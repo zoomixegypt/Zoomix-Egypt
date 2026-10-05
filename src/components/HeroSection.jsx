@@ -17,7 +17,7 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
       ref={ref}
       id="hero-section"
       dir={language === "ar" ? "rtl" : "ltr"}
-      className="min-h-[100svh] bg-[#0A0A0A] text-white relative overflow-hidden flex flex-col justify-center lg:flex-row lg:items-end pb-12 pt-24 md:pb-24 md:pt-28"
+      className="min-h-[100svh] bg-[#0A0A0A] text-white relative overflow-hidden flex flex-col justify-start pt-32 pb-12 lg:justify-center lg:flex-row lg:items-end md:pb-24 md:pt-28"
     >
       <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:56px_56px]" />
       <div className="absolute -right-[18vw] bottom-[-20vw] h-[68vw] w-[68vw] rounded-full border border-white/20 shadow-[0_0_0_90px_rgba(255,255,255,.025),0_0_0_180px_rgba(255,255,255,.018)]" />
