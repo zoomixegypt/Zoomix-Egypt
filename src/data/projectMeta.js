@@ -38,6 +38,19 @@ export const PROJECT_META = [
     color: "bg-[#A5A5A5]",
     img: "/reel-master.svg",
   },
+  {
+    id: 4,
+    isConcept: true,
+    slug: "mirsa-brand-world",
+    titleAr: "مِرسى",
+    titleEn: "MIRSA",
+    categoryAr: "هوية / محتوى / إطلاق",
+    categoryEn: "IDENTITY / CONTENT / LAUNCH",
+    servicesAr: "هوية بصرية · تصوير منتجات · نظام محتوى",
+    servicesEn: "Visual identity · Product photography · Content system",
+    color: "bg-[#F28A3D]",
+    img: "/mirsa-brand-world.png",
+  },
 ];
 
 export function getProjectMeta(language = "ar") {

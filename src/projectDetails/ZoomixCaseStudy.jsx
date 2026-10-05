@@ -109,9 +109,13 @@ export default function ZoomixCaseStudy() {
             </ul>
           </section>
           <p className="font-mono text-xs text-black/45 border-t border-black/20 pt-5">
-            {language === "ar"
-              ? "ZOOMIX CONCEPT PROJECT — لا توجد نتيجة موثقة."
-              : "ZOOMIX CONCEPT PROJECT — No documented result claimed."}
+            {project.isSelfInitiated
+              ? language === "ar"
+                ? "ZOOMIX SELF-INITIATED PROJECT — مشروع أصلي للتجربة، بدون عميل أو نتائج تجارية مدّعاة."
+                : "ZOOMIX SELF-INITIATED PROJECT — Original concept, with no client or claimed commercial results."
+              : language === "ar"
+                ? "ZOOMIX CONCEPT PROJECT — لا توجد نتيجة موثقة."
+                : "ZOOMIX CONCEPT PROJECT — No documented result claimed."}
           </p>
           <a
             href="#contact-section"

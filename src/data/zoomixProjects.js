@@ -80,4 +80,49 @@ export const ZOOMIX_PROJECTS = {
     },
     image: "/reel-master.svg",
   },
+  "mirsa-brand-world": {
+    slug: "mirsa-brand-world",
+    isConcept: true,
+    isSelfInitiated: true,
+    title: { ar: "مِرسى", en: "MIRSA" },
+    category: { ar: "هوية / محتوى / إطلاق", en: "IDENTITY / CONTENT / LAUNCH" },
+    overview: {
+      ar: "علامة أكل حضرية أصلية صممناها لتوضح كيف تتحول الباقة من هوية إلى حضور وانطلاقة كاملة.",
+      en: "An original urban food brand built to show how a package can move from identity to presence and launch.",
+    },
+    need: {
+      ar: "فكرة أكل جديدة تحتاج شخصية واضحة ونظامًا يشتغل على المكان، التغليف، السوشيال، والظهور الرقمي.",
+      en: "A new food concept needed a clear personality and a system across the space, packaging, social and digital presence.",
+    },
+    direction: {
+      ar: "مزجنا دفء المكان المصري مع أشكال هندسية بسيطة وألوان قوية ليظهر البراند بسرعة ويحافظ على شخصيته.",
+      en: "We mixed the warmth of an Egyptian neighborhood with simple geometry and bold color so the brand feels immediate and memorable.",
+    },
+    services: {
+      ar: ["استراتيجية هوية", "نظام محتوى", "تصوير وتوجيه فني", "مطبوعات وLanding Page"],
+      en: [
+        "Brand strategy",
+        "Content system",
+        "Photography & art direction",
+        "Print & landing page",
+      ],
+    },
+    deliverables: {
+      ar: [
+        "هوية بصرية واتجاه ألوان",
+        "نظام تغليف ومنيو",
+        "قوالب محتوى للسوشيال",
+        "اتجاه تصوير منتجات",
+        "تصور Landing Page للإطلاق",
+      ],
+      en: [
+        "Visual identity and color direction",
+        "Packaging and menu system",
+        "Social content templates",
+        "Product photography direction",
+        "Launch landing-page concept",
+      ],
+    },
+    image: "/mirsa-brand-world.png",
+  },
 };
