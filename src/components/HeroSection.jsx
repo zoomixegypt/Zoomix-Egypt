@@ -33,7 +33,7 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
           <h1
             className={`${language === "ar" ? "font-arabic tracking-normal leading-[1.12]" : "font-display tracking-[-.06em] leading-[.98]"} text-[clamp(2.75rem,12vw,8.7rem)] sm:text-[clamp(3.6rem,9vw,8.7rem)] font-extrabold max-w-4xl break-words`}
           >
-            {t("hero", "titleA")} <span className="text-[#A5A5A5]">{t("hero", "titleAccent")}</span>
+            {t("hero", "titleA")} <span className="text-[#BBFF00]">{t("hero", "titleAccent")}</span>
             <br />
             {t("hero", "titleB")}
           </h1>
