@@ -52,6 +52,20 @@ export const PROJECT_META = [
     color: "bg-[#F28A3D]",
     img: "/mirsa-brand-world.png",
   },
+  {
+    id: 5,
+    isConcept: true,
+    isSelfInitiated: true,
+    slug: "nodra-brand-world",
+    titleAr: "نُضرة",
+    titleEn: "NODRA",
+    categoryAr: "عناية / هوية / محتوى",
+    categoryEn: "BEAUTY / IDENTITY / CONTENT",
+    servicesAr: "هوية بصرية · تغليف · تصوير منتجات",
+    servicesEn: "Visual identity · Packaging · Product photography",
+    color: "bg-[#C9795E]",
+    img: "/nodra-brand-world.png",
+  },
 ];
 
 export function getProjectMeta(language = "ar") {

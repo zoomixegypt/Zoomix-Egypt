@@ -8,6 +8,7 @@ const PROJECT_DETAIL_COMPONENTS = {
   "story-system": lazy(() => import("./ZoomixCaseStudy")),
   "reel-system": lazy(() => import("./ZoomixCaseStudy")),
   "mirsa-brand-world": lazy(() => import("./ZoomixCaseStudy")),
+  "nodra-brand-world": lazy(() => import("./ZoomixCaseStudy")),
 };
 
 export function getProjectRouteConfig(slug) {

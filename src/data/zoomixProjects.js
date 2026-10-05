@@ -125,4 +125,49 @@ export const ZOOMIX_PROJECTS = {
     },
     image: "/mirsa-brand-world.png",
   },
+  "nodra-brand-world": {
+    slug: "nodra-brand-world",
+    isConcept: true,
+    isSelfInitiated: true,
+    title: { ar: "نُضرة", en: "NODRA" },
+    category: { ar: "عناية / هوية / محتوى", en: "BEAUTY / IDENTITY / CONTENT" },
+    overview: {
+      ar: "علامة عناية محلية هادئة صممناها لتجمع بين الثقة، البساطة، وحضور بصري جاهز للنمو.",
+      en: "An original local self-care brand designed to balance trust, simplicity and a visual presence ready to grow.",
+    },
+    need: {
+      ar: "منتجات جيدة تحتاج نظامًا يوضح الفرق بينها ويجعل التجربة متماسكة من العبوة إلى السوشيال.",
+      en: "Good products needed a system that clarifies the range and keeps the experience consistent from packaging to social.",
+    },
+    direction: {
+      ar: "لغة ناعمة وملموسة تعتمد على خامات طبيعية، مساحات هادئة، وألوان دافئة تظهر المنتج بدون مبالغة.",
+      en: "A tactile, calm language built from natural materials, quiet space and warm color that lets the product lead.",
+    },
+    services: {
+      ar: ["اتجاه هوية", "تغليف ومنتجات", "تصوير منتجات", "نظام محتوى وإطلاق"],
+      en: [
+        "Identity direction",
+        "Packaging system",
+        "Product photography",
+        "Launch content system",
+      ],
+    },
+    deliverables: {
+      ar: [
+        "هوية بصرية ونظام ألوان",
+        "نظام عبوات للمنتجات",
+        "صور منتجات جاهزة للاستخدام",
+        "قوالب سوشيال وStories",
+        "مخرجات إطلاق قابلة للتوسع",
+      ],
+      en: [
+        "Visual identity and color system",
+        "Product packaging system",
+        "Ready-to-use product photography",
+        "Social and Story templates",
+        "Scalable launch outputs",
+      ],
+    },
+    image: "/nodra-brand-world.png",
+  },
 };
