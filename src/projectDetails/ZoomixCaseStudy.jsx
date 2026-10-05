@@ -1,4 +1,4 @@
-import { ArrowUpRight, X } from "lucide-react";
+import { ArrowUpLeft, ArrowUpRight, X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useLanguage } from "../i18n";
 import { ZOOMIX_PROJECTS } from "../data/zoomixProjects";
@@ -13,27 +13,38 @@ export default function ZoomixCaseStudy() {
 
   const text = (field) => project[field][language];
   const close = () => navigate("/");
+  const ActionArrow = language === "ar" ? ArrowUpLeft : ArrowUpRight;
 
   return (
     <article className="bg-[#F5F4EF] text-[#0A0A0A]" dir={language === "ar" ? "rtl" : "ltr"}>
-      <div className="flex items-center justify-between p-5 md:p-8 border-b border-black/15">
+      <div className="flex items-center justify-between gap-4 p-5 md:p-8 border-b border-black/15">
         <span className="font-mono text-xs tracking-[0.16em] text-black/50">
           ZOOMIX / CASE STUDY
         </span>
-        <button
-          type="button"
-          onClick={close}
-          aria-label={language === "ar" ? "إغلاق المشروع" : "Close project"}
-          className="w-10 h-10 border border-black/20 flex items-center justify-center hover:bg-[#BBFF00] transition-colors"
-        >
-          <X size={18} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={close}
+            className="hidden sm:inline-flex zoomix-button min-h-10 border-black/20 px-3 py-2 text-xs"
+          >
+            {language === "ar" ? "العودة للأعمال" : "Back to work"}
+          </button>
+          <button
+            type="button"
+            onClick={close}
+            aria-label={language === "ar" ? "إغلاق المشروع" : "Close project"}
+            className="w-10 h-10 border border-black/20 flex items-center justify-center hover:bg-[#BBFF00] transition-colors"
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+        </div>
       </div>
       <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-10 p-6 md:p-10 lg:p-16">
         <div>
           <p className="zoomix-label mb-6">{project.category[language]}</p>
           <h1
-            className={`${language === "ar" ? "font-arabic" : "font-display"} text-5xl md:text-7xl font-black leading-[0.95] tracking-[-0.05em]`}
+            id="project-dialog-title"
+            className={`${language === "ar" ? "font-arabic tracking-normal" : "font-display tracking-[-0.05em]"} text-5xl md:text-7xl font-black leading-[0.95]`}
           >
             {project.title[language]}
           </h1>
@@ -90,7 +101,7 @@ export default function ZoomixCaseStudy() {
             onClick={close}
             className="zoomix-button bg-[#0A0A0A] text-white"
           >
-            {language === "ar" ? "ابدأ مشروعك" : "Start a project"} <ArrowUpRight size={18} />
+            {language === "ar" ? "ابدأ مشروعك" : "Start a project"} <ActionArrow size={18} />
           </a>
         </div>
       </div>

@@ -33,6 +33,9 @@ const translations = {
       titleB: "واضح.",
       description: "نحوّل الأفكار إلى أنظمة بصرية جاهزة للاستخدام.",
       view: "شوف المشروع",
+      explore: "اسحب للمزيد",
+      previous: "المشروع السابق",
+      next: "المشروع التالي",
       explorations: "ZOOMIX PROJECTS",
     },
     services: {
@@ -97,6 +100,9 @@ const translations = {
       titleB: "work.",
       description: "Turning ideas into visual systems ready to use.",
       view: "View project",
+      explore: "Swipe to explore",
+      previous: "Previous project",
+      next: "Next project",
       explorations: "ZOOMIX PROJECTS",
     },
     services: {

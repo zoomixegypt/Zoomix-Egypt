@@ -133,6 +133,16 @@ html {
   transform: translateY(0);
 }
 
+.whatsapp-float {
+  bottom: max(1.25rem, env(safe-area-inset-bottom));
+}
+
+@media (max-height: 500px) and (pointer: coarse) {
+  .whatsapp-float {
+    display: none;
+  }
+}
+
 :focus-visible {
   outline: 2px solid var(--zoomix-lime);
   outline-offset: 3px;

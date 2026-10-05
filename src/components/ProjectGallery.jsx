@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Gsap } from "../utils/gsapAnimate";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -81,6 +81,12 @@ export default function ProjectGallery({ onOpenProject }) {
 
   const projects = getProjectMeta(language);
   const projectCount = projects.length;
+
+  const scrollToMobileProject = (index) => {
+    const nextIndex = Math.max(0, Math.min(projectCount - 1, index));
+    const card = mobileScrollRef.current?.querySelector(`[data-project-index="${nextIndex}"]`);
+    card?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  };
 
   useEffect(() => {
     if (!enablePinnedScroll) {
@@ -297,7 +303,9 @@ export default function ProjectGallery({ onOpenProject }) {
             <div className="flex-1 h-[1px] bg-white/5" />
           </div>
 
-          <h2 className="text-5xl font-black text-white uppercase leading-[0.92] tracking-tight">
+          <h2
+            className={`${language === "ar" ? "font-arabic tracking-normal" : "font-display tracking-tight"} text-5xl font-black text-white uppercase leading-[0.92]`}
+          >
             {t("gallery", "titleA")}
             <br />
             <span className="text-[#BBFF00]">{t("gallery", "titleB")}</span>
@@ -323,6 +331,32 @@ export default function ProjectGallery({ onOpenProject }) {
           </div>
         </div>
 
+        <div className="px-6 mb-6 flex items-center justify-between gap-4">
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/40">
+            {t("gallery", "explore")}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => scrollToMobileProject(activeProjectIndex - 1)}
+              disabled={activeProjectIndex === 0}
+              aria-label={t("gallery", "previous")}
+              className="flex h-9 w-9 items-center justify-center border border-white/20 text-white transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00] disabled:cursor-not-allowed disabled:opacity-30"
+            >
+              <ArrowLeft size={16} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToMobileProject(activeProjectIndex + 1)}
+              disabled={activeProjectIndex === projectCount - 1}
+              aria-label={t("gallery", "next")}
+              className="flex h-9 w-9 items-center justify-center border border-white/20 text-white transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00] disabled:cursor-not-allowed disabled:opacity-30"
+            >
+              <ArrowRight size={16} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+
         {/* Horizontally scrollable card strip */}
         <div
           ref={mobileScrollRef}
@@ -336,9 +370,14 @@ export default function ProjectGallery({ onOpenProject }) {
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
-                if (e.key === "Enter") onOpenProject?.(project);
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onOpenProject?.(project);
+                }
               }}
-              className="project-card group relative w-[80vw] shrink-0 snap-center overflow-hidden rounded-lg border border-white/10 bg-neutral-950 cursor-pointer active:scale-[0.98] transition-transform"
+              aria-label={`${project.title} — ${t("gallery", "view")}`}
+              aria-haspopup="dialog"
+              className="project-card group relative w-[80vw] shrink-0 snap-center overflow-hidden rounded-lg border border-white/10 bg-neutral-950 cursor-pointer active:scale-[0.98] transition-transform focus-visible:outline-2 focus-visible:outline-[#BBFF00] focus-visible:outline-offset-4"
               data-project-index={index}
               style={{ WebkitTapHighlightColor: "transparent", aspectRatio: "3/4" }}
             >
@@ -432,7 +471,9 @@ export default function ProjectGallery({ onOpenProject }) {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="flex flex-col justify-center shrink-0 h-[70vh] w-[40vw]"
           >
-            <h2 className="text-6xl lg:text-8xl font-black text-white uppercase leading-[0.92]">
+            <h2
+              className={`${language === "ar" ? "font-arabic tracking-normal" : "font-display"} text-6xl lg:text-8xl font-black text-white uppercase leading-[0.92]`}
+            >
               {t("gallery", "titleA")}
               <br />
               <span className="text-[#BBFF00]">{t("gallery", "titleB")}</span>
@@ -452,9 +493,14 @@ export default function ProjectGallery({ onOpenProject }) {
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
-                if (e.key === "Enter") onOpenProject?.(project);
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onOpenProject?.(project);
+                }
               }}
-              className="project-card group relative h-[70vh] w-[45vw] shrink-0 overflow-hidden rounded-[4px] border border-white/10 bg-neutral-900 transition-all duration-500 hover:border-[#BBFF00]/50 hover:shadow-[0_0_40px_rgba(187,255,0,0.1)] active:scale-[0.98] cursor-pointer"
+              aria-label={`${project.title} — ${t("gallery", "view")}`}
+              aria-haspopup="dialog"
+              className="project-card group relative h-[70vh] w-[45vw] shrink-0 overflow-hidden rounded-[4px] border border-white/10 bg-neutral-900 transition-all duration-500 hover:border-[#BBFF00]/50 hover:shadow-[0_0_40px_rgba(187,255,0,0.1)] active:scale-[0.98] cursor-pointer focus-visible:outline-2 focus-visible:outline-[#BBFF00] focus-visible:outline-offset-4"
               data-project-index={index}
               style={{ WebkitTapHighlightColor: "transparent" }}
             >

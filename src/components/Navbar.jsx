@@ -17,6 +17,9 @@ const Navbar = memo(function Navbar() {
     { label: t("nav", "process"), sectionId: "process-section" },
     { label: t("nav", "contact"), sectionId: "contact-section" },
   ];
+  const DESKTOP_NAV_ITEMS = NAV_ITEMS.filter(({ sectionId }) =>
+    ["about-section", "services-section", "project-section", "contact-section"].includes(sectionId),
+  );
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isOnDarkSection, setIsOnDarkSection] = useState(false);
@@ -275,13 +278,13 @@ const Navbar = memo(function Navbar() {
         <div
           className={`flex items-center p-1.5 backdrop-blur-xl border shadow-[0_12px_40px_rgba(0,0,0,0.06)] rounded-full relative transition-colors duration-500 ${isOnDarkSection ? "bg-black/25 border-white/25" : "bg-white/70 border-black/5"}`}
         >
-          {NAV_ITEMS.map((item, index) => (
+          {DESKTOP_NAV_ITEMS.map((item, index) => (
             <Magnetic key={item.sectionId}>
               <button
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
                 onClick={() => scrollTo(item.sectionId)}
-                className={`relative px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-[0.12em] md:tracking-[0.16em] transition-colors ${isOnDarkSection ? "text-white/60 hover:text-white" : "text-black/60 hover:text-black"}`}
+                className={`relative px-3 xl:px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-[0.1em] xl:tracking-[0.14em] transition-colors ${isOnDarkSection ? "text-white/60 hover:text-white" : "text-black/60 hover:text-black"}`}
               >
                 <span className="relative z-10">{item.label}</span>
                 {hoveredIndex === index && (
@@ -300,18 +303,18 @@ const Navbar = memo(function Navbar() {
       {/* ── Desktop Right (Premium CTA) ── */}
       <div className="hidden lg:flex pointer-events-auto">
         <Magnetic>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 xl:gap-2">
             <button
               type="button"
               onClick={() => setLanguage(language === "ar" ? "en" : "ar")}
               aria-label="Switch language"
-              className={`px-3 py-2.5 border rounded-full text-xs font-mono font-bold transition-colors ${isOnDarkSection ? "border-white/25 text-white hover:bg-white hover:text-black" : "border-black/15 text-black hover:bg-black hover:text-white"}`}
+              className={`px-2 xl:px-3 py-2.5 border rounded-full text-xs font-mono font-bold transition-colors ${isOnDarkSection ? "border-white/25 text-white hover:bg-white hover:text-black" : "border-black/15 text-black hover:bg-black hover:text-white"}`}
             >
               {t("nav", "language")}
             </button>
             <button
               onClick={() => scrollTo("contact-section")}
-              className={`group relative overflow-hidden flex items-center gap-3 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-[0.12em] md:tracking-[0.16em] hover:shadow-[0_0_30px_rgba(187,255,0,0.3)] transition-all duration-500 ${isOnDarkSection ? "bg-white text-black" : "bg-black text-white"}`}
+              className={`group relative overflow-hidden flex items-center gap-2 xl:gap-3 px-4 xl:px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-[0.1em] xl:tracking-[0.14em] hover:shadow-[0_0_30px_rgba(187,255,0,0.3)] transition-all duration-500 ${isOnDarkSection ? "bg-white text-black" : "bg-black text-white"}`}
             >
               {/* Core Label */}
               <span className="relative z-10 pl-2">{t("nav", "start")}</span>

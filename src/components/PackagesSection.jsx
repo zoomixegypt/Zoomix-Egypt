@@ -1,11 +1,12 @@
 import { memo } from "react";
-import { ArrowUpRight, Check } from "lucide-react";
+import { ArrowUpLeft, ArrowUpRight, Check } from "lucide-react";
 import { useLanguage } from "../i18n";
 import { ZOOMIX_PACKAGES } from "../data/zoomixPackages";
 
 const PackagesSection = memo(function PackagesSection() {
   const { language } = useLanguage();
   const isArabic = language === "ar";
+  const ActionArrow = isArabic ? ArrowUpLeft : ArrowUpRight;
 
   const selectPackage = (id) => {
     window.localStorage.setItem("zoomix-selected-package", id);
@@ -29,7 +30,7 @@ const PackagesSection = memo(function PackagesSection() {
         </div>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-14">
           <h2
-            className={`${isArabic ? "font-arabic" : "font-display"} text-5xl md:text-7xl font-black leading-[0.95] tracking-[-0.05em]`}
+            className={`${isArabic ? "font-arabic tracking-normal" : "font-display tracking-[-0.05em]"} text-5xl md:text-7xl font-black leading-[0.95]`}
           >
             {isArabic ? "اختار نقطة البداية." : "Choose your starting point."}
           </h2>
@@ -38,6 +39,18 @@ const PackagesSection = memo(function PackagesSection() {
               ? "كل باقة لها نطاق واضح ومخرجات جاهزة للاستخدام."
               : "Every package has a clear scope and ready-to-use deliverables."}
           </p>
+        </div>
+
+        <div
+          className="mb-8 grid gap-2 sm:grid-cols-3"
+          aria-label={isArabic ? "مقارنة سريعة" : "Quick comparison"}
+        >
+          {ZOOMIX_PACKAGES.map((pkg) => (
+            <div key={pkg.id} className="border border-white/10 px-4 py-3 text-sm">
+              <strong className="text-white">{pkg.name[language]}</strong>
+              <span className="mt-1 block text-white/55">{pkg.fit[language]}</span>
+            </div>
+          ))}
         </div>
 
         <div className="grid lg:grid-cols-3 gap-5 items-stretch">
@@ -51,7 +64,9 @@ const PackagesSection = memo(function PackagesSection() {
                   {isArabic ? "المقترحة" : "RECOMMENDED"}
                 </span>
               )}
-              <h3 className={`${isArabic ? "font-arabic" : "font-display"} text-2xl font-black`}>
+              <h3
+                className={`${isArabic ? "font-arabic tracking-normal" : "font-display tracking-[-0.02em]"} text-2xl font-black`}
+              >
                 {pkg.name[language]}
               </h3>
               <p className="mt-4 text-white/60 leading-7 min-h-[5.5rem]">
@@ -63,7 +78,7 @@ const PackagesSection = memo(function PackagesSection() {
               </p>
               <p className="mt-4 text-sm text-white/70 leading-6">{pkg.fit[language]}</p>
               <div className="my-7 h-px bg-white/15" />
-              <ul className="space-y-3 flex-1">
+              <ul className="hidden flex-1 space-y-3 lg:block">
                 {pkg.outputs[language].map((output) => (
                   <li
                     key={output}
@@ -74,6 +89,22 @@ const PackagesSection = memo(function PackagesSection() {
                   </li>
                 ))}
               </ul>
+              <details className="mt-6 lg:hidden">
+                <summary className="cursor-pointer border-y border-white/15 py-3 text-sm font-bold text-white">
+                  {isArabic ? "تفاصيل الباقة" : "Package details"}
+                </summary>
+                <ul className="space-y-3 pt-4">
+                  {pkg.outputs[language].map((output) => (
+                    <li
+                      key={output}
+                      className="flex items-start gap-3 text-sm leading-6 text-white/75"
+                    >
+                      <Check size={16} className="mt-1 shrink-0 text-[#BBFF00]" />
+                      {output}
+                    </li>
+                  ))}
+                </ul>
+              </details>
               <div className="mt-8 pt-5 border-t border-white/15 text-sm">
                 <p className="text-white/70">
                   <strong className="text-white">{isArabic ? "المدة:" : "Duration:"}</strong>{" "}
@@ -86,7 +117,7 @@ const PackagesSection = memo(function PackagesSection() {
                 onClick={() => selectPackage(pkg.id)}
                 className={`mt-7 zoomix-button w-full ${pkg.featured ? "bg-[#BBFF00] text-[#0A0A0A]" : "border-white/35 text-white"}`}
               >
-                {isArabic ? "اختار الباقة" : "Choose package"} <ArrowUpRight size={18} />
+                {isArabic ? "اختار الباقة" : "Choose package"} <ActionArrow size={18} />
               </button>
             </article>
           ))}

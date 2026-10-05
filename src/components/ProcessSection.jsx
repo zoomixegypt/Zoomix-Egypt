@@ -21,7 +21,7 @@ const ProcessSection = memo(function ProcessSection() {
           <div className="flex-1 h-px bg-black/15" />
         </div>
         <h2
-          className={`${isArabic ? "font-arabic" : "font-display"} text-5xl md:text-8xl font-black tracking-[-0.06em] leading-[0.9]`}
+          className={`${isArabic ? "font-arabic tracking-normal" : "font-display tracking-[-0.06em]"} text-5xl md:text-8xl font-black leading-[0.9]`}
         >
           {isArabic ? "من الـBrief إلى الإطلاق." : "From Brief to Launch."}
         </h2>
@@ -50,7 +50,7 @@ const ProcessSection = memo(function ProcessSection() {
 
         <div id="faq-section" className="mt-28 md:mt-40 grid lg:grid-cols-[0.7fr_1.3fr] gap-12">
           <h2
-            className={`${isArabic ? "font-arabic" : "font-display"} text-4xl md:text-6xl font-black tracking-[-0.05em] leading-none`}
+            className={`${isArabic ? "font-arabic tracking-normal" : "font-display tracking-[-0.05em]"} text-4xl md:text-6xl font-black leading-none`}
           >
             FAQ<span className="text-[#BBFF00]">.</span>
           </h2>

@@ -1,5 +1,5 @@
 import { memo, useRef } from "react";
-import { ArrowDownRight } from "lucide-react";
+import { ArrowDownLeft, ArrowDownRight } from "lucide-react";
 import { Gsap, useGsapScroll, useGsapTransform } from "../utils/gsapAnimate";
 import { useLanguage } from "../i18n";
 
@@ -10,6 +10,7 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
     typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const { scrollYProgress } = useGsapScroll({ target: ref, offset: ["start start", "end start"] });
   const artY = useGsapTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
+  const ActionArrow = language === "ar" ? ArrowDownLeft : ArrowDownRight;
   return (
     <header
       ref={ref}
@@ -29,7 +30,7 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
             {t("hero", "eyebrow")}
           </p>
           <h1
-            className={`${language === "ar" ? "font-arabic" : "font-display"} text-[clamp(2.75rem,12vw,8.7rem)] sm:text-[clamp(3.6rem,9vw,8.7rem)] font-black leading-[.98] tracking-[-.06em] max-w-4xl break-words`}
+            className={`${language === "ar" ? "font-arabic tracking-normal" : "font-display tracking-[-.06em]"} text-[clamp(2.75rem,12vw,8.7rem)] sm:text-[clamp(3.6rem,9vw,8.7rem)] font-black leading-[.98] max-w-4xl break-words`}
           >
             {t("hero", "titleA")} <span className="text-[#A5A5A5]">{t("hero", "titleAccent")}</span>
             <br />
@@ -40,10 +41,10 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
           </p>
           <div className="mt-9 flex flex-wrap items-center gap-3">
             <a href="#contact-section" className="zoomix-button bg-[#BBFF00] text-black">
-              {t("nav", "start")} <ArrowDownRight size={20} />
+              {t("nav", "start")} <ActionArrow size={20} />
             </a>
             <a href="#project-section" className="zoomix-button border-white/50 text-white">
-              {t("hero", "work")} <ArrowDownRight size={20} />
+              {t("hero", "work")} <ActionArrow size={20} />
             </a>
           </div>
         </Gsap.div>

@@ -22,7 +22,9 @@ const ServicesSection = memo(function ServicesSection() {
         <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-12 lg:gap-24 items-start">
           <div>
             <p className="zoomix-label mb-6">{t("services", "eyebrow")}</p>
-            <h2 className="font-arabic lg:sticky lg:top-28 text-4xl md:text-6xl font-black leading-[1.05] tracking-[-0.045em] max-w-xl">
+            <h2
+              className={`${language === "ar" ? "font-arabic tracking-normal" : "font-display tracking-[-0.045em]"} lg:sticky lg:top-28 text-4xl md:text-6xl font-black leading-[1.05] max-w-xl`}
+            >
               {t("services", "problem")}
             </h2>
           </div>
@@ -53,7 +55,7 @@ const ServicesSection = memo(function ServicesSection() {
 
         <div className="mt-24 md:mt-36 pt-10 border-t border-black/20 grid lg:grid-cols-[0.8fr_1.2fr] gap-10 items-start">
           <h2
-            className={`${language === "ar" ? "font-arabic" : "font-display"} text-4xl md:text-6xl font-black tracking-[-0.05em] leading-none`}
+            className={`${language === "ar" ? "font-arabic tracking-normal" : "font-display tracking-[-0.05em]"} text-4xl md:text-6xl font-black leading-none`}
           >
             {t("services", "why")}
           </h2>

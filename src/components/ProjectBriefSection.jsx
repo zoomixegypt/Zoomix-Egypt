@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, memo } from "react";
-import { ArrowUpRight, Check, MessageCircle } from "lucide-react";
+import { ArrowUpLeft, ArrowUpRight, Check, MessageCircle } from "lucide-react";
 import { useLanguage } from "../i18n";
 import { ZOOMIX_PACKAGES } from "../data/zoomixPackages";
 
@@ -22,6 +22,8 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
   const [form, setForm] = useState(initialForm);
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState({});
+  const [whatsappBlocked, setWhatsappBlocked] = useState(false);
+  const [messageCopied, setMessageCopied] = useState(false);
 
   useEffect(() => {
     const applyPackage = (id) =>
@@ -38,6 +40,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
   );
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
   const label = (ar, en) => (isArabic ? ar : en);
+  const ActionArrow = isArabic ? ArrowUpLeft : ArrowUpRight;
 
   const buildMessage = () =>
     [
@@ -56,7 +59,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    const required = ["name", "project", "phone", "activity", "service", "description"];
+    const required = ["name", "phone", "service", "description"];
     const nextErrors = Object.fromEntries(
       required.filter((key) => !form[key].trim()).map((key) => [key, label("مطلوب", "Required")]),
     );
@@ -66,24 +69,42 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       return;
     }
     setSubmitted(true);
-    window.open(
+    const whatsappWindow = window.open(
       `https://wa.me/201555451535?text=${encodeURIComponent(buildMessage())}`,
       "_blank",
       "noopener,noreferrer",
     );
+    setWhatsappBlocked(!whatsappWindow);
+    setMessageCopied(false);
   };
 
-  const field = (key, labelText, type = "text") => (
+  const copyMessage = async () => {
+    try {
+      await navigator.clipboard.writeText(buildMessage());
+      setMessageCopied(true);
+    } catch {
+      setMessageCopied(false);
+    }
+  };
+
+  const field = (key, labelText, type = "text", required = false) => (
     <label className="block">
       <span className="block text-sm font-bold mb-2">{labelText}</span>
       <input
+        id={`brief-${key}`}
         type={type}
         value={form[key]}
         onChange={(event) => update(key, event.target.value)}
         className={`w-full border bg-white px-4 py-3 outline-none focus:border-[#BBFF00] ${errors[key] ? "border-red-500" : "border-black/20"}`}
         aria-invalid={Boolean(errors[key])}
+        aria-describedby={errors[key] ? `brief-${key}-error` : undefined}
+        required={required}
       />
-      {errors[key] && <span className="block mt-1 text-xs text-red-600">{errors[key]}</span>}
+      {errors[key] && (
+        <span id={`brief-${key}-error`} className="block mt-1 text-xs text-red-600">
+          {errors[key]}
+        </span>
+      )}
     </label>
   );
 
@@ -102,7 +123,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
         <div className="grid lg:grid-cols-[0.75fr_1.25fr] gap-12 items-start">
           <div className="lg:sticky lg:top-24">
             <h2
-              className={`${isArabic ? "font-arabic" : "font-display"} text-5xl md:text-7xl font-black leading-[0.92] tracking-[-0.06em]`}
+              className={`${isArabic ? "font-arabic tracking-normal" : "font-display tracking-[-0.06em]"} text-5xl md:text-7xl font-black leading-[0.92]`}
             >
               {label("جاهز نرتب", "LET'S BUILD")}
               <br />
@@ -127,11 +148,11 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
             onSubmit={handleSubmit}
             className="bg-[#F5F4EF] text-[#0A0A0A] p-6 md:p-10 grid sm:grid-cols-2 gap-5"
           >
-            {field("name", label("الاسم *", "Name *"))}
-            {field("project", label("اسم المشروع *", "Project name *"))}
-            {field("phone", label("رقم الهاتف *", "Phone *"), "tel")}
-            {field("activity", label("نوع النشاط *", "Business type *"))}
-            {field("service", label("نوع الخدمة *", "Service type *"))}
+            {field("name", label("الاسم *", "Name *"), "text", true)}
+            {field("project", label("اسم المشروع", "Project name"))}
+            {field("phone", label("رقم الهاتف *", "Phone *"), "tel", true)}
+            {field("activity", label("نوع النشاط", "Business type"))}
+            {field("service", label("نوع الخدمة *", "Service type *"), "text", true)}
             <label className="block">
               <span className="block text-sm font-bold mb-2">{label("الباقة", "Package")}</span>
               <select
@@ -155,14 +176,19 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 {label("وصف مختصر *", "Short description *")}
               </span>
               <textarea
+                id="brief-description"
                 rows="5"
                 value={form.description}
                 onChange={(event) => update("description", event.target.value)}
                 className={`w-full border bg-white px-4 py-3 outline-none focus:border-[#BBFF00] ${errors.description ? "border-red-500" : "border-black/20"}`}
                 aria-invalid={Boolean(errors.description)}
+                aria-describedby={errors.description ? "brief-description-error" : undefined}
+                required
               />
               {errors.description && (
-                <span className="block mt-1 text-xs text-red-600">{errors.description}</span>
+                <span id="brief-description-error" className="block mt-1 text-xs text-red-600">
+                  {errors.description}
+                </span>
               )}
             </label>
             <div className="sm:col-span-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-3">
@@ -173,9 +199,24 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 )}
               </p>
               <button type="submit" className="zoomix-button bg-[#BBFF00] text-[#0A0A0A]">
-                {label("إرسال على واتساب", "Send to WhatsApp")} <ArrowUpRight size={18} />
+                {label("إرسال على واتساب", "Send to WhatsApp")} <ActionArrow size={18} />
               </button>
             </div>
+            {whatsappBlocked && (
+              <div className="sm:col-span-2 border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+                <p>
+                  {label(
+                    "لم يفتح واتساب تلقائيًا. انسخ الرسالة وأرسلها من التطبيق.",
+                    "WhatsApp did not open automatically. Copy the message and send it from the app.",
+                  )}
+                </p>
+                <button type="button" onClick={copyMessage} className="mt-3 font-bold underline">
+                  {messageCopied
+                    ? label("تم نسخ الرسالة", "Message copied")
+                    : label("نسخ الرسالة", "Copy message")}
+                </button>
+              </div>
+            )}
             {submitted && (
               <p
                 className="sm:col-span-2 flex items-center gap-2 text-sm text-[#4d6900]"
@@ -193,7 +234,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
         target="_blank"
         rel="noreferrer"
         aria-label="WhatsApp"
-        className="fixed bottom-5 left-5 z-40 w-12 h-12 bg-[#BBFF00] text-[#0A0A0A] flex items-center justify-center shadow-lg"
+        className="whatsapp-float fixed left-5 z-40 w-12 h-12 bg-[#BBFF00] text-[#0A0A0A] flex items-center justify-center shadow-lg"
       >
         <MessageCircle size={22} />
       </a>
