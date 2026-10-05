@@ -210,4 +210,44 @@ export const ZOOMIX_PROJECTS = {
     },
     image: "/athar-brand-world.png",
   },
+  "riwaq-brand-world": {
+    slug: "riwaq-brand-world",
+    isConcept: true,
+    isSelfInitiated: true,
+    title: { ar: "رِواق", en: "RIWAQ" },
+    category: { ar: "ضيافة / مكان / إطلاق", en: "HOSPITALITY / SPACE / LAUNCH" },
+    overview: {
+      ar: "مساحة ضيافة وثقافة أصلية صممناها لتوضح كيف تتحول الهوية من شكل بصري إلى تجربة تُعاش داخل المكان.",
+      en: "An original hospitality and culture space built to show how identity becomes an experience people live inside.",
+    },
+    need: {
+      ar: "مكان جديد يحتاج لغة واضحة تربط الواجهة، الحركة داخله، المواد، والمحتوى الذي يعرّف الناس به.",
+      en: "A new space needed a clear language connecting its facade, movement, materials and launch content.",
+    },
+    direction: {
+      ar: "بنينا النظام على خامات دافئة، أشكال هندسية هادئة، وإشارات واضحة تخلي المكان مفهومًا ومميزًا من أول خطوة.",
+      en: "We built the system from warm materials, quiet geometry and clear signals that make the space feel legible from the first step.",
+    },
+    services: {
+      ar: ["هوية مكانية", "Wayfinding", "توجيه بصري للمكان", "محتوى وإطلاق"],
+      en: ["Spatial identity", "Wayfinding", "Environmental art direction", "Content and launch"],
+    },
+    deliverables: {
+      ar: [
+        "نظام هوية وألوان للمكان",
+        "تصور Wayfinding وإشارات الحركة",
+        "اتجاه خامات ومواد تطبيقية",
+        "قوالب محتوى للإطلاق",
+        "فكرة تجربة افتتاح قابلة للتنفيذ",
+      ],
+      en: [
+        "Spatial identity and color system",
+        "Wayfinding and movement-signage concept",
+        "Material and application direction",
+        "Launch content templates",
+        "An executable opening experience concept",
+      ],
+    },
+    image: "/riwaq-brand-world.png",
+  },
 };

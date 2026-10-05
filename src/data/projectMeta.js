@@ -80,6 +80,20 @@ export const PROJECT_META = [
     color: "bg-[#C6A24A]",
     img: "/athar-brand-world.png",
   },
+  {
+    id: 7,
+    isConcept: true,
+    isSelfInitiated: true,
+    slug: "riwaq-brand-world",
+    titleAr: "رِواق",
+    titleEn: "RIWAQ",
+    categoryAr: "ضيافة / مكان / إطلاق",
+    categoryEn: "HOSPITALITY / SPACE / LAUNCH",
+    servicesAr: "هوية مكانية · Wayfinding · محتوى وإطلاق",
+    servicesEn: "Spatial identity · Wayfinding · Content and launch",
+    color: "bg-[#6B7350]",
+    img: "/riwaq-brand-world.png",
+  },
 ];
 
 export function getProjectMeta(language = "ar") {

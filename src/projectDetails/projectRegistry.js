@@ -10,6 +10,7 @@ const PROJECT_DETAIL_COMPONENTS = {
   "mirsa-brand-world": lazy(() => import("./ZoomixCaseStudy")),
   "nodra-brand-world": lazy(() => import("./ZoomixCaseStudy")),
   "athar-brand-world": lazy(() => import("./ZoomixCaseStudy")),
+  "riwaq-brand-world": lazy(() => import("./ZoomixCaseStudy")),
 };
 
 export function getProjectRouteConfig(slug) {
