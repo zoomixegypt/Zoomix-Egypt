@@ -31,13 +31,15 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
             {t("hero", "eyebrow")}
           </p>
           <h1
-            className={`${language === "ar" ? "font-arabic tracking-normal" : "font-display tracking-[-.06em]"} text-[clamp(2.75rem,12vw,8.7rem)] sm:text-[clamp(3.6rem,9vw,8.7rem)] font-black leading-[.98] max-w-4xl break-words`}
+            className={`${language === "ar" ? "font-arabic tracking-normal leading-[1.12]" : "font-display tracking-[-.06em] leading-[.98]"} text-[clamp(2.75rem,12vw,8.7rem)] sm:text-[clamp(3.6rem,9vw,8.7rem)] font-extrabold max-w-4xl break-words`}
           >
             {t("hero", "titleA")} <span className="text-[#A5A5A5]">{t("hero", "titleAccent")}</span>
             <br />
             {t("hero", "titleB")}
           </h1>
-          <p className="text-white/65 leading-8 max-w-xl mt-7 text-base md:text-lg">
+          <p
+            className={`${language === "ar" ? "font-arabic leading-[1.9]" : "font-display leading-8"} text-white/65 max-w-xl mt-7 text-base md:text-lg`}
+          >
             {t("hero", "description")}
           </p>
           <div className="mt-9 flex flex-wrap items-center gap-3">

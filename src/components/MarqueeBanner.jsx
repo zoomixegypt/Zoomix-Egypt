@@ -21,7 +21,7 @@ const MarqueeBanner = memo(function MarqueeBanner() {
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className={`flex gap-6 md:gap-14 text-lg sm:text-2xl md:text-4xl font-black uppercase items-center ${marqueeFont}`}
+                className={`flex gap-6 md:gap-14 text-lg sm:text-2xl md:text-4xl font-extrabold uppercase items-center ${marqueeFont}`}
               >
                 {skills.map((skill, j) => (
                   <span key={j} className="flex items-center gap-6 md:gap-14">
@@ -49,7 +49,7 @@ const MarqueeBanner = memo(function MarqueeBanner() {
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className={`flex gap-6 md:gap-12 text-base sm:text-lg md:text-2xl font-black uppercase items-center ${marqueeFont}`}
+                className={`flex gap-6 md:gap-12 text-base sm:text-lg md:text-2xl font-extrabold uppercase items-center ${marqueeFont}`}
               >
                 {skills.map((skill, j) => (
                   <span key={j} className="flex items-center gap-6 md:gap-12">
