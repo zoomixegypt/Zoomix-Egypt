@@ -170,4 +170,44 @@ export const ZOOMIX_PROJECTS = {
     },
     image: "/nodra-brand-world.png",
   },
+  "athar-brand-world": {
+    slug: "athar-brand-world",
+    isConcept: true,
+    isSelfInitiated: true,
+    title: { ar: "أثر", en: "ATHAR" },
+    category: { ar: "أزياء / هوية / محتوى", en: "FASHION / IDENTITY / CONTENT" },
+    overview: {
+      ar: "علامة أزياء محلية أصلية صممناها لتربط بين شكل المنتج، الصورة، والإيقاع البصري للمحتوى.",
+      en: "An original local fashion label built to connect product form, image direction and the rhythm of content.",
+    },
+    need: {
+      ar: "مجموعة جديدة تحتاج هوية مرنة وحضورًا بصريًا يصلح للصور، السوشيال، والإطلاق.",
+      en: "A new collection needed a flexible identity that could work across photography, social and launch.",
+    },
+    direction: {
+      ar: "اعتمدنا على تكوينات جريئة وخامات واضحة ومساحات محسوبة لتظهر القطعة قبل الزخرفة.",
+      en: "We used bold compositions, visible materials and measured space so the garment leads before decoration.",
+    },
+    services: {
+      ar: ["اتجاه هوية", "Art Direction", "تصوير أزياء", "نظام محتوى وReels"],
+      en: ["Identity direction", "Art direction", "Fashion photography", "Content and Reel system"],
+    },
+    deliverables: {
+      ar: [
+        "نظام هوية قابل للتوسع",
+        "اتجاه جلسة التصوير",
+        "قوالب سوشيال وStories",
+        "3 أفكار Reels",
+        "مواد إطلاق للـCollection",
+      ],
+      en: [
+        "Scalable identity system",
+        "Shoot art direction",
+        "Social and Story templates",
+        "3 Reel concepts",
+        "Collection launch assets",
+      ],
+    },
+    image: "/athar-brand-world.png",
+  },
 };

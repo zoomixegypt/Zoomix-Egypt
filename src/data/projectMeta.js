@@ -66,6 +66,20 @@ export const PROJECT_META = [
     color: "bg-[#C9795E]",
     img: "/nodra-brand-world.png",
   },
+  {
+    id: 6,
+    isConcept: true,
+    isSelfInitiated: true,
+    slug: "athar-brand-world",
+    titleAr: "أثر",
+    titleEn: "ATHAR",
+    categoryAr: "أزياء / هوية / محتوى",
+    categoryEn: "FASHION / IDENTITY / CONTENT",
+    servicesAr: "هوية بصرية · Art Direction · محتوى بصري",
+    servicesEn: "Visual identity · Art direction · Visual content",
+    color: "bg-[#C6A24A]",
+    img: "/athar-brand-world.png",
+  },
 ];
 
 export function getProjectMeta(language = "ar") {
