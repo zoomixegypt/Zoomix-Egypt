@@ -37,7 +37,7 @@ export const ZOOMIX_PACKAGES = [
   },
   {
     id: "launch",
-    name: { ar: "ظهور", en: "PRESENCE" },
+    name: { ar: "حضور", en: "PRESENCE" },
     description: {
       ar: "باقة تجهيز كاملة: هوية، محتوى بداية، Landing Page ومطبوعات أساسية.",
       en: "A complete setup: identity, launch content, Landing Page and essential print.",
