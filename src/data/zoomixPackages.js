@@ -1,7 +1,7 @@
 export const ZOOMIX_PACKAGES = [
   {
     id: "start",
-    name: { ar: "Start — تأسيس واضح", en: "Start" },
+    name: { ar: "بداية", en: "ORIGIN" },
     description: {
       ar: "باقة تأسيس بصري للمشروعات الصغيرة: هوية، سوشيال، ومطبوعات البداية.",
       en: "A visual foundation for small businesses: identity, social and starter print.",
@@ -37,7 +37,7 @@ export const ZOOMIX_PACKAGES = [
   },
   {
     id: "launch",
-    name: { ar: "Launch — جاهز للظهور", en: "Launch" },
+    name: { ar: "ظهور", en: "PRESENCE" },
     description: {
       ar: "باقة تجهيز كاملة: هوية، محتوى بداية، Landing Page ومطبوعات أساسية.",
       en: "A complete setup: identity, launch content, Landing Page and essential print.",
@@ -74,7 +74,7 @@ export const ZOOMIX_PACKAGES = [
   },
   {
     id: "launch-content",
-    name: { ar: "Content — حضور بمحتوى حقيقي", en: "Content" },
+    name: { ar: "انطلاقة", en: "MOMENTUM" },
     description: {
       ar: "حضور حقيقي بمحتوى مصوّر جاهز للاستخدام.",
       en: "A complete launch package with photography and real content.",
