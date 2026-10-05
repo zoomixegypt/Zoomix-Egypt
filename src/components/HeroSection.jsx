@@ -1,0 +1,82 @@
+import { memo, useRef } from "react";
+import { ArrowDownRight } from "lucide-react";
+import { Gsap, useGsapScroll, useGsapTransform } from "../utils/gsapAnimate";
+import { useLanguage } from "../i18n";
+
+const HeroSection = memo(function HeroSection({ isRevealed = true }) {
+  const { language, t } = useLanguage();
+  const ref = useRef(null);
+  const reduceMotion =
+    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const { scrollYProgress } = useGsapScroll({ target: ref, offset: ["start start", "end start"] });
+  const artY = useGsapTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
+  return (
+    <header
+      ref={ref}
+      id="hero-section"
+      dir={language === "ar" ? "rtl" : "ltr"}
+      className="min-h-[100svh] bg-[#0A0A0A] text-white relative overflow-hidden flex flex-col justify-center lg:flex-row lg:items-end pb-12 pt-24 md:pb-24 md:pt-28"
+    >
+      <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:56px_56px]" />
+      <div className="absolute -right-[18vw] bottom-[-20vw] h-[68vw] w-[68vw] rounded-full border border-white/20 shadow-[0_0_0_90px_rgba(255,255,255,.025),0_0_0_180px_rgba(255,255,255,.018)]" />
+      <div className="relative z-10 w-full max-w-[1380px] mx-auto px-6 md:px-12 grid lg:grid-cols-[1.2fr_.8fr] gap-12 items-end">
+        <Gsap.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={isRevealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <p className="font-mono text-[11px] tracking-[.2em] text-[#BBFF00] mb-7" dir="ltr">
+            {t("hero", "eyebrow")}
+          </p>
+          <h1
+            className={`${language === "ar" ? "font-arabic" : "font-display"} text-[clamp(2.75rem,12vw,8.7rem)] sm:text-[clamp(3.6rem,9vw,8.7rem)] font-black leading-[.98] tracking-[-.06em] max-w-4xl break-words`}
+          >
+            {t("hero", "titleA")} <span className="text-[#A5A5A5]">{t("hero", "titleAccent")}</span>
+            <br />
+            {t("hero", "titleB")}
+          </h1>
+          <p className="text-white/65 leading-8 max-w-xl mt-7 text-base md:text-lg">
+            {t("hero", "description")}
+          </p>
+          <div className="mt-9 flex flex-wrap items-center gap-3">
+            <a href="#contact-section" className="zoomix-button bg-[#BBFF00] text-black">
+              {t("nav", "start")} <ArrowDownRight size={20} />
+            </a>
+            <a href="#project-section" className="zoomix-button border-white/50 text-white">
+              {t("hero", "work")} <ArrowDownRight size={20} />
+            </a>
+          </div>
+        </Gsap.div>
+        <div
+          className="absolute bottom-10 left-6 right-6 md:left-12 md:right-12 hidden sm:block"
+          aria-hidden="true"
+        >
+          <div className="connection-line" />
+        </div>
+        <Gsap.div
+          style={{ y: reduceMotion ? 0 : artY }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={isRevealed ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
+          transition={{ duration: reduceMotion ? 0 : 1, delay: reduceMotion ? 0 : 0.12 }}
+          className="hidden lg:block border-r border-white/15 pr-9"
+        >
+          <img
+            src="/zoomix-logo.svg"
+            alt="ZOOMIX"
+            width="250"
+            height="100"
+            className="w-full max-w-sm mx-auto opacity-90"
+          />
+          <p className="font-mono text-xs tracking-[.18em] text-white/40 mt-9 leading-6" dir="ltr">
+            {t("hero", "build")}
+            <br />
+            {t("hero", "show")}
+            <br />
+            {t("hero", "launch")}
+          </p>
+        </Gsap.div>
+      </div>
+    </header>
+  );
+});
+export default HeroSection;

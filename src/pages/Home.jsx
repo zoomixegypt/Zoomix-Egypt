@@ -1,0 +1,109 @@
+import { useEffect, useState, useRef, lazy, Suspense, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import Cursor from "../components/Cursor";
+import Navbar from "../components/Navbar";
+import HeroSection from "../components/HeroSection";
+import useLenis from "../hooks/useLenis";
+import useScrollToGallery from "../hooks/useScrollToGallery";
+
+const MarqueeBanner = lazy(() => import("../components/MarqueeBanner"));
+const Footer = lazy(() => import("../components/Footer"));
+const ServicesSection = lazy(() => import("../components/ServicesSection"));
+const PackagesSection = lazy(() => import("../components/PackagesSection"));
+const ProcessSection = lazy(() => import("../components/ProcessSection"));
+const ProjectBriefSection = lazy(() => import("../components/ProjectBriefSection"));
+
+const ProjectGallery = lazy(() => import("../components/ProjectGallery"));
+const NoiseOverlay = lazy(() => import("../components/NoiseOverlay"));
+
+export default function Home() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const galleryRef = useRef(null);
+
+  /* Refactored Loading & Scroll Logic */
+  const [isLoading] = useState(false);
+  const [isScrollLocked] = useState(false);
+  const [enableNoiseOverlay, setEnableNoiseOverlay] = useState(false);
+
+  // Initialize Lenis with scroll lock state
+  useLenis(isScrollLocked);
+
+  useScrollToGallery(galleryRef, isLoading);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isFinePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      setEnableNoiseOverlay(isFinePointer && !reduceMotion);
+    }
+  }, []);
+
+  // Manage body overflow based on scroll lock
+  useEffect(() => {
+    if (isScrollLocked) {
+      document.body.style.overflow = "hidden";
+      // Safety check: ensure strict scroll reset
+      window.scrollTo(0, 0);
+    } else {
+      document.body.style.overflow = "";
+    }
+  }, [isScrollLocked]);
+
+  const handleOpenProject = useCallback(
+    (project) => {
+      if (!project?.slug) return;
+      navigate(`/projects/${project.slug}`, {
+        state: { backgroundLocation: location },
+      });
+    },
+    [navigate, location],
+  );
+
+  return (
+    <>
+      <a className="skip-link" href="#main-content">
+        {typeof document !== "undefined" && document.documentElement.lang === "en"
+          ? "Skip to content"
+          : "تخطي إلى المحتوى"}
+      </a>
+      <div
+        id="main-content"
+        className="bg-[#F5F4EF] text-black selection:bg-[#BBFF00] selection:text-black relative"
+      >
+        {enableNoiseOverlay && (
+          <Suspense fallback={null}>
+            <NoiseOverlay />
+          </Suspense>
+        )}
+        <Cursor />
+        <Navbar />
+        <HeroSection isRevealed={true} />
+        <Suspense fallback={null}>
+          <MarqueeBanner />
+        </Suspense>
+        <Suspense fallback={<div className="min-h-[40vh] bg-[#F5F4EF]" />}>
+          <ServicesSection />
+        </Suspense>
+        <div id="project-section" ref={galleryRef} className="bg-neutral-900">
+          <Suspense fallback={<div className="h-screen bg-neutral-900" />}>
+            <ProjectGallery onOpenProject={handleOpenProject} />
+          </Suspense>
+        </div>
+
+        <Suspense fallback={<div className="min-h-[40vh] bg-[#0A0A0A]" />}>
+          <PackagesSection />
+          <ProcessSection />
+        </Suspense>
+
+        <Suspense fallback={<div className="min-h-[60vh] bg-[#0A0A0A]" />}>
+          <ProjectBriefSection />
+        </Suspense>
+
+        <Suspense fallback={null}>
+          <Footer />
+        </Suspense>
+      </div>
+    </>
+  );
+}

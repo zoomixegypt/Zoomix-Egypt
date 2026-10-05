@@ -1,0 +1,1 @@
+var e=e=>Math.min(1,1.001-2**(-10*e));export{e as t};
