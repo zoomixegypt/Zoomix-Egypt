@@ -41,6 +41,7 @@ export const PROJECT_META = [
   {
     id: 4,
     isConcept: true,
+    isSelfInitiated: true,
     slug: "mirsa-brand-world",
     titleAr: "مِرسى",
     titleEn: "MIRSA",

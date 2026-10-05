@@ -424,7 +424,13 @@ export default function ProjectGallery({ onOpenProject }) {
                 </div>
                 {project.isConcept && (
                   <span className="mb-2 inline-flex border border-[#BBFF00]/50 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-[#BBFF00]">
-                    {language === "ar" ? "مشروع Concept" : "Concept project"}
+                    {project.isSelfInitiated
+                      ? language === "ar"
+                        ? "مشروع براند مستقل"
+                        : "Independent brand project"
+                      : language === "ar"
+                        ? "مشروع Concept"
+                        : "Concept project"}
                   </span>
                 )}
                 <h3 className="text-2xl font-black uppercase text-white tracking-tight leading-[1.05]">
@@ -545,7 +551,13 @@ export default function ProjectGallery({ onOpenProject }) {
                     </div>
                     {project.isConcept && (
                       <span className="mb-3 inline-flex border border-[#BBFF00]/50 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-[#BBFF00]">
-                        {language === "ar" ? "مشروع Concept" : "Concept project"}
+                        {project.isSelfInitiated
+                          ? language === "ar"
+                            ? "مشروع براند مستقل"
+                            : "Independent brand project"
+                          : language === "ar"
+                            ? "مشروع Concept"
+                            : "Concept project"}
                       </span>
                     )}
                     <h3 className="text-4xl lg:text-5xl font-black uppercase text-white tracking-tight leading-[1.1]">
