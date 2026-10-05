@@ -74,7 +74,10 @@ export const ZOOMIX_PACKAGES = [
   },
   {
     id: "launch-content",
-    name: { ar: "Zoomix Launch + Content", en: "Zoomix Launch + Content" },
+    name: {
+      ar: "Zoomix Launch + Content — إطلاق بمحتوى مصوّر",
+      en: "Zoomix Launch + Content",
+    },
     description: {
       ar: "باقة إطلاق متكاملة بالتصوير والمحتوى الحقيقي.",
       en: "A complete launch package with photography and real content.",
