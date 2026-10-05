@@ -373,6 +373,48 @@ html.lenis body {
   }
 }
 
+@keyframes zoomix-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.zoomix-reveal {
+  animation: zoomix-rise 800ms var(--zoomix-ease) both;
+}
+
+.zoomix-reveal-delay-1 {
+  animation-delay: 100ms;
+}
+
+.zoomix-reveal-delay-2 {
+  animation-delay: 220ms;
+}
+
+.zoomix-reveal-delay-3 {
+  animation-delay: 360ms;
+}
+
+.zoomix-journey-line {
+  background: linear-gradient(90deg, var(--zoomix-lime), rgba(187, 255, 0, 0.18));
+  height: 1px;
+  inset-inline: 2rem;
+  position: absolute;
+  top: 1rem;
+}
+
+@media (max-width: 639px) {
+  .zoomix-journey-line {
+    inset-inline: 1.5rem;
+  }
+}
+
 /* Marquee infinite scroll - CSS animation for zero JS overhead */
 @keyframes marquee-scroll-left {
   0% {

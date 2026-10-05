@@ -5,10 +5,27 @@ const MarqueeBanner = memo(function MarqueeBanner() {
   const { language } = useLanguage();
   const skills =
     language === "ar"
-      ? ["هوية", "محتوى", "تصوير", "مطبوعات", "صفحات هبوط", "إطلاق"]
-      : ["IDENTITY", "CONTENT", "PHOTOGRAPHY", "PRINT", "LANDING PAGES", "LAUNCH"];
+      ? [
+          { label: "هوية", target: "services-section" },
+          { label: "محتوى", target: "project-section" },
+          { label: "تصوير", target: "project-section" },
+          { label: "مطبوعات", target: "services-section" },
+          { label: "صفحات هبوط", target: "packages-section" },
+          { label: "إطلاق", target: "contact-section" },
+        ]
+      : [
+          { label: "IDENTITY", target: "services-section" },
+          { label: "CONTENT", target: "project-section" },
+          { label: "PHOTOGRAPHY", target: "project-section" },
+          { label: "PRINT", target: "services-section" },
+          { label: "LANDING PAGES", target: "packages-section" },
+          { label: "LAUNCH", target: "contact-section" },
+        ];
   const marqueeFont =
     language === "ar" ? "font-arabic tracking-normal" : "font-display tracking-[-0.03em]";
+  const scrollToSkill = (target) => {
+    document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   return (
     <div className="relative z-20 sm:-rotate-[0.8deg] sm:scale-[1.02] cursor-default select-none">
       <div className="bg-black shadow-[0_0_40px_rgba(187,255,0,0.12)]">
@@ -25,9 +42,13 @@ const MarqueeBanner = memo(function MarqueeBanner() {
               >
                 {skills.map((skill, j) => (
                   <span key={j} className="flex items-center gap-6 md:gap-14">
-                    <span className="text-[#BBFF00] hover:text-white transition-all duration-300 hover:drop-shadow-[0_0_12px_rgba(187,255,0,0.6)]">
-                      {skill}
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => scrollToSkill(skill.target)}
+                      className="text-[#BBFF00] hover:text-white transition-all duration-300 hover:drop-shadow-[0_0_12px_rgba(187,255,0,0.6)]"
+                    >
+                      {skill.label}
+                    </button>
                     <span className="text-[#BBFF00]/30 text-xs">✦</span>
                   </span>
                 ))}
@@ -53,9 +74,13 @@ const MarqueeBanner = memo(function MarqueeBanner() {
               >
                 {skills.map((skill, j) => (
                   <span key={j} className="flex items-center gap-6 md:gap-12">
-                    <span className="text-black hover:text-white transition-colors duration-300">
-                      {skill}
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => scrollToSkill(skill.target)}
+                      className="text-black hover:text-white transition-colors duration-300"
+                    >
+                      {skill.label}
+                    </button>
                     <span className="text-black/25 text-xs">◆</span>
                   </span>
                 ))}

@@ -27,22 +27,25 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
           animate={isRevealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
         >
-          <p className="font-mono text-[11px] tracking-[.2em] text-[#BBFF00] mb-7" dir="ltr">
+          <p
+            className="zoomix-reveal font-mono text-[11px] tracking-[.2em] text-[#BBFF00] mb-7"
+            dir="ltr"
+          >
             {t("hero", "eyebrow")}
           </p>
           <h1
-            className={`${language === "ar" ? "font-arabic tracking-normal leading-[1.12]" : "font-display tracking-[-.06em] leading-[.98]"} text-[clamp(2.75rem,12vw,8.7rem)] sm:text-[clamp(3.6rem,9vw,8.7rem)] font-extrabold max-w-4xl break-words`}
+            className={`zoomix-reveal zoomix-reveal-delay-1 ${language === "ar" ? "font-arabic tracking-normal leading-[1.12]" : "font-display tracking-[-.06em] leading-[.98]"} text-[clamp(2.75rem,12vw,8.7rem)] sm:text-[clamp(3.6rem,9vw,8.7rem)] font-extrabold max-w-4xl break-words`}
           >
             {t("hero", "titleA")} <span className="text-[#BBFF00]">{t("hero", "titleAccent")}</span>
             <br />
             {t("hero", "titleB")}
           </h1>
           <p
-            className={`${language === "ar" ? "font-arabic leading-[1.9]" : "font-display leading-8"} text-white/65 max-w-xl mt-7 text-base md:text-lg`}
+            className={`zoomix-reveal zoomix-reveal-delay-2 ${language === "ar" ? "font-arabic leading-[1.9]" : "font-display leading-8"} text-white/65 max-w-xl mt-7 text-base md:text-lg`}
           >
             {t("hero", "description")}
           </p>
-          <div className="mt-9 flex flex-wrap items-center gap-3">
+          <div className="zoomix-reveal zoomix-reveal-delay-3 mt-9 flex flex-wrap items-center gap-3">
             <a href="#contact-section" className="zoomix-button bg-[#BBFF00] text-black">
               {t("nav", "start")} <ActionArrow size={20} />
             </a>

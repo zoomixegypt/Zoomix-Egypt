@@ -7,6 +7,7 @@ const PackagesSection = memo(function PackagesSection() {
   const { language } = useLanguage();
   const isArabic = language === "ar";
   const ActionArrow = isArabic ? ArrowUpLeft : ArrowUpRight;
+  const journeyLabel = isArabic ? "رحلة المشروع" : "THE ZOOMIX JOURNEY";
 
   const selectPackage = (id) => {
     window.localStorage.setItem("zoomix-selected-package", id);
@@ -41,6 +42,25 @@ const PackagesSection = memo(function PackagesSection() {
           </p>
         </div>
 
+        <div className="relative mb-10 grid grid-cols-3 gap-3" aria-label={journeyLabel}>
+          <div className="zoomix-journey-line hidden sm:block" aria-hidden="true" />
+          {ZOOMIX_PACKAGES.map((pkg, index) => (
+            <a
+              key={pkg.id}
+              href={`#package-${pkg.id}`}
+              className="group relative z-10 flex flex-col items-center gap-2 text-center"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#BBFF00] bg-[#0A0A0A] font-mono text-[10px] text-[#BBFF00] transition-colors group-hover:bg-[#BBFF00] group-hover:text-[#0A0A0A]">
+                0{index + 1}
+              </span>
+              <span
+                className={`${isArabic ? "font-arabic" : "font-display"} text-sm font-bold text-white/75 group-hover:text-[#BBFF00]`}
+              >
+                {pkg.name[language]}
+              </span>
+            </a>
+          ))}
+        </div>
         <div
           className="mb-8 grid gap-2 sm:grid-cols-3"
           aria-label={isArabic ? "مقارنة سريعة" : "Quick comparison"}
@@ -57,6 +77,7 @@ const PackagesSection = memo(function PackagesSection() {
           {ZOOMIX_PACKAGES.map((pkg) => (
             <article
               key={pkg.id}
+              id={`package-${pkg.id}`}
               className={`flex flex-col border p-6 md:p-7 ${pkg.featured ? "border-[#BBFF00] bg-white/[0.04]" : "border-white/15"}`}
             >
               {pkg.featured && (
