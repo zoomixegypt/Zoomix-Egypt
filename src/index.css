@@ -27,6 +27,7 @@
 @layer components {
   .zoomix-section {
     padding-block: var(--zoomix-space-section);
+    scroll-margin-top: 6rem;
   }
 
   .zoomix-heading {
@@ -103,6 +104,15 @@ body {
     "cv11" 1;
   -webkit-overflow-scrolling: touch;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Keep the communication font tied to the active language direction. */
+[dir="rtl"] body {
+  font-family: var(--font-arabic);
+}
+
+[dir="ltr"] body {
+  font-family: var(--font-display);
 }
 
 html {

@@ -7,6 +7,8 @@ const MarqueeBanner = memo(function MarqueeBanner() {
     language === "ar"
       ? ["هوية", "محتوى", "تصوير", "مطبوعات", "صفحات هبوط", "إطلاق"]
       : ["IDENTITY", "CONTENT", "PHOTOGRAPHY", "PRINT", "LANDING PAGES", "LAUNCH"];
+  const marqueeFont =
+    language === "ar" ? "font-arabic tracking-normal" : "font-display tracking-[-0.03em]";
   return (
     <div className="relative z-20 sm:-rotate-[0.8deg] sm:scale-[1.02] cursor-default select-none">
       <div className="bg-black shadow-[0_0_40px_rgba(187,255,0,0.12)]">
@@ -19,7 +21,7 @@ const MarqueeBanner = memo(function MarqueeBanner() {
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className="flex gap-6 md:gap-14 text-lg sm:text-2xl md:text-4xl font-black uppercase items-center"
+                className={`flex gap-6 md:gap-14 text-lg sm:text-2xl md:text-4xl font-black uppercase items-center ${marqueeFont}`}
               >
                 {skills.map((skill, j) => (
                   <span key={j} className="flex items-center gap-6 md:gap-14">
@@ -47,7 +49,7 @@ const MarqueeBanner = memo(function MarqueeBanner() {
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className="flex gap-6 md:gap-12 text-base sm:text-lg md:text-2xl font-black uppercase items-center"
+                className={`flex gap-6 md:gap-12 text-base sm:text-lg md:text-2xl font-black uppercase items-center ${marqueeFont}`}
               >
                 {skills.map((skill, j) => (
                   <span key={j} className="flex items-center gap-6 md:gap-12">
