@@ -2,6 +2,8 @@ import { ArrowUpLeft, ArrowUpRight, X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useLanguage } from "../i18n";
 import { ZOOMIX_PROJECTS } from "../data/zoomixProjects";
+import ImageWithFallback from "../components/ImageWithFallback";
+import ProjectSeo from "../components/ProjectSeo";
 
 export default function ZoomixCaseStudy() {
   const { slug } = useParams();
@@ -17,11 +19,22 @@ export default function ZoomixCaseStudy() {
 
   return (
     <article className="bg-[#F5F4EF] text-[#0A0A0A]" dir={language === "ar" ? "rtl" : "ltr"}>
+      <ProjectSeo project={{ ...project, slug }} />
       <div className="flex items-center justify-between gap-4 p-5 md:p-8 border-b border-black/15">
         <span className="font-mono text-xs tracking-[0.16em] text-black/50">
           ZOOMIX / CASE STUDY
         </span>
         <div className="flex items-center gap-2">
+          <nav
+            aria-label={language === "ar" ? "مسار التنقل" : "Breadcrumb"}
+            className="hidden md:flex items-center gap-2 text-xs text-black/45"
+          >
+            <a href="/" onClick={close} className="hover:text-black transition-colors">
+              {language === "ar" ? "الرئيسية" : "Home"}
+            </a>
+            <span aria-hidden="true">/</span>
+            <span>{project.title[language]}</span>
+          </nav>
           <button
             type="button"
             onClick={close}
@@ -50,10 +63,14 @@ export default function ZoomixCaseStudy() {
           </h1>
           <p className="mt-8 text-xl leading-8 text-black/65">{text("overview")}</p>
           <div className="mt-10 aspect-[4/5] overflow-hidden bg-[#0A0A0A]">
-            <img
+            <ImageWithFallback
               src={project.image}
               alt={project.title[language]}
+              width="1080"
+              height="1350"
+              loading="eager"
               className="w-full h-full object-cover"
+              fallbackClassName="w-full h-full aspect-[4/5]"
             />
           </div>
         </div>

@@ -1,5 +1,7 @@
 export const ZOOMIX_PROJECTS = {
   "content-system": {
+    slug: "content-system",
+    isConcept: true,
     title: { ar: "نظام المحتوى", en: "Content System" },
     category: { ar: "محتوى / إخراج فني", en: "SOCIAL / ART DIRECTION" },
     overview: {
@@ -25,6 +27,8 @@ export const ZOOMIX_PROJECTS = {
     image: "/social-master.svg",
   },
   "story-system": {
+    slug: "story-system",
+    isConcept: true,
     title: { ar: "قصص تفاعلية", en: "Story System" },
     category: { ar: "قصص / محتوى", en: "STORIES / CONTENT" },
     overview: {
@@ -50,6 +54,8 @@ export const ZOOMIX_PROJECTS = {
     image: "/story-master.svg",
   },
   "reel-system": {
+    slug: "reel-system",
+    isConcept: true,
     title: { ar: "فيديو قصير", en: "Reel System" },
     category: { ar: "حركة / ريلز", en: "MOTION / REELS" },
     overview: {

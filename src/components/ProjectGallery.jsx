@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { getProjectMeta } from "../data/projectMeta";
 import { useLanguage } from "../i18n";
+import ImageWithFallback from "./ImageWithFallback";
 
 const INDICATOR_CARD_WIDTH = 600;
 const INDICATOR_GAP = 48;
@@ -383,26 +384,23 @@ export default function ProjectGallery({ onOpenProject }) {
             >
               {/* Image */}
               <div className="absolute inset-0 overflow-hidden">
-                <picture>
-                  <source
-                    srcSet={[
-                      cloudinarySrc(project.img, 400) + " 400w",
-                      cloudinarySrc(project.img, 800) + " 800w",
-                    ].join(", ")}
-                    sizes="80vw"
-                  />
-                  <img
-                    draggable="false"
-                    src={cloudinarySrc(project.img, 800)}
-                    alt={project.title}
-                    width="1080"
-                    height="1350"
-                    loading={index === 0 ? "eager" : "lazy"}
-                    decoding="async"
-                    className="h-full w-full object-cover opacity-70 grayscale-[30%]"
-                    style={{ imageRendering: "auto" }}
-                  />
-                </picture>
+                <ImageWithFallback
+                  draggable="false"
+                  src={cloudinarySrc(project.img, 800)}
+                  srcSet={[
+                    cloudinarySrc(project.img, 400) + " 400w",
+                    cloudinarySrc(project.img, 800) + " 800w",
+                  ].join(", ")}
+                  sizes="80vw"
+                  alt={project.title}
+                  width="1080"
+                  height="1350"
+                  loading={index === 0 ? "eager" : "lazy"}
+                  decoding="async"
+                  className="h-full w-full object-cover opacity-70 grayscale-[30%]"
+                  style={{ imageRendering: "auto" }}
+                  fallbackClassName="h-full w-full"
+                />
               </div>
 
               {/* Gradient overlay */}
@@ -423,6 +421,11 @@ export default function ProjectGallery({ onOpenProject }) {
                     {project.category}
                   </span>
                 </div>
+                {project.isConcept && (
+                  <span className="mb-2 inline-flex border border-[#BBFF00]/50 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-[#BBFF00]">
+                    {language === "ar" ? "مشروع Concept" : "Concept project"}
+                  </span>
+                )}
                 <h3 className="text-2xl font-black uppercase text-white tracking-tight leading-[1.05]">
                   {project.title}
                 </h3>
@@ -505,33 +508,24 @@ export default function ProjectGallery({ onOpenProject }) {
               style={{ WebkitTapHighlightColor: "transparent" }}
             >
               <div className="absolute inset-0 overflow-hidden bg-neutral-950">
-                <picture>
-                  <source
-                    srcSet={[
-                      cloudinarySrc(project.img, 400) + " 400w",
-                      cloudinarySrc(project.img, 800) + " 800w",
-                      cloudinarySrc(project.img, 1200) + " 1200w",
-                    ].join(", ")}
-                    sizes="45vw"
-                  />
-                  <img
-                    draggable="false"
-                    src={cloudinarySrc(project.img, 800)}
-                    srcSet={[
-                      cloudinarySrc(project.img, 400) + " 400w",
-                      cloudinarySrc(project.img, 800) + " 800w",
-                      cloudinarySrc(project.img, 1200) + " 1200w",
-                    ].join(", ")}
-                    sizes="45vw"
-                    alt={project.title}
-                    width="1080"
-                    height="1350"
-                    loading={index === 0 ? "eager" : "lazy"}
-                    decoding="async"
-                    className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105 opacity-80 group-hover:opacity-100 grayscale-[50%] group-hover:grayscale-0 will-change-transform"
-                    style={{ imageRendering: "auto" }}
-                  />
-                </picture>
+                <ImageWithFallback
+                  draggable="false"
+                  src={cloudinarySrc(project.img, 800)}
+                  srcSet={[
+                    cloudinarySrc(project.img, 400) + " 400w",
+                    cloudinarySrc(project.img, 800) + " 800w",
+                    cloudinarySrc(project.img, 1200) + " 1200w",
+                  ].join(", ")}
+                  sizes="45vw"
+                  alt={project.title}
+                  width="1080"
+                  height="1350"
+                  loading={index === 0 ? "eager" : "lazy"}
+                  decoding="async"
+                  className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105 opacity-80 group-hover:opacity-100 grayscale-[50%] group-hover:grayscale-0 will-change-transform"
+                  style={{ imageRendering: "auto" }}
+                  fallbackClassName="h-full w-full"
+                />
               </div>
 
               {/* Premium dark gradient overlay */}
@@ -547,6 +541,11 @@ export default function ProjectGallery({ onOpenProject }) {
                         {project.category}
                       </span>
                     </div>
+                    {project.isConcept && (
+                      <span className="mb-3 inline-flex border border-[#BBFF00]/50 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-[#BBFF00]">
+                        {language === "ar" ? "مشروع Concept" : "Concept project"}
+                      </span>
+                    )}
                     <h3 className="text-4xl lg:text-5xl font-black uppercase text-white tracking-tight leading-[1.1]">
                       {project.title}
                     </h3>

@@ -1,6 +1,7 @@
 export const PROJECT_META = [
   {
     id: 1,
+    isConcept: true,
     slug: "content-system",
     titleAr: "نظام المحتوى",
     titleEn: "Content System",
@@ -13,6 +14,7 @@ export const PROJECT_META = [
   },
   {
     id: 2,
+    isConcept: true,
     slug: "story-system",
     titleAr: "قصص تفاعلية",
     titleEn: "Story System",
@@ -25,6 +27,7 @@ export const PROJECT_META = [
   },
   {
     id: 3,
+    isConcept: true,
     slug: "reel-system",
     titleAr: "فيديو قصير",
     titleEn: "Reel System",

@@ -2,6 +2,7 @@ import { memo, useRef } from "react";
 import { ArrowDownLeft, ArrowDownRight } from "lucide-react";
 import { Gsap, useGsapScroll, useGsapTransform } from "../utils/gsapAnimate";
 import { useLanguage } from "../i18n";
+import ImageWithFallback from "./ImageWithFallback";
 
 const HeroSection = memo(function HeroSection({ isRevealed = true }) {
   const { language, t } = useLanguage();
@@ -61,12 +62,13 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
           transition={{ duration: reduceMotion ? 0 : 1, delay: reduceMotion ? 0 : 0.12 }}
           className="hidden lg:block border-r border-white/15 pr-9"
         >
-          <img
+          <ImageWithFallback
             src="/zoomix-logo.svg"
             alt="ZOOMIX"
             width="250"
             height="100"
             className="w-full max-w-sm mx-auto opacity-90"
+            fallbackClassName="aspect-[5/2] w-full max-w-sm mx-auto"
           />
           <p className="font-mono text-xs tracking-[.18em] text-white/40 mt-9 leading-6" dir="ltr">
             {t("hero", "build")}

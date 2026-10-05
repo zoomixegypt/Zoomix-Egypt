@@ -5,6 +5,8 @@ import Navbar from "../components/Navbar";
 import HeroSection from "../components/HeroSection";
 import useLenis from "../hooks/useLenis";
 import useScrollToGallery from "../hooks/useScrollToGallery";
+import SectionSkeleton from "../components/SectionSkeleton";
+import HomeSeo from "../components/HomeSeo";
 
 const MarqueeBanner = lazy(() => import("../components/MarqueeBanner"));
 const Footer = lazy(() => import("../components/Footer"));
@@ -71,6 +73,7 @@ export default function Home() {
         id="main-content"
         className="bg-[#F5F4EF] text-black selection:bg-[#BBFF00] selection:text-black relative"
       >
+        <HomeSeo />
         {enableNoiseOverlay && (
           <Suspense fallback={null}>
             <NoiseOverlay />
@@ -79,28 +82,28 @@ export default function Home() {
         <Cursor />
         <Navbar />
         <HeroSection isRevealed={true} />
-        <Suspense fallback={null}>
+        <Suspense fallback={<SectionSkeleton tone="dark" className="min-h-20" />}>
           <MarqueeBanner />
         </Suspense>
-        <Suspense fallback={<div className="min-h-[40vh] bg-[#F5F4EF]" />}>
+        <Suspense fallback={<SectionSkeleton className="min-h-[40vh]" />}>
           <ServicesSection />
         </Suspense>
         <div id="project-section" ref={galleryRef} className="bg-neutral-900">
-          <Suspense fallback={<div className="h-screen bg-neutral-900" />}>
+          <Suspense fallback={<SectionSkeleton tone="dark" className="min-h-screen" />}>
             <ProjectGallery onOpenProject={handleOpenProject} />
           </Suspense>
         </div>
 
-        <Suspense fallback={<div className="min-h-[40vh] bg-[#0A0A0A]" />}>
+        <Suspense fallback={<SectionSkeleton tone="dark" className="min-h-[40vh]" />}>
           <PackagesSection />
           <ProcessSection />
         </Suspense>
 
-        <Suspense fallback={<div className="min-h-[60vh] bg-[#0A0A0A]" />}>
+        <Suspense fallback={<SectionSkeleton tone="dark" className="min-h-[60vh]" />}>
           <ProjectBriefSection />
         </Suspense>
 
-        <Suspense fallback={null}>
+        <Suspense fallback={<SectionSkeleton tone="dark" className="min-h-[40vh]" />}>
           <Footer />
         </Suspense>
       </div>
