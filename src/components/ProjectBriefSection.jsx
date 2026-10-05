@@ -111,9 +111,10 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
   return (
     <section
       id="contact-section"
-      className="zoomix-section bg-[#0A0A0A] text-white"
+      className="zoomix-section relative overflow-hidden bg-[#0A0A0A] text-white"
       dir={isArabic ? "rtl" : "ltr"}
     >
+      <div className="contact-orbit" aria-hidden="true" />
       <div className="max-w-[1200px] mx-auto px-6 md:px-12">
         <div className="flex items-center gap-4 mb-12">
           <span className="w-2 h-2 bg-[#BBFF00]" />
@@ -135,6 +136,20 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 "Share the essentials and we will organize the next step on WhatsApp.",
               )}
             </p>
+            <div className="mt-8 grid max-w-sm grid-cols-3 gap-2">
+              {[
+                label("واتساب مباشر", "DIRECT WHATSAPP"),
+                label("نطاق واضح", "CLEAR SCOPE"),
+                label("مخرجات جاهزة", "READY OUTPUTS"),
+              ].map((item) => (
+                <span
+                  key={item}
+                  className="border border-white/15 px-2 py-3 text-center font-mono text-[9px] leading-4 tracking-[0.08em] text-white/55"
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
             <a
               href="https://wa.me/201555451535"
               className="mt-8 inline-flex items-center gap-3 text-[#BBFF00] font-bold"

@@ -378,6 +378,7 @@ export default function ProjectGallery({ onOpenProject }) {
               }}
               aria-label={`${project.title} — ${t("gallery", "view")}`}
               aria-haspopup="dialog"
+              data-cursor-label={t("gallery", "view")}
               className="project-card group relative w-[80vw] shrink-0 snap-center overflow-hidden rounded-lg border border-white/10 bg-neutral-950 cursor-pointer active:scale-[0.98] transition-transform focus-visible:outline-2 focus-visible:outline-[#BBFF00] focus-visible:outline-offset-4"
               data-project-index={index}
               style={{ WebkitTapHighlightColor: "transparent", aspectRatio: "3/4" }}
@@ -503,6 +504,7 @@ export default function ProjectGallery({ onOpenProject }) {
               }}
               aria-label={`${project.title} — ${t("gallery", "view")}`}
               aria-haspopup="dialog"
+              data-cursor-label={t("gallery", "view")}
               className="project-card group relative h-[70vh] w-[45vw] shrink-0 overflow-hidden rounded-[4px] border border-white/10 bg-neutral-900 transition-all duration-500 hover:border-[#BBFF00]/50 hover:shadow-[0_0_40px_rgba(187,255,0,0.1)] active:scale-[0.98] cursor-pointer focus-visible:outline-2 focus-visible:outline-[#BBFF00] focus-visible:outline-offset-4"
               data-project-index={index}
               style={{ WebkitTapHighlightColor: "transparent" }}

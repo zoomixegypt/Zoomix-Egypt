@@ -136,6 +136,7 @@ const PackagesSection = memo(function PackagesSection() {
               <button
                 type="button"
                 onClick={() => selectPackage(pkg.id)}
+                data-cursor-label={isArabic ? "اختار" : "CHOOSE"}
                 className={`mt-7 zoomix-button w-full ${pkg.featured ? "bg-[#BBFF00] text-[#0A0A0A]" : "border-white/35 text-white"}`}
               >
                 {isArabic ? "اختار الباقة" : "Choose package"} <ActionArrow size={18} />

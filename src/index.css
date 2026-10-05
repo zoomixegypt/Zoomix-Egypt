@@ -409,6 +409,29 @@ html.lenis body {
   top: 1rem;
 }
 
+.contact-orbit {
+  border: 1px solid rgba(187, 255, 0, 0.28);
+  border-radius: 999px;
+  box-shadow:
+    0 0 0 70px rgba(187, 255, 0, 0.025),
+    0 0 0 140px rgba(187, 255, 0, 0.018);
+  height: min(42vw, 34rem);
+  pointer-events: none;
+  position: absolute;
+  right: -10rem;
+  top: 18%;
+  width: min(42vw, 34rem);
+}
+
+@media (max-width: 639px) {
+  .contact-orbit {
+    height: 18rem;
+    right: -9rem;
+    top: 8%;
+    width: 18rem;
+  }
+}
+
 @media (max-width: 639px) {
   .zoomix-journey-line {
     inset-inline: 1.5rem;

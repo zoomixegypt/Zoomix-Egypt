@@ -8,6 +8,7 @@ const Cursor = memo(function Cursor() {
   const positionRef = useRef({ x: 0, y: 0 });
   const hoveredRef = useRef(false);
   const [hovered, setHovered] = useState(false);
+  const [cursorLabel, setCursorLabel] = useState("");
 
   useEffect(() => {
     // Skip on devices without a fine pointer (touch-only)
@@ -37,14 +38,19 @@ const Cursor = memo(function Cursor() {
     };
 
     const handleMouseOver = (e) => {
-      if (e.target.closest("a, button, .project-card")) {
+      const interactive = e.target.closest("a, button, .project-card");
+      if (interactive) {
         updateHovered(true);
+        setCursorLabel(interactive.dataset.cursorLabel || "");
       }
     };
 
     const handleMouseOut = (e) => {
-      if (e.target.closest("a, button, .project-card")) {
+      const interactive = e.target.closest("a, button, .project-card");
+      const nextInteractive = e.relatedTarget?.closest?.("a, button, .project-card");
+      if (interactive && interactive !== nextInteractive) {
         updateHovered(false);
+        setCursorLabel("");
       }
     };
 
@@ -79,6 +85,11 @@ const Cursor = memo(function Cursor() {
           transition: "transform 0.15s ease-out",
         }}
       />
+      {cursorLabel && (
+        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap font-mono text-[8px] font-bold uppercase tracking-[0.12em] text-black">
+          {cursorLabel}
+        </span>
+      )}
     </div>
   );
 });
