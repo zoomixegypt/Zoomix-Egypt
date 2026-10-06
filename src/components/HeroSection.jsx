@@ -67,7 +67,7 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
         >
           <div className="connection-line translate-y-0.5" />
           <p
-            className="absolute left-1/2 top-10 flex -translate-x-1/2 items-center gap-7 whitespace-nowrap bg-[#0A0A0A]/85 px-2 py-1 font-mono text-[15px] leading-6 tracking-[.16em] text-white/60"
+            className="absolute left-1/2 top-10 flex -translate-x-1/2 items-center gap-7 whitespace-nowrap bg-[#0A0A0A]/85 px-2 py-1 font-mono text-[18px] leading-6 tracking-[.16em] text-white/60"
             dir="ltr"
           >
             <span>{t("hero", "build")}</span>
