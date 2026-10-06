@@ -14,6 +14,7 @@ export default function ZoomixCaseStudy() {
   if (!project) return <div className="p-10">Project not found.</div>;
 
   const text = (field) => project[field][language];
+  const gallery = project.gallery?.length ? project.gallery : [project.image];
   const close = () => navigate("/");
   const ActionArrow = language === "ar" ? ArrowUpLeft : ArrowUpRight;
 
@@ -128,6 +129,44 @@ export default function ZoomixCaseStudy() {
           </a>
         </div>
       </div>
+      <section className="border-t border-black/15 px-6 py-12 md:px-10 md:py-16 lg:px-16">
+        <div className="mb-8 flex items-end justify-between gap-6">
+          <div>
+            <p className="zoomix-label mb-4">
+              {language === "ar" ? "النظام البصري" : "THE VISUAL SYSTEM"}
+            </p>
+            <h2 className="text-3xl font-black md:text-5xl">
+              {language === "ar" ? "الصورة كاملة." : "The full picture."}
+            </h2>
+          </div>
+          <span className="hidden font-mono text-xs text-black/45 sm:block">
+            {String(gallery.length).padStart(2, "0")}{" "}
+            {language === "ar" ? "مخرجات بصرية" : "VISUAL OUTPUTS"}
+          </span>
+        </div>
+        <div className="grid auto-rows-[minmax(180px,24vw)] gap-4 md:grid-cols-2">
+          {gallery.map((image, index) => (
+            <div
+              key={image}
+              className={`${index === 0 ? "md:row-span-2" : ""} group relative overflow-hidden bg-[#0A0A0A]`}
+            >
+              <ImageWithFallback
+                src={image}
+                alt={`${project.title[language]} ${index + 1}`}
+                width="1600"
+                height="1000"
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                fallbackClassName="h-full w-full"
+              />
+              <span className="absolute bottom-3 start-3 bg-black/70 px-2 py-1 font-mono text-[10px] text-white/70">
+                0{index + 1}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
     </article>
   );
 }

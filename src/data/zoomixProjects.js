@@ -37,6 +37,7 @@ export const ZOOMIX_PROJECTS = {
       ],
     },
     image: "/mawj-coffee.jpg",
+    gallery: ["/mawj-coffee.jpg", "/mawj-coffee-system.jpg", "/mawj-coffee-space.jpg"],
   },
   "story-system": {
     slug: "story-system",
@@ -76,6 +77,7 @@ export const ZOOMIX_PROJECTS = {
       ],
     },
     image: "/nawa-learning.jpg",
+    gallery: ["/nawa-learning.jpg", "/nawa-learning-interface.jpg", "/nawa-learning-kit.jpg"],
   },
   "reel-system": {
     slug: "reel-system",
@@ -115,6 +117,7 @@ export const ZOOMIX_PROJECTS = {
       ],
     },
     image: "/tawazon-studio.jpg",
+    gallery: ["/tawazon-studio.jpg", "/tawazon-studio-reel.jpg", "/tawazon-studio-frames.jpg"],
   },
   "mirsa-brand-world": {
     slug: "mirsa-brand-world",

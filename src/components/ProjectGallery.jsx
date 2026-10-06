@@ -257,7 +257,8 @@ export default function ProjectGallery({ onOpenProject }) {
         invalidateOnRefresh: true,
         onUpdate: (self) => {
           const current = self.progress * maxScroll;
-          setX(language === "ar" ? current : -current);
+          // Keep the project track LTR in both languages so Arabic starts with project 01.
+          setX(-current);
 
           const nextActiveIndex = Math.max(
             0,
@@ -309,7 +310,7 @@ export default function ProjectGallery({ onOpenProject }) {
     activeProjectIndexRef.current = nextIndex;
     setActiveProjectIndex(nextIndex);
     gsap.to(trackRef.current, {
-      x: language === "ar" ? target : -target,
+      x: -target,
       duration: 0.8,
       ease: "power3.out",
       overwrite: true,
@@ -405,7 +406,7 @@ export default function ProjectGallery({ onOpenProject }) {
         {/* Horizontally scrollable card strip */}
         <div
           ref={mobileScrollRef}
-          dir={language === "ar" ? "rtl" : "ltr"}
+          dir="ltr"
           aria-label={t("gallery", "explore")}
           className="flex gap-4 overflow-x-auto snap-x snap-mandatory px-6 scrollbar-hide [-webkit-overflow-scrolling:touch] [touch-action:pan-x] pb-4"
         >
