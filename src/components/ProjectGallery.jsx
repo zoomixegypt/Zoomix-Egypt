@@ -11,6 +11,7 @@ import ImageWithFallback from "./ImageWithFallback";
 const INDICATOR_CARD_WIDTH = 600;
 const INDICATOR_GAP = 48;
 const INDICATOR_INTRO_WIDTH = 500;
+const PINNED_PROJECT_LIMIT = 3;
 
 // Hanya register sekali untuk menghindari konflik
 if (typeof window !== "undefined" && !ScrollTrigger.isRegistered) {
@@ -37,6 +38,7 @@ export default function ProjectGallery({ onOpenProject }) {
 
   const [activeProjectIndex, setActiveProjectIndex] = useState(0);
   const [maxScroll, setMaxScroll] = useState(0);
+  const [fullMaxScroll, setFullMaxScroll] = useState(0);
   const [enablePinnedScroll, setEnablePinnedScroll] = useState(true);
 
   useEffect(() => {
@@ -92,6 +94,7 @@ export default function ProjectGallery({ onOpenProject }) {
   useEffect(() => {
     if (!enablePinnedScroll) {
       setMaxScroll(0);
+      setFullMaxScroll(0);
       return;
     }
 
@@ -101,10 +104,19 @@ export default function ProjectGallery({ onOpenProject }) {
       if (!section || !track) return;
 
       const sectionW = section.getBoundingClientRect().width;
-      const total = track.scrollWidth - sectionW;
-      const nextMaxScroll = Math.max(0, total);
+      const fullScroll = Math.max(0, track.scrollWidth - sectionW);
+      const previewCard = track.querySelector(
+        `[data-project-index="${Math.min(PINNED_PROJECT_LIMIT - 1, projectCount - 1)}"]`,
+      );
+      const previewEnd = previewCard
+        ? Math.max(0, previewCard.offsetLeft + previewCard.offsetWidth - sectionW + 96)
+        : fullScroll;
+      const nextMaxScroll = Math.min(fullScroll, previewEnd);
       setMaxScroll((prevMaxScroll) =>
         prevMaxScroll === nextMaxScroll ? prevMaxScroll : nextMaxScroll,
+      );
+      setFullMaxScroll((prevFullMaxScroll) =>
+        prevFullMaxScroll === fullScroll ? prevFullMaxScroll : fullScroll,
       );
     };
 
@@ -153,7 +165,7 @@ export default function ProjectGallery({ onOpenProject }) {
       }
       if (ro) ro.disconnect();
     };
-  }, [enablePinnedScroll]);
+  }, [enablePinnedScroll, projectCount]);
 
   useEffect(() => {
     if (enablePinnedScroll) return;
@@ -284,6 +296,25 @@ export default function ProjectGallery({ onOpenProject }) {
       }
     };
   }, [enablePinnedScroll, maxScroll, projectCount, language]);
+
+  const goToDesktopProject = (index) => {
+    if (!trackRef.current || !sectionRef.current || !fullMaxScroll) return;
+
+    const nextIndex = Math.max(0, Math.min(projectCount - 1, index));
+    const card = trackRef.current.querySelector(`[data-project-index="${nextIndex}"]`);
+    if (!card) return;
+
+    const viewportWidth = sectionRef.current.getBoundingClientRect().width;
+    const target = Math.max(0, Math.min(fullMaxScroll, card.offsetLeft - viewportWidth * 0.18));
+    activeProjectIndexRef.current = nextIndex;
+    setActiveProjectIndex(nextIndex);
+    gsap.to(trackRef.current, {
+      x: language === "ar" ? target : -target,
+      duration: 0.8,
+      ease: "power3.out",
+      overwrite: true,
+    });
+  };
 
   /* ═══════════════════════════════════════════
      Desktop: GSAP horizontal pinned scroll
@@ -622,8 +653,43 @@ export default function ProjectGallery({ onOpenProject }) {
         </Gsap.div>
       </div>
 
+      {/* Optional manual browsing keeps later projects accessible without extending the pin. */}
+      <div className="absolute bottom-7 left-8 right-8 z-20 flex items-center justify-between gap-4">
+        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/60">
+          {language === "ar" ? "مشاريع أخرى" : "MORE PROJECTS"}
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => goToDesktopProject(activeProjectIndex - 1)}
+            disabled={activeProjectIndex === 0}
+            aria-label={t("gallery", "previous")}
+            className="flex h-9 w-9 items-center justify-center border border-white/25 text-white transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00] disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            <ArrowLeft
+              size={16}
+              className={language === "ar" ? "rotate-180" : ""}
+              aria-hidden="true"
+            />
+          </button>
+          <button
+            type="button"
+            onClick={() => goToDesktopProject(activeProjectIndex + 1)}
+            disabled={activeProjectIndex === projectCount - 1}
+            aria-label={t("gallery", "next")}
+            className="flex h-9 w-9 items-center justify-center border border-white/25 text-white transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00] disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            <ArrowRight
+              size={16}
+              className={language === "ar" ? "rotate-180" : ""}
+              aria-hidden="true"
+            />
+          </button>
+        </div>
+      </div>
+
       {/* Indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
+      <div className="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 transform gap-2">
         {projects.map((_, index) => {
           const isActive = index === activeProjectIndex;
           return (

@@ -17,6 +17,8 @@ export default function ImageWithFallback({
     setIsLoaded(false);
   }, [src]);
 
+  const shouldFade = typeof src === "string" && !src.toLowerCase().endsWith(".svg");
+
   if (hasError) {
     return (
       <div
@@ -37,7 +39,7 @@ export default function ImageWithFallback({
       onError={() => setHasError(true)}
       {...props}
       className={`${className} transition-opacity duration-500`}
-      style={{ ...style, opacity: isLoaded ? style?.opacity : 0.18 }}
+      style={{ ...style, ...(shouldFade && !isLoaded ? { opacity: 0.18 } : {}) }}
     />
   );
 }
