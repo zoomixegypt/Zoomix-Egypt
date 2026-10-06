@@ -31,6 +31,10 @@ const initialForm = {
   projectLink: "",
   goal: "",
   description: "",
+  email: "",
+  contactPreference: "",
+  preferredTime: "",
+  website: "",
   consent: false,
 };
 
@@ -131,6 +135,19 @@ const ROUTE_OPTIONS = [
   { value: "one-thing", ar: "خدمة واحدة", en: "One thing — one specific service" },
 ];
 
+const CONTACT_OPTIONS = [
+  { value: "whatsapp", ar: "واتساب", en: "WhatsApp" },
+  { value: "call", ar: "مكالمة هاتفية", en: "Phone call" },
+  { value: "email", ar: "إيميل", en: "Email" },
+];
+
+const CALL_TIME_OPTIONS = [
+  { value: "morning", ar: "الصبح", en: "Morning" },
+  { value: "afternoon", ar: "الظهر أو العصر", en: "Afternoon" },
+  { value: "evening", ar: "المساء", en: "Evening" },
+  { value: "anytime", ar: "أي وقت مناسب", en: "Any suitable time" },
+];
+
 const ROUTE_DESCRIPTIONS = {
   start: { ar: "لما تكون بتبدأ وعاوز أساس واضح", en: "When you need a clear foundation" },
   show: { ar: "لما تكون جاهز تظهر بقوة", en: "When the work is ready to show up" },
@@ -152,6 +169,8 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
   const [errors, setErrors] = useState({});
   const [whatsappBlocked, setWhatsappBlocked] = useState(false);
   const [messageCopied, setMessageCopied] = useState(false);
+  const [referenceCode, setReferenceCode] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
     const applyPackage = (id) =>
@@ -325,7 +344,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
     });
   };
 
-  const buildMessage = () => {
+  const buildMessage = (reference = referenceCode) => {
     const lines = [
       [label("الاسم", "Name"), form.name],
       [label("اسم المشروع", "Project"), form.project],
@@ -346,18 +365,31 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       [label("عرفتنا منين", "How they found us"), optionLabel(SOURCE_OPTIONS, form.source)],
       [label("رابط المشروع", "Project link"), form.projectLink],
       [label("الهدف الأساسي", "Main goal"), form.goal],
+      [label("وسيلة التواصل", "Preferred contact"), optionLabel(CONTACT_OPTIONS, form.contactPreference)],
+      [label("الإيميل", "Email"), form.email],
+      [label("الوقت المفضل للمكالمة", "Preferred call time"), optionLabel(CALL_TIME_OPTIONS, form.preferredTime)],
+      [label("رقم الطلب", "Reference"), reference],
       [label("الوصف", "Description"), form.description],
     ].filter(([, value]) => String(value ?? "").trim());
 
     return ["ZOOMIX PROJECT BRIEF", ...lines.map(([key, value]) => `${key}: ${value}`)].join("\n");
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    const required = ["name", "phone", "service", "description"];
+    const required = ["name", "service", "description", "contactPreference"];
     const nextErrors = Object.fromEntries(
       required.filter((key) => !form[key].trim()).map((key) => [key, label("مطلوب", "Required")]),
     );
+    if (["whatsapp", "call"].includes(form.contactPreference) && !form.phone.trim()) {
+      nextErrors.phone = label("رقم الهاتف مطلوب", "Phone is required");
+    }
+    if (form.contactPreference === "email" && !form.email.trim()) {
+      nextErrors.email = label("الإيميل مطلوب", "Email is required");
+    }
+    if (form.email && !/^\S+@\S+\.\S+$/.test(form.email)) {
+      nextErrors.email = label("اكتب إيميل صحيح", "Enter a valid email");
+    }
     if (form.route === "show" && !activeShowType) {
       nextErrors.showType = label("اختار نوع الطلب", "Choose the request type");
     }
@@ -372,14 +404,31 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       setSubmitted(false);
       return;
     }
-    setSubmitted(true);
-    const whatsappWindow = window.open(
-      `https://wa.me/201555451535?text=${encodeURIComponent(buildMessage())}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
-    setWhatsappBlocked(!whatsappWindow);
+    setSubmitError("");
+    setWhatsappBlocked(false);
     setMessageCopied(false);
+    try {
+      const response = await fetch("/api/briefs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, offerName: selectedOfferName }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || label("حصلت مشكلة أثناء حفظ الطلب.", "We could not save the brief."));
+      setReferenceCode(result.referenceCode || "");
+      setSubmitted(true);
+      if (form.contactPreference === "whatsapp") {
+        const whatsappWindow = window.open(
+          `https://wa.me/201555451535?text=${encodeURIComponent(buildMessage(result.referenceCode))}`,
+          "_blank",
+          "noopener,noreferrer",
+        );
+        setWhatsappBlocked(!whatsappWindow);
+      }
+    } catch (error) {
+      setSubmitted(false);
+      setSubmitError(error.message || label("حصلت مشكلة أثناء الإرسال.", "Something went wrong while sending."));
+    }
   };
 
   const copyMessage = async () => {
@@ -550,7 +599,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
             )}
             {field("name", label("الاسم *", "Name *"), "text", true)}
             {field("project", label("اسم المشروع", "Project name"))}
-            {field("phone", label("رقم الهاتف *", "Phone *"), "tel", true)}
+            {field("phone", label("رقم الهاتف", "Phone"), "tel")}
             {field("activity", label("نوع النشاط", "Business type"))}
             <div className="sm:col-span-2 mt-2 border-t border-black/15 pt-5">
               <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-black/45">01 / {label("الإشارة", "SIGNAL")}</p>
@@ -683,6 +732,13 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 </span>
               )}
             </label>
+            <div className="sm:col-span-2 border-t border-black/15 pt-5">
+              <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-black/45">CONTACT LINE / {label("وسيلة التواصل", "YOUR CONTACT LINE")}</p>
+              <p className="mt-2 text-sm text-black/55">{label("لو واتساب مش مناسب، اختار الطريقة اللي تريحك.", "WhatsApp is not required — choose the way that works for you.")}</p>
+            </div>
+            {selectField("contactPreference", label("تحب نكمل معاك إزاي؟ *", "How should we reach you? *"), CONTACT_OPTIONS, true, label("اختار وسيلة التواصل", "Choose a contact method"))}
+            {form.contactPreference === "email" && field("email", label("الإيميل *", "Email *"), "email", true)}
+            {form.contactPreference === "call" && selectField("preferredTime", label("الوقت المفضل للمكالمة", "Preferred call time"), CALL_TIME_OPTIONS)}
             <label className="sm:col-span-2 flex items-start gap-3 text-sm leading-6 text-black/70">
               <input
                 type="checkbox"
@@ -700,6 +756,16 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 )}
               </span>
             </label>
+            <input
+              type="text"
+              name="website"
+              value={form.website}
+              onChange={(event) => update("website", event.target.value)}
+              className="absolute -left-[9999px] h-px w-px opacity-0"
+              tabIndex="-1"
+              autoComplete="off"
+              aria-hidden="true"
+            />
             {errors.consent && (
               <span id="brief-consent-error" className="sm:col-span-2 -mt-3 text-xs text-red-600">
                 {errors.consent}
@@ -713,6 +779,14 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 {label("إرسال على واتساب", "Send to WhatsApp")} <ActionArrow size={18} />
               </button>
             </div>
+            {submitError && (
+              <div className="sm:col-span-2 border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+                <p>{submitError}</p>
+                <button type="button" onClick={copyMessage} className="mt-3 font-bold underline">
+                  {label("نسخ نسخة من البريف", "Copy a brief copy")}
+                </button>
+              </div>
+            )}
             {whatsappBlocked && (
               <div className="sm:col-span-2 border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
                 <p>
@@ -735,7 +809,10 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 aria-live="polite"
               >
                 <Check size={16} />
-                {label("تم تجهيز الرسالة وفتح واتساب.", "Message prepared and WhatsApp opened.")}
+                {form.contactPreference === "whatsapp"
+                  ? label("تم حفظ البريف وفتح واتساب.", "Brief saved and WhatsApp opened.")
+                  : label("تم حفظ البريف. هنتواصل معاك بالطريقة اللي اخترتها.", "Brief saved. We will follow up using your preferred contact method.")}
+                {referenceCode && <span className="font-mono font-bold">{referenceCode}</span>}
               </p>
             )}
           </form>

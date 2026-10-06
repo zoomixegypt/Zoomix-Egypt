@@ -1,6 +1,7 @@
 import { lazy, Suspense, useLayoutEffect } from "react";
 import { Routes, Route, useLocation, useNavigationType } from "react-router-dom";
 import Home from "./pages/Home";
+import Studio from "./pages/Studio";
 import ProjectDetailModal from "./components/projects/ProjectDetailModal";
 import SectionSkeleton from "./components/SectionSkeleton";
 
@@ -112,6 +113,7 @@ export default function App() {
       <ScrollToTop />
       <Routes location={backgroundLocation || location}>
         <Route path="/" element={<Home />} />
+        <Route path="/studio" element={<Studio />} />
         <Route path="/route-finder" element={<Suspense fallback={<SectionSkeleton className="min-h-screen" />}><RouteFinder /></Suspense>} />
         <Route path="/projects/:slug" element={<ProjectDetailModal />} />
       </Routes>
