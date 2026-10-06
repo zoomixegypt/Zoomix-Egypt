@@ -360,7 +360,7 @@ const Navbar = memo(function Navbar() {
         </Magnetic>
       </div>
 
-      {!isRouteFinderPage && (
+      {!isRouteFinderPage && scrolled && (
         <button
           type="button"
           onClick={openRouteFinder}

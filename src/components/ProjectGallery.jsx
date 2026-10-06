@@ -76,14 +76,19 @@ export default function ProjectGallery({ onOpenProject }) {
     };
   }, []);
 
-  // Preload gambar pertama untuk smooth loading
-  useEffect(() => {
-    const firstImage = new Image();
-    firstImage.src = cloudinarySrc(projects[0]?.img, 800);
-  }, []);
-
   const projects = getProjectMeta(language);
   const projectCount = projects.length;
+
+  // Preload only the first two gallery images so the opening view feels ready
+  // without eagerly downloading the full project set.
+  useEffect(() => {
+    projects.slice(0, 2).forEach((project) => {
+      const image = new Image();
+      image.decoding = "async";
+      image.loading = "eager";
+      image.src = cloudinarySrc(project?.img, 800);
+    });
+  }, [language, projectCount]);
 
   // Always start the localized gallery at project 01. In RTL documents the
   // browser can otherwise preserve the previous horizontal scroll position

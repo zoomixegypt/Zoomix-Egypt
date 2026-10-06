@@ -119,6 +119,17 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
   ], [language, isArabic]);
   const selectedOfferId = form.offerId || form.packageId;
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+  const clearSavedSelection = () => {
+    window.localStorage.removeItem("zoomix-selected-package");
+    window.localStorage.removeItem("zoomix-project-route");
+    setForm((current) => ({
+      ...current,
+      packageId: "",
+      route: "",
+      offerId: "",
+    }));
+    setSubmitted(false);
+  };
   const updateField = (key, value) => {
     update(key, value);
     if (errors[key]) {
@@ -358,10 +369,21 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                   </optgroup>
                 ))}
               </select>
-              {selectedOfferName && form.offerId && (
-                <p className="mt-2 text-xs text-black/55">
-                  {label("الاختيار من المسار: ", "Selected from your path: ")}{selectedOfferName}
-                </p>
+              {(form.route || form.offerId || form.packageId) && (
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs text-black/55">
+                    {selectedOfferName
+                      ? `${label("الاختيار من المسار: ", "Selected from your path: ")}${selectedOfferName}`
+                      : pathLabel[form.route] || label("اختيار محفوظ", "Saved selection")}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={clearSavedSelection}
+                    className="text-xs font-bold text-black/55 underline decoration-black/25 underline-offset-4 transition-colors hover:text-black"
+                  >
+                    {label("مسح الاختيار", "Clear selection")}
+                  </button>
+                </div>
               )}
             </label>
             {field("stage", label("المرحلة الحالية", "Current stage"))}
