@@ -337,7 +337,8 @@ export default function ProjectGallery({ onOpenProject }) {
         </div>
 
         <div className="px-6 mb-6 flex items-center justify-between gap-4">
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/40">
+          <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#BBFF00]/80">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#BBFF00]" aria-hidden="true" />
             {t("gallery", "explore")}
           </span>
           <div className="flex items-center gap-2">
@@ -374,6 +375,7 @@ export default function ProjectGallery({ onOpenProject }) {
         <div
           ref={mobileScrollRef}
           dir={language === "ar" ? "rtl" : "ltr"}
+          aria-label={t("gallery", "explore")}
           className="flex gap-4 overflow-x-auto snap-x snap-mandatory px-6 scrollbar-hide [-webkit-overflow-scrolling:touch] [touch-action:pan-x] pb-4"
         >
           {projects.map((project, index) => (
@@ -432,7 +434,7 @@ export default function ProjectGallery({ onOpenProject }) {
               <div className="absolute bottom-0 left-0 right-0 z-10 border-t border-white/10 bg-black/35 p-5 backdrop-blur-[2px]">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#BBFF00] shadow-[0_0_6px_rgba(187,255,0,0.8)]" />
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-[0.16em] text-white/70">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-[0.16em] text-white/85">
                     {project.category}
                   </span>
                 </div>
@@ -448,14 +450,18 @@ export default function ProjectGallery({ onOpenProject }) {
                 <h3 className="text-2xl font-black uppercase text-white tracking-tight leading-[1.05]">
                   {project.title}
                 </h3>
-                <p className="mt-2 text-xs text-white/55 leading-5">{project.services}</p>
+                <p className="mt-2 text-xs leading-5 text-white/70">{project.services}</p>
 
                 {/* CTA arrow */}
                 <div className="mt-3 flex items-center gap-2 text-[#BBFF00]">
                   <span className="font-mono text-[10px] uppercase tracking-[0.14em] font-bold">
                     {t("gallery", "view")}
                   </span>
-                  <ArrowUpRight size={14} strokeWidth={2.5} />
+                  <ArrowUpRight
+                    size={14}
+                    strokeWidth={2.5}
+                    className={language === "ar" ? "rotate-180" : ""}
+                  />
                 </div>
               </div>
             </Gsap.div>
@@ -562,7 +568,7 @@ export default function ProjectGallery({ onOpenProject }) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-3">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#BBFF00] shadow-[0_0_8px_rgba(187,255,0,0.8)]" />
-                      <span className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-white/80">
+                      <span className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-white/90">
                         {project.category}
                       </span>
                     </div>
@@ -578,7 +584,7 @@ export default function ProjectGallery({ onOpenProject }) {
                     <h3 className="text-4xl lg:text-5xl font-black uppercase text-white tracking-tight leading-[1.1]">
                       {project.title}
                     </h3>
-                    <p className="mt-3 text-sm text-white/60 leading-6">{project.services}</p>
+                    <p className="mt-3 text-sm leading-6 text-white/75">{project.services}</p>
                   </div>
 
                   {/* Floating Action Button */}
@@ -586,7 +592,7 @@ export default function ProjectGallery({ onOpenProject }) {
                     <ArrowUpRight
                       size={24}
                       strokeWidth={2}
-                      className="group-hover:rotate-45 transition-transform duration-300"
+                      className={`${language === "ar" ? "rotate-180" : ""} group-hover:rotate-45 transition-transform duration-300`}
                     />
                   </div>
                 </div>

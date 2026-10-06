@@ -30,7 +30,7 @@ const ServicesSection = memo(function ServicesSection() {
           </div>
 
           <div>
-            <p className="text-xl md:text-2xl text-black/65 leading-[1.65] max-w-2xl mb-14">
+            <p className="mb-14 max-w-2xl text-xl leading-[1.65] text-black/75 md:text-2xl">
               {t("services", "intro")}
             </p>
             <div className="connection-line mb-12" aria-hidden="true" />
@@ -45,7 +45,7 @@ const ServicesSection = memo(function ServicesSection() {
                   >
                     {t("services", titleKey)}
                   </h3>
-                  <p className="mt-4 text-black/60 leading-7">{t("services", textKey)}</p>
+                  <p className="mt-4 leading-7 text-black/70">{t("services", textKey)}</p>
                   <ArrowUpRight className="mt-8 text-[#0A0A0A]" size={22} aria-hidden="true" />
                 </article>
               ))}

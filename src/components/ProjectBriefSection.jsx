@@ -39,6 +39,16 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
     [form.packageId],
   );
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+  const updateField = (key, value) => {
+    update(key, value);
+    if (errors[key]) {
+      setErrors((current) => {
+        const next = { ...current };
+        delete next[key];
+        return next;
+      });
+    }
+  };
   const label = (ar, en) => (isArabic ? ar : en);
   const ActionArrow = isArabic ? ArrowUpLeft : ArrowUpRight;
 
@@ -89,16 +99,19 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
 
   const field = (key, labelText, type = "text", required = false) => (
     <label className="block">
-      <span className="block text-sm font-bold mb-2">{labelText}</span>
+      <span className="mb-2 block text-sm font-bold">{labelText}</span>
       <input
         id={`brief-${key}`}
         type={type}
         value={form[key]}
-        onChange={(event) => update(key, event.target.value)}
-        className={`w-full border bg-white px-4 py-3 outline-none focus:border-[#BBFF00] ${errors[key] ? "border-red-500" : "border-black/20"}`}
+        onChange={(event) => updateField(key, event.target.value)}
+        className={`min-w-0 w-full border bg-white px-4 py-3 outline-none transition-colors focus:border-[#6b8d00] ${errors[key] ? "border-red-500" : "border-black/30"}`}
         aria-invalid={Boolean(errors[key])}
         aria-describedby={errors[key] ? `brief-${key}-error` : undefined}
         required={required}
+        maxLength={key === "phone" ? 30 : 160}
+        inputMode={key === "phone" ? "tel" : undefined}
+        autoComplete={key === "name" ? "name" : key === "phone" ? "tel" : "off"}
       />
       {errors[key] && (
         <span id={`brief-${key}-error`} className="block mt-1 text-xs text-red-600">
@@ -161,8 +174,20 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
           </div>
           <form
             onSubmit={handleSubmit}
-            className="bg-[#F5F4EF] text-[#0A0A0A] p-6 md:p-10 grid sm:grid-cols-2 gap-5"
+            noValidate
+            className="grid min-w-0 gap-5 overflow-hidden bg-[#F5F4EF] p-5 text-[#0A0A0A] shadow-[0_16px_60px_rgba(0,0,0,0.16)] sm:grid-cols-2 md:p-10"
           >
+            {Object.keys(errors).length > 0 && (
+              <div
+                className="sm:col-span-2 border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800"
+                role="alert"
+              >
+                {label(
+                  "راجع الحقول المطلوبة قبل الإرسال.",
+                  "Please complete the required fields before sending.",
+                )}
+              </div>
+            )}
             {field("name", label("الاسم *", "Name *"), "text", true)}
             {field("project", label("اسم المشروع", "Project name"))}
             {field("phone", label("رقم الهاتف *", "Phone *"), "tel", true)}
@@ -172,8 +197,8 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
               <span className="block text-sm font-bold mb-2">{label("الباقة", "Package")}</span>
               <select
                 value={form.packageId}
-                onChange={(event) => update("packageId", event.target.value)}
-                className="w-full border border-black/20 bg-white px-4 py-3"
+                onChange={(event) => updateField("packageId", event.target.value)}
+                className="min-w-0 w-full border border-black/30 bg-white px-4 py-3 outline-none transition-colors focus:border-[#6b8d00]"
               >
                 <option value="">{label("اختار الباقة", "Choose a package")}</option>
                 {ZOOMIX_PACKAGES.map((pkg) => (
@@ -194,11 +219,12 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 id="brief-description"
                 rows="5"
                 value={form.description}
-                onChange={(event) => update("description", event.target.value)}
-                className={`w-full border bg-white px-4 py-3 outline-none focus:border-[#BBFF00] ${errors.description ? "border-red-500" : "border-black/20"}`}
+                onChange={(event) => updateField("description", event.target.value)}
+                className={`min-h-36 min-w-0 w-full resize-y border bg-white px-4 py-3 outline-none transition-colors focus:border-[#6b8d00] ${errors.description ? "border-red-500" : "border-black/30"}`}
                 aria-invalid={Boolean(errors.description)}
                 aria-describedby={errors.description ? "brief-description-error" : undefined}
                 required
+                maxLength={1200}
               />
               {errors.description && (
                 <span id="brief-description-error" className="block mt-1 text-xs text-red-600">
@@ -206,14 +232,17 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 </span>
               )}
             </label>
-            <div className="sm:col-span-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-3">
-              <p className="text-xs text-black/55">
+            <div className="sm:col-span-2 flex flex-col items-stretch justify-between gap-4 pt-3 sm:flex-row sm:items-center">
+              <p className="text-xs leading-5 text-black/65">
                 {label(
                   "سيتم فتح واتساب بعد الضغط فقط، ولا يتم حفظ البيانات على Server.",
                   "WhatsApp opens only after submit; no server database is used.",
                 )}
               </p>
-              <button type="submit" className="zoomix-button bg-[#BBFF00] text-[#0A0A0A]">
+              <button
+                type="submit"
+                className="zoomix-button w-full bg-[#BBFF00] text-[#0A0A0A] sm:w-auto"
+              >
                 {label("إرسال على واتساب", "Send to WhatsApp")} <ActionArrow size={18} />
               </button>
             </div>
@@ -236,6 +265,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
               <p
                 className="sm:col-span-2 flex items-center gap-2 text-sm text-[#4d6900]"
                 role="status"
+                aria-live="polite"
               >
                 <Check size={16} />
                 {label("تم تجهيز الرسالة وفتح واتساب.", "Message prepared and WhatsApp opened.")}

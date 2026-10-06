@@ -234,7 +234,7 @@ const Navbar = memo(function Navbar() {
                     >
                       <ArrowUpRight
                         size={15}
-                        className={isOnDarkSection ? "text-white/70" : "text-black/45"}
+                        className={`${isOnDarkSection ? "text-white/70" : "text-black/45"} ${language === "ar" ? "rotate-180" : ""}`}
                       />
                     </span>
                   </Gsap.button>
@@ -249,7 +249,7 @@ const Navbar = memo(function Navbar() {
                 className={`w-full max-w-md mx-auto mt-6 h-12 rounded-full text-xs font-bold uppercase tracking-[0.16em] flex items-center justify-center gap-2 shadow-[0_10px_24px_rgba(0,0,0,0.16)] ${isOnDarkSection ? "bg-white text-black" : "bg-black text-white"}`}
               >
                 {t("nav", "start")}
-                <ArrowUpRight size={14} />
+                <ArrowUpRight size={14} className={language === "ar" ? "rotate-180" : ""} />
               </Gsap.button>
 
               <div
@@ -324,7 +324,7 @@ const Navbar = memo(function Navbar() {
                 <ArrowUpRight
                   size={14}
                   strokeWidth={2.5}
-                  className="group-hover:rotate-45 transition-transform duration-300"
+                  className={`${language === "ar" ? "rotate-180" : ""} group-hover:rotate-45 transition-transform duration-300`}
                 />
               </div>
             </button>

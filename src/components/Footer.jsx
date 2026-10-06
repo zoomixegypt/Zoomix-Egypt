@@ -18,7 +18,8 @@ const Footer = memo(function Footer() {
   return (
     <footer
       id="footer-section"
-      className="bg-[#0A0A0A] text-white pt-20 md:pt-24 pb-12 w-full relative overflow-hidden"
+      dir={language === "ar" ? "rtl" : "ltr"}
+      className="relative w-full overflow-hidden bg-[#0A0A0A] pt-20 pb-12 text-white md:pt-24"
     >
       <div
         className="absolute inset-0 opacity-[0.04] pointer-events-none"
@@ -37,7 +38,7 @@ const Footer = memo(function Footer() {
           <div className="flex-1 h-px bg-white/10" />
         </div>
 
-        <div className="flex flex-col lg:flex-row justify-between gap-12 mb-20">
+        <div className="mb-20 flex flex-col justify-between gap-12 lg:flex-row">
           <div className="lg:w-1/2">
             <ImageWithFallback
               src="/zoomix-logo.svg"
@@ -63,19 +64,22 @@ const Footer = memo(function Footer() {
           </div>
 
           <div className="lg:w-1/3 flex flex-col gap-4">
-            <span className="font-mono text-[10px] text-white/35 uppercase tracking-[0.2em] mb-3 border-l-2 border-[#BBFF00] pl-3">
+            <span className="mb-3 border-s-2 border-[#BBFF00] ps-3 font-mono text-[10px] uppercase tracking-[0.2em] text-white/55">
               {t("footer", "sitemap")}
             </span>
             {[
               [t("nav", "about"), "about-section"],
+              [t("nav", "services"), "services-section"],
               [t("nav", "work"), "project-section"],
+              [t("nav", "packages"), "packages-section"],
+              [t("nav", "process"), "process-section"],
               [t("nav", "contact"), "contact-section"],
             ].map(([label, id]) => (
               <button
                 key={id}
                 type="button"
                 onClick={() => scrollToSection(id)}
-                className="text-left font-mono text-xs md:text-sm uppercase tracking-[0.14em] text-white/65 hover:text-[#BBFF00] transition-colors flex items-center gap-3"
+                className="flex items-center gap-3 text-start font-mono text-xs uppercase tracking-[0.14em] text-white/75 transition-colors hover:text-[#BBFF00] md:text-sm"
               >
                 <span className="w-1.5 h-1.5 bg-white/25" aria-hidden="true" />
                 {label}
@@ -92,7 +96,7 @@ const Footer = memo(function Footer() {
                     href={href}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-2 border border-white/10 px-3 py-3 text-xs text-white/65 hover:border-[#BBFF00] hover:text-[#BBFF00] transition-colors"
+                    className="flex min-w-0 items-center gap-2 border border-white/15 px-3 py-3 text-xs text-white/75 transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00]"
                   >
                     <Icon size={14} aria-hidden="true" />
                     {label}
@@ -103,16 +107,17 @@ const Footer = memo(function Footer() {
                 href="https://wa.me/201555451535"
                 target="_blank"
                 rel="noreferrer"
-                className="mt-2 flex items-center gap-2 border border-[#BBFF00]/50 px-3 py-3 text-xs text-[#BBFF00] hover:bg-[#BBFF00] hover:text-[#0A0A0A] transition-colors"
+                className="mt-2 flex items-center gap-2 border border-[#BBFF00]/70 px-3 py-3 text-xs text-[#BBFF00] transition-colors hover:bg-[#BBFF00] hover:text-[#0A0A0A]"
               >
                 <MessageCircle size={14} aria-hidden="true" />
-                {t("footer", "whatsapp")} +20 15 5545 1535
+                <span>{t("footer", "whatsapp")}</span>
+                <span dir="ltr">+20 15 5545 1535</span>
               </a>
             </div>
           </div>
         </div>
 
-        <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 text-center md:flex-row md:text-start">
           <span className="font-mono text-[10px] md:text-xs text-white/45 uppercase tracking-[0.16em]">
             {t("footer", "cairo")}
           </span>
@@ -121,7 +126,12 @@ const Footer = memo(function Footer() {
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             className="inline-flex items-center gap-2 font-mono text-[10px] md:text-xs uppercase tracking-[0.16em] text-[#BBFF00] hover:text-white transition-colors"
           >
-            {t("footer", "top")} <ArrowUpRight size={14} aria-hidden="true" />
+            {t("footer", "top")}{" "}
+            <ArrowUpRight
+              size={14}
+              className={language === "ar" ? "rotate-180" : ""}
+              aria-hidden="true"
+            />
           </button>
           <span className="font-mono text-[10px] md:text-xs text-white/45 uppercase tracking-[0.16em]">
             © {new Date().getFullYear()} ZOOMIX

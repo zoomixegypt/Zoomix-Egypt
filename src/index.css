@@ -160,6 +160,11 @@ html {
   bottom: max(1.25rem, env(safe-area-inset-bottom));
 }
 
+[dir="rtl"] .whatsapp-float {
+  left: auto;
+  right: 1.25rem;
+}
+
 @media (max-height: 500px) and (pointer: coarse) {
   .whatsapp-float {
     display: none;

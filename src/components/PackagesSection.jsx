@@ -35,7 +35,7 @@ const PackagesSection = memo(function PackagesSection() {
           >
             {isArabic ? "اختار نقطة البداية." : "Choose your starting point."}
           </h2>
-          <p className="max-w-md text-white/60 leading-7">
+          <p className="max-w-md leading-7 text-white/75">
             {isArabic
               ? "كل باقة لها نطاق واضح ومخرجات جاهزة للاستخدام."
               : "Every package has a clear scope and ready-to-use deliverables."}
@@ -90,14 +90,14 @@ const PackagesSection = memo(function PackagesSection() {
               >
                 {pkg.name[language]}
               </h3>
-              <p className="mt-4 text-white/60 leading-7 min-h-[5.5rem]">
+              <p className="mt-4 min-h-[5.5rem] leading-7 text-white/75">
                 {pkg.description[language]}
               </p>
               <p className="mt-5 font-mono text-3xl text-[#BBFF00]">
                 {pkg.price}{" "}
                 <span className="text-sm text-white/60">{isArabic ? "جنيه" : "EGP"}</span>
               </p>
-              <p className="mt-4 text-sm text-white/70 leading-6">{pkg.fit[language]}</p>
+              <p className="mt-4 text-sm leading-6 text-white/80">{pkg.fit[language]}</p>
               <div className="my-7 h-px bg-white/15" />
               <ul className="hidden flex-1 space-y-3 lg:block">
                 {pkg.outputs[language].map((output) => (
@@ -131,7 +131,7 @@ const PackagesSection = memo(function PackagesSection() {
                   <strong className="text-white">{isArabic ? "المدة:" : "Duration:"}</strong>{" "}
                   {pkg.duration[language]}
                 </p>
-                <p className="mt-2 text-white/45 leading-6">{pkg.exclusions[language]}</p>
+                <p className="mt-2 leading-6 text-white/60">{pkg.exclusions[language]}</p>
               </div>
               <button
                 type="button"
