@@ -1,6 +1,6 @@
 import { useState, memo, useEffect, useRef } from "react";
 import { Gsap, GsapPresence } from "../utils/gsapAnimate";
-import { Menu, X, ArrowUpRight } from "lucide-react";
+import { Menu, X, ArrowUpRight, Crosshair } from "lucide-react";
 import Magnetic from "./Magnetic";
 import { exponentialEaseOut } from "../utils/easing";
 import { useLanguage } from "../i18n";
@@ -121,36 +121,47 @@ const Navbar = memo(function Navbar() {
     }, 100); // Small delay to let close animation start and avoid layout calculation stutter
   };
 
+  const openRouteFinder = () => {
+    setIsMenuOpen(false);
+    navigate("/route-finder");
+  };
+
   return (
     <nav
       aria-label={language === "ar" ? "التنقل الرئيسي" : "Primary navigation"}
       className={`fixed top-0 left-0 w-full p-4 md:p-6 flex justify-between items-center z-50 pointer-events-none transition-all duration-500`}
     >
-      {/* ── Logo ── */}
-      <Magnetic>
-        <button
-          type="button"
-          onClick={() => {
-            if (window.lenisInstance && typeof window.lenisInstance.scrollTo === "function") {
-              window.lenisInstance.scrollTo(0, {
-                duration: 1.5,
-                easing: exponentialEaseOut,
-              });
-              return;
-            }
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }}
-          aria-label="ZOOMIX"
-          className={`group pointer-events-auto flex items-center px-1.5 py-1 md:px-2 md:py-1.5 transition-all duration-500 cursor-pointer ${logoOnDark ? "" : "drop-shadow-[0_2px_8px_rgba(0,0,0,0.12)]"}`}
-        >
-          <ZoomixLogo
-            variant={logoOnDark ? "dark" : "light"}
-            className="h-auto w-24 md:w-32"
-            width={180}
-            height={60}
-          />
-        </button>
-      </Magnetic>
+      {/* ── Logo + fixed route finder signal ── */}
+      <div className="nav-logo-lockup pointer-events-auto">
+        <div className="nav-logo-backplate" aria-hidden="true">
+          <span className="nav-logo-backplate__line" />
+          <span className="nav-logo-backplate__dot" />
+        </div>
+        <Magnetic>
+          <button
+            type="button"
+            onClick={() => {
+              if (window.lenisInstance && typeof window.lenisInstance.scrollTo === "function") {
+                window.lenisInstance.scrollTo(0, {
+                  duration: 1.5,
+                  easing: exponentialEaseOut,
+                });
+                return;
+              }
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            aria-label="ZOOMIX"
+            className={`nav-logo-button group relative z-10 flex items-center px-1.5 py-1 md:px-2 md:py-1.5 transition-all duration-500 cursor-pointer ${logoOnDark ? "" : "drop-shadow-[0_2px_8px_rgba(0,0,0,0.12)]"}`}
+          >
+            <ZoomixLogo
+              variant={logoOnDark ? "dark" : "light"}
+              className="h-auto w-24 md:w-32"
+              width={180}
+              height={60}
+            />
+          </button>
+        </Magnetic>
+      </div>
 
       {/* ── Mobile Menu Toggle ── */}
       <div className="lg:hidden pointer-events-auto relative z-50">
@@ -348,6 +359,25 @@ const Navbar = memo(function Navbar() {
           </div>
         </Magnetic>
       </div>
+
+      {!isRouteFinderPage && (
+        <button
+          type="button"
+          onClick={openRouteFinder}
+          dir={language === "ar" ? "rtl" : "ltr"}
+          className={`route-finder-fixed-entry pointer-events-auto group ${isOnDarkSection ? "route-finder-fixed-entry--dark" : "route-finder-fixed-entry--light"}`}
+          aria-label={language === "ar" ? "ساعدني أختار الطريق المناسب" : "Help me find the right route"}
+        >
+          <span className="route-finder-fixed-entry__line" aria-hidden="true" />
+          <span className="route-finder-fixed-entry__node" aria-hidden="true">
+            <Crosshair size={12} strokeWidth={1.8} />
+          </span>
+          <span className="route-finder-fixed-entry__copy">
+            <span className="route-finder-fixed-entry__eyebrow">ZOOMIX / NEXT MOVE</span>
+            <span>{language === "ar" ? "مش عارف تبدأ؟ نحددها سوا" : "Not sure where to start? Find your route"}</span>
+          </span>
+        </button>
+      )}
     </nav>
   );
 });
