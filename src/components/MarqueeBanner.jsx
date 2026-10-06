@@ -27,13 +27,19 @@ const MarqueeBanner = memo(function MarqueeBanner() {
     document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   return (
-    <div className="relative z-20 sm:-rotate-[0.8deg] sm:scale-[1.02] cursor-default select-none">
+    <div
+      dir={language === "ar" ? "rtl" : "ltr"}
+      className="relative z-20 sm:-rotate-[0.8deg] sm:scale-[1.02] cursor-default select-none"
+    >
       <div className="bg-black shadow-[0_0_40px_rgba(187,255,0,0.12)]">
         {/* ── Row 1: Solid Lime Text, scrolling left ── */}
         <div className="py-4 md:py-6 overflow-hidden relative group border-b border-neutral-800/60">
           <div
             className="flex whitespace-nowrap gap-6 md:gap-14 will-change-transform group-hover:[animation-play-state:paused]"
-            style={{ animation: "marquee-scroll-left 28s linear infinite" }}
+            dir="ltr"
+            style={{
+              animation: `${language === "ar" ? "marquee-scroll-right" : "marquee-scroll-left"} 28s linear infinite`,
+            }}
           >
             {[...Array(3)].map((_, i) => (
               <div
@@ -65,7 +71,10 @@ const MarqueeBanner = memo(function MarqueeBanner() {
         <div className="py-2.5 md:py-4 bg-[#BBFF00] overflow-hidden relative group">
           <div
             className="flex whitespace-nowrap gap-6 md:gap-12 will-change-transform group-hover:[animation-play-state:paused]"
-            style={{ animation: "marquee-scroll-right 32s linear infinite" }}
+            dir="ltr"
+            style={{
+              animation: `${language === "ar" ? "marquee-scroll-left" : "marquee-scroll-right"} 32s linear infinite`,
+            }}
           >
             {[...Array(3)].map((_, i) => (
               <div

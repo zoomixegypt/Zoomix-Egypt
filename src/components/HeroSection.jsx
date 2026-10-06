@@ -41,7 +41,7 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
             {t("hero", "titleB")}
           </h1>
           <p
-            className={`zoomix-reveal zoomix-reveal-delay-2 ${language === "ar" ? "font-arabic leading-[1.9]" : "font-display leading-8"} text-white/65 max-w-xl mt-7 text-base md:text-lg`}
+            className={`zoomix-reveal zoomix-reveal-delay-2 ${language === "ar" ? "font-arabic leading-[1.9]" : "font-display leading-8"} text-white/75 max-w-xl mt-7 text-base md:text-lg`}
           >
             {t("hero", "description")}
           </p>
@@ -55,7 +55,7 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
           </div>
         </Gsap.div>
         <div
-          className="absolute bottom-10 left-6 right-6 md:left-12 md:right-12 hidden sm:block"
+          className="absolute bottom-10 left-6 right-6 md:left-12 md:right-12 hidden sm:block rounded-full bg-[#141A0A]/70 px-2 py-2 shadow-[0_0_0_1px_rgba(187,255,0,0.08),0_0_24px_rgba(187,255,0,0.08)]"
           aria-hidden="true"
         >
           <div className="connection-line" />
@@ -72,7 +72,7 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
             alt="ZOOMIX"
             width="250"
             height="100"
-            className="w-full max-w-sm mx-auto opacity-90"
+            className="w-full max-w-sm mx-auto opacity-100 drop-shadow-[0_0_18px_rgba(255,255,255,0.08)]"
             fallbackClassName="aspect-[5/2] w-full max-w-sm mx-auto"
           />
           <p className="font-mono text-xs tracking-[.18em] text-white/40 mt-9 leading-6" dir="ltr">

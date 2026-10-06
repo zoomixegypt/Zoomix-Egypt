@@ -245,7 +245,7 @@ export default function ProjectGallery({ onOpenProject }) {
         invalidateOnRefresh: true,
         onUpdate: (self) => {
           const current = self.progress * maxScroll;
-          setX(-current);
+          setX(language === "ar" ? current : -current);
 
           const nextActiveIndex = Math.max(
             0,
@@ -283,7 +283,7 @@ export default function ProjectGallery({ onOpenProject }) {
         ScrollTrigger.defaults({ scroller: window });
       }
     };
-  }, [enablePinnedScroll, maxScroll, projectCount]);
+  }, [enablePinnedScroll, maxScroll, projectCount, language]);
 
   /* ═══════════════════════════════════════════
      Desktop: GSAP horizontal pinned scroll
@@ -293,7 +293,11 @@ export default function ProjectGallery({ onOpenProject }) {
   // ── MOBILE LAYOUT ──
   if (!enablePinnedScroll) {
     return (
-      <section ref={sectionRef} className="relative bg-neutral-900 overflow-hidden py-16 pb-20">
+      <section
+        ref={sectionRef}
+        dir={language === "ar" ? "rtl" : "ltr"}
+        className="relative bg-neutral-900 overflow-hidden py-16 pb-20"
+      >
         {/* Section Header */}
         <div className="px-6 mb-10">
           <div className="flex items-center gap-4 mb-10">
@@ -344,7 +348,11 @@ export default function ProjectGallery({ onOpenProject }) {
               aria-label={t("gallery", "previous")}
               className="flex h-9 w-9 items-center justify-center border border-white/20 text-white transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00] disabled:cursor-not-allowed disabled:opacity-30"
             >
-              <ArrowLeft size={16} aria-hidden="true" />
+              <ArrowLeft
+                size={16}
+                className={language === "ar" ? "rotate-180" : ""}
+                aria-hidden="true"
+              />
             </button>
             <button
               type="button"
@@ -353,7 +361,11 @@ export default function ProjectGallery({ onOpenProject }) {
               aria-label={t("gallery", "next")}
               className="flex h-9 w-9 items-center justify-center border border-white/20 text-white transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00] disabled:cursor-not-allowed disabled:opacity-30"
             >
-              <ArrowRight size={16} aria-hidden="true" />
+              <ArrowRight
+                size={16}
+                className={language === "ar" ? "rotate-180" : ""}
+                aria-hidden="true"
+              />
             </button>
           </div>
         </div>
@@ -361,6 +373,7 @@ export default function ProjectGallery({ onOpenProject }) {
         {/* Horizontally scrollable card strip */}
         <div
           ref={mobileScrollRef}
+          dir={language === "ar" ? "rtl" : "ltr"}
           className="flex gap-4 overflow-x-auto snap-x snap-mandatory px-6 scrollbar-hide [-webkit-overflow-scrolling:touch] [touch-action:pan-x] pb-4"
         >
           {projects.map((project, index) => (
@@ -455,7 +468,11 @@ export default function ProjectGallery({ onOpenProject }) {
 
   // ── DESKTOP LAYOUT (GSAP horizontal pinned scroll) ──
   return (
-    <section ref={sectionRef} className="relative bg-neutral-900 overflow-hidden h-[100dvh]">
+    <section
+      ref={sectionRef}
+      dir={language === "ar" ? "rtl" : "ltr"}
+      className="relative bg-neutral-900 overflow-hidden h-[100dvh]"
+    >
       {/* Section Header */}
       <Gsap.div
         initial={{ opacity: 0, y: 10 }}
@@ -472,7 +489,7 @@ export default function ProjectGallery({ onOpenProject }) {
 
       {/* Horizontal scroll track */}
       <div className="flex w-full h-[100dvh] items-center overflow-hidden">
-        <Gsap.div ref={trackRef} className="flex gap-12 px-24">
+        <Gsap.div ref={trackRef} dir="ltr" className="flex gap-12 px-24">
           {/* Intro Card */}
           <Gsap.div
             initial={{ opacity: 0, x: -50 }}

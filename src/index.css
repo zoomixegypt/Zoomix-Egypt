@@ -69,9 +69,13 @@
 
   .connection-line {
     background: var(--zoomix-lime);
+    border-radius: 999px;
     height: 1px;
     position: relative;
     width: 100%;
+    box-shadow:
+      0 0 0 4px rgba(10, 10, 10, 0.18),
+      0 0 14px rgba(187, 255, 0, 0.18);
   }
 
   .connection-line::after {
@@ -84,6 +88,15 @@
     top: 50%;
     transform: translate(50%, -50%);
     width: 0.5rem;
+    box-shadow:
+      0 0 0 3px rgba(10, 10, 10, 0.2),
+      0 0 12px rgba(187, 255, 0, 0.35);
+  }
+
+  [dir="rtl"] .connection-line::after {
+    left: 0;
+    right: auto;
+    transform: translate(-50%, -50%);
   }
 }
 
@@ -407,6 +420,13 @@ html.lenis body {
   inset-inline: 2rem;
   position: absolute;
   top: 1rem;
+  box-shadow:
+    0 0 0 4px rgba(10, 10, 10, 0.16),
+    0 0 14px rgba(187, 255, 0, 0.16);
+}
+
+[dir="rtl"] .zoomix-journey-line {
+  background: linear-gradient(270deg, var(--zoomix-lime), rgba(187, 255, 0, 0.18));
 }
 
 .contact-orbit {
