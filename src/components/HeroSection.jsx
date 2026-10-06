@@ -57,9 +57,19 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
               {t("hero", "work")} <ActionArrow size={20} />
             </a>
           </div>
+          <p
+            className="relative z-10 mt-4 w-fit bg-[#0A0A0A]/85 px-2 py-1 font-mono text-[10px] leading-6 tracking-[.18em] text-white/40"
+            dir="ltr"
+          >
+            {t("hero", "build")}
+            <br />
+            {t("hero", "show")}
+            <br />
+            {t("hero", "launch")}
+          </p>
         </Gsap.div>
         <div
-          className="pointer-events-none absolute bottom-10 left-6 right-6 z-0 hidden rounded-full bg-transparent sm:block md:left-12 md:right-12"
+          className="pointer-events-none absolute bottom-5 left-6 right-6 z-0 hidden rounded-full bg-transparent sm:block md:left-12 md:right-12"
           aria-hidden="true"
         >
           <div className="connection-line" />
@@ -69,7 +79,7 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={isRevealed ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
           transition={{ duration: reduceMotion ? 0 : 1, delay: reduceMotion ? 0 : 0.12 }}
-          className="hidden lg:block border-r border-white/15 pr-9"
+          className="hidden self-end border-r border-white/15 pb-16 pr-9 lg:block lg:-translate-y-4"
         >
           <ImageWithFallback
             src="/zoomix-logo.svg"
@@ -79,13 +89,6 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
             className="w-full max-w-sm mx-auto opacity-100 drop-shadow-[0_0_18px_rgba(255,255,255,0.08)]"
             fallbackClassName="aspect-[5/2] w-full max-w-sm mx-auto"
           />
-          <p className="font-mono text-xs tracking-[.18em] text-white/40 mt-9 leading-6" dir="ltr">
-            {t("hero", "build")}
-            <br />
-            {t("hero", "show")}
-            <br />
-            {t("hero", "launch")}
-          </p>
         </Gsap.div>
       </div>
     </header>
