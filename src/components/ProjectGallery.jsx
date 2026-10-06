@@ -426,9 +426,7 @@ export default function ProjectGallery({ onOpenProject }) {
                 {project.isConcept && (
                   <span className="mb-2 inline-flex border border-[#BBFF00]/50 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-[#BBFF00]">
                     {project.isSelfInitiated
-                      ? language === "ar"
-                        ? "مشروع براند مستقل"
-                        : "Independent brand project"
+                      ? project.badge
                       : language === "ar"
                         ? "مشروع Concept"
                         : "Concept project"}
@@ -554,9 +552,7 @@ export default function ProjectGallery({ onOpenProject }) {
                     {project.isConcept && (
                       <span className="mb-3 inline-flex border border-[#BBFF00]/50 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-[#BBFF00]">
                         {project.isSelfInitiated
-                          ? language === "ar"
-                            ? "مشروع براند مستقل"
-                            : "Independent brand project"
+                          ? project.badge
                           : language === "ar"
                             ? "مشروع Concept"
                             : "Concept project"}
