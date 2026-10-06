@@ -123,7 +123,7 @@ export const ZOOMIX_PROJECTS = {
         "Launch landing-page concept",
       ],
     },
-    image: "/mirsa-brand-world.png",
+    image: "/mirsa-brand-world.jpg",
   },
   "nodra-brand-world": {
     slug: "nodra-brand-world",
@@ -168,7 +168,7 @@ export const ZOOMIX_PROJECTS = {
         "Scalable launch outputs",
       ],
     },
-    image: "/nodra-brand-world.png",
+    image: "/nodra-brand-world.jpg",
   },
   "athar-brand-world": {
     slug: "athar-brand-world",
@@ -208,7 +208,7 @@ export const ZOOMIX_PROJECTS = {
         "Collection launch assets",
       ],
     },
-    image: "/athar-brand-world.png",
+    image: "/athar-brand-world.jpg",
   },
   "riwaq-brand-world": {
     slug: "riwaq-brand-world",
@@ -248,6 +248,166 @@ export const ZOOMIX_PROJECTS = {
         "An executable opening experience concept",
       ],
     },
-    image: "/riwaq-brand-world.png",
+    image: "/riwaq-brand-world.jpg",
+  },
+  "nabd-health-club": {
+    slug: "nabd-health-club",
+    isConcept: true,
+    isSelfInitiated: true,
+    title: { ar: "NABD Health Club", en: "NABD Health Club" },
+    category: { ar: "منتج رقمي / صحة / محتوى", en: "DIGITAL PRODUCT / WELLNESS / CONTENT" },
+    overview: {
+      ar: "منتج صحة وWellness رقمي صممناه ليجمع بين الهدوء، الوضوح، وتجربة استخدام تشجع على الاستمرار.",
+      en: "A digital wellness product designed to bring calm, clarity and a more consistent user experience together.",
+    },
+    need: {
+      ar: "تجربة صحية تحتاج واجهة بسيطة ونظام محتوى يجعل العادات اليومية أسهل وأوضح.",
+      en: "A wellness experience needed a simple interface and content system that makes daily habits easier to follow.",
+    },
+    direction: {
+      ar: "لغة رقمية هادئة تعتمد على مساحات واضحة، إشارات لونية دقيقة، ومحتوى قصير قابل للفهم.",
+      en: "A calm digital language built around clear space, precise color signals and easy-to-understand content.",
+    },
+    services: {
+      ar: ["استراتيجية رقمية", "UI/UX", "نظام محتوى", "خطة إطلاق"],
+      en: ["Digital strategy", "UI/UX", "Content system", "Launch plan"],
+    },
+    deliverables: {
+      ar: ["اتجاه تجربة المستخدم", "تصور واجهات التطبيق", "نظام محتوى تعليمي", "مواد إطلاق رقمية"],
+      en: [
+        "User-experience direction",
+        "App interface concept",
+        "Educational content system",
+        "Digital launch assets",
+      ],
+    },
+    image: "/nabd-health-club.jpg",
+  },
+  "cairo-after-dark": {
+    slug: "cairo-after-dark",
+    isConcept: true,
+    isSelfInitiated: true,
+    title: { ar: "Cairo After Dark", en: "Cairo After Dark" },
+    category: { ar: "فعالية / حملة / حركة", en: "EVENT / CAMPAIGN / MOTION" },
+    overview: {
+      ar: "هوية فعالية ليلية أصلية تبني حالة بصرية واضحة من البوستر إلى الحملة الرقمية.",
+      en: "An original night-event identity built as a visual world from poster to digital campaign.",
+    },
+    need: {
+      ar: "فعالية ثقافية تحتاج حضورًا سريعًا ومميزًا يشتغل في الشارع، التذاكر، والسوشيال.",
+      en: "A cultural event needed an immediate identity that could work across street posters, tickets and social.",
+    },
+    direction: {
+      ar: "مزجنا الظلال المعمارية مع الليموني الحاد ليظهر الإحساس الليلي ويظل النظام مرنًا للحركة.",
+      en: "Architectural shadows meet acid lime to create a nocturnal feeling with a system ready for motion.",
+    },
+    services: {
+      ar: ["هوية فعالية", "حملة إطلاق", "بوسترات وتذاكر", "Motion direction"],
+      en: ["Event identity", "Launch campaign", "Posters and tickets", "Motion direction"],
+    },
+    deliverables: {
+      ar: ["نظام بصري للفعالية", "بوستر رئيسي", "تصور تذكرة", "قوالب Social وMotion"],
+      en: ["Event visual system", "Key poster", "Ticket concept", "Social and motion templates"],
+    },
+    image: "/cairo-after-dark.jpg",
+  },
+  "studio-27": {
+    slug: "studio-27",
+    isConcept: true,
+    isSelfInitiated: true,
+    title: { ar: "Studio 27", en: "Studio 27" },
+    category: { ar: "إنتاج / تصوير / إخراج", en: "PRODUCTION / PHOTOGRAPHY / DIRECTION" },
+    overview: {
+      ar: "استوديو إنتاج أصلي يوضح كيف يمكن للإخراج الفني ونظام المحتوى أن يصنعا حضورًا متماسكًا.",
+      en: "An original production studio concept showing how art direction and a content system create a coherent presence.",
+    },
+    need: {
+      ar: "فريق إنتاج يحتاج لغة بصرية تبرز الحرفة وتظل قابلة للاستخدام في المشاريع المختلفة.",
+      en: "A production team needed a visual language that highlights craft and remains useful across different projects.",
+    },
+    direction: {
+      ar: "ركزنا على الأدوات، الضوء، والخامة كأبطال بصريين بدل الاعتماد على شعارات مباشرة.",
+      en: "Tools, light and material become the visual protagonists instead of relying on obvious logo treatment.",
+    },
+    services: {
+      ar: ["إخراج فني", "تصوير", "نظام محتوى", "هوية إطلاق"],
+      en: ["Art direction", "Photography", "Content system", "Launch identity"],
+    },
+    deliverables: {
+      ar: ["اتجاه تصوير", "نظام صور وحركة", "قوالب Case Studies", "حزمة إطلاق للاستوديو"],
+      en: [
+        "Photography direction",
+        "Image and motion system",
+        "Case-study templates",
+        "Studio launch kit",
+      ],
+    },
+    image: "/studio-27.jpg",
+  },
+  "common-ground": {
+    slug: "common-ground",
+    isConcept: true,
+    isSelfInitiated: true,
+    title: { ar: "Common Ground", en: "Common Ground" },
+    category: { ar: "مساحة / مجتمع / هوية مكانية", en: "SPACE / COMMUNITY / SPATIAL IDENTITY" },
+    overview: {
+      ar: "هوية مساحة عمل ومجتمع صممناها لتربط بين المكان، الإشارات، والتجربة اليومية.",
+      en: "A workspace and community identity connecting the physical space, wayfinding and everyday experience.",
+    },
+    need: {
+      ar: "مساحة متعددة الاستخدامات تحتاج نظامًا يساعد الناس على فهمها والشعور بالانتماء إليها.",
+      en: "A multi-use space needed a system that helps people navigate it and feel a sense of belonging.",
+    },
+    direction: {
+      ar: "اعتمدنا على خامات دافئة، تقسيمات واضحة، وإشارات بسيطة تخلق نظامًا إنسانيًا لا يبدو مؤسسيًا.",
+      en: "Warm materials, clear zones and simple signals create a human system without feeling overly corporate.",
+    },
+    services: {
+      ar: ["هوية مكانية", "Wayfinding", "تجربة مجتمع", "محتوى المكان"],
+      en: ["Spatial identity", "Wayfinding", "Community experience", "Place content"],
+    },
+    deliverables: {
+      ar: ["نظام ألوان وخامات", "تصور إشارات الحركة", "لوحة مجتمع", "قوالب إطلاق المكان"],
+      en: [
+        "Color and material system",
+        "Movement-signage concept",
+        "Community board",
+        "Space launch templates",
+      ],
+    },
+    image: "/common-ground.jpg",
+  },
+  "alif-learning-lab": {
+    slug: "alif-learning-lab",
+    isConcept: true,
+    isSelfInitiated: true,
+    title: { ar: "Alif Learning Lab", en: "Alif Learning Lab" },
+    category: { ar: "تعليم / محتوى / تجربة رقمية", en: "EDUCATION / CONTENT / DIGITAL EXPERIENCE" },
+    overview: {
+      ar: "منصة تعليمية أصلية تحول المعرفة إلى تجربة واضحة، مرنة، وقابلة للتوسع بصريًا.",
+      en: "An original learning platform turning knowledge into a clear, flexible and scalable visual experience.",
+    },
+    need: {
+      ar: "محتوى تعليمي يحتاج نظامًا يبسّط المعلومة ويحافظ على الفضول عبر الشاشات والمطبوعات.",
+      en: "Educational content needed a system that simplifies information while keeping curiosity alive across formats.",
+    },
+    direction: {
+      ar: "استخدمنا الورق، البطاقات، والرسوم المجردة لبناء لغة تعليمية معاصرة بعيدًا عن شكل المدرسة التقليدي.",
+      en: "Paper, cards and abstract diagrams build a contemporary learning language beyond traditional classroom clichés.",
+    },
+    services: {
+      ar: ["نظام محتوى", "تجربة رقمية", "تعليم بصري", "هوية إطلاق"],
+      en: ["Content system", "Digital experience", "Visual learning", "Launch identity"],
+    },
+    deliverables: {
+      ar: ["نظام شرح بصري", "تصور واجهة تعليمية", "قوالب دروس", "مواد إطلاق للمنصة"],
+      en: [
+        "Visual explanation system",
+        "Learning-interface concept",
+        "Lesson templates",
+        "Platform launch assets",
+      ],
+    },
+    image: "/alif-learning-lab.jpg",
   },
 };

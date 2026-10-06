@@ -397,6 +397,7 @@ export default function ProjectGallery({ onOpenProject }) {
                   width="1080"
                   height="1350"
                   loading={index === 0 ? "eager" : "lazy"}
+                  fetchPriority={index === 0 ? "high" : "low"}
                   decoding="async"
                   className="h-full w-full object-cover opacity-70 grayscale-[30%]"
                   style={{ imageRendering: "auto" }}
@@ -529,6 +530,7 @@ export default function ProjectGallery({ onOpenProject }) {
                   width="1080"
                   height="1350"
                   loading={index === 0 ? "eager" : "lazy"}
+                  fetchPriority={index === 0 ? "high" : "low"}
                   decoding="async"
                   className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105 opacity-80 group-hover:opacity-100 grayscale-[50%] group-hover:grayscale-0 will-change-transform"
                   style={{ imageRendering: "auto" }}

@@ -11,6 +11,11 @@ const PROJECT_DETAIL_COMPONENTS = {
   "nodra-brand-world": lazy(() => import("./ZoomixCaseStudy")),
   "athar-brand-world": lazy(() => import("./ZoomixCaseStudy")),
   "riwaq-brand-world": lazy(() => import("./ZoomixCaseStudy")),
+  "nabd-health-club": lazy(() => import("./ZoomixCaseStudy")),
+  "cairo-after-dark": lazy(() => import("./ZoomixCaseStudy")),
+  "studio-27": lazy(() => import("./ZoomixCaseStudy")),
+  "common-ground": lazy(() => import("./ZoomixCaseStudy")),
+  "alif-learning-lab": lazy(() => import("./ZoomixCaseStudy")),
 };
 
 export function getProjectRouteConfig(slug) {
