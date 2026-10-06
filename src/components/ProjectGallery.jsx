@@ -670,11 +670,7 @@ export default function ProjectGallery({ onOpenProject }) {
             aria-label={t("gallery", "previous")}
             className="flex h-9 w-9 items-center justify-center border border-white/25 text-white transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00] disabled:cursor-not-allowed disabled:opacity-30"
           >
-            <ArrowLeft
-              size={16}
-              className={language === "ar" ? "rotate-180" : ""}
-              aria-hidden="true"
-            />
+            <ArrowLeft size={16} aria-hidden="true" />
           </button>
           <button
             type="button"
@@ -683,11 +679,7 @@ export default function ProjectGallery({ onOpenProject }) {
             aria-label={t("gallery", "next")}
             className="flex h-9 w-9 items-center justify-center border border-white/25 text-white transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00] disabled:cursor-not-allowed disabled:opacity-30"
           >
-            <ArrowRight
-              size={16}
-              className={language === "ar" ? "rotate-180" : ""}
-              aria-hidden="true"
-            />
+            <ArrowRight size={16} aria-hidden="true" />
           </button>
         </div>
       </div>
