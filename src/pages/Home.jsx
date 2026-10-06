@@ -7,6 +7,7 @@ import useLenis from "../hooks/useLenis";
 import useScrollToGallery from "../hooks/useScrollToGallery";
 import SectionSkeleton from "../components/SectionSkeleton";
 import HomeSeo from "../components/HomeSeo";
+import { trackEvent } from "../utils/analytics";
 
 const MarqueeBanner = lazy(() => import("../components/MarqueeBanner"));
 const Footer = lazy(() => import("../components/Footer"));
@@ -56,6 +57,7 @@ export default function Home() {
   const handleOpenProject = useCallback(
     (project) => {
       if (!project?.slug) return;
+      trackEvent("open_project", { project_slug: project.slug, source_section: "gallery" });
       navigate(`/projects/${project.slug}`, {
         state: { backgroundLocation: location },
       });

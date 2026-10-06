@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { trackEvent } from "./utils/analytics";
 
 const STORAGE_KEY = "zoomix-language";
 
@@ -171,7 +172,11 @@ export function I18nProvider({ children }) {
   const value = useMemo(
     () => ({
       language,
-      setLanguage: (next) => setLanguage(next === "en" ? "en" : "ar"),
+      setLanguage: (next) => {
+        const nextLanguage = next === "en" ? "en" : "ar";
+        if (nextLanguage !== language) trackEvent("language_change", { from_language: language, to_language: nextLanguage });
+        setLanguage(nextLanguage);
+      },
       t: (section, key) =>
         translations[language]?.[section]?.[key] ?? translations.ar[section]?.[key] ?? key,
     }),

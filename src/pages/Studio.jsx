@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Check, LogOut, RefreshCw, Search, X } from "lucide-react";
+import { BarChart3, Check, Download, LogOut, RefreshCw, Save, Search, X } from "lucide-react";
 import { useLanguage } from "../i18n";
 
 const STATUS_OPTIONS = [
@@ -34,6 +34,8 @@ export default function Studio() {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [saving, setSaving] = useState(false);
+  const [notesDraft, setNotesDraft] = useState("");
+  const [insights, setInsights] = useState(null);
 
   const label = (ar, en) => (isArabic ? ar : en);
 
@@ -53,6 +55,8 @@ export default function Studio() {
       setNeedsLogin(false);
       setRequests(result.requests || []);
       setSelected((current) => (current ? result.requests?.find((item) => item.id === current.id) || current : result.requests?.[0] || null));
+      const insightsResponse = await fetch("/api/studio/insights");
+      if (insightsResponse.ok) setInsights(await insightsResponse.json());
     } catch (loadError) {
       setError(loadError.message || label("تعذر الاتصال بالاستوديو.", "Could not connect to Studio."));
     } finally {
@@ -63,6 +67,10 @@ export default function Studio() {
   useEffect(() => {
     loadRequests();
   }, []);
+
+  useEffect(() => {
+    setNotesDraft(selected?.notes || "");
+  }, [selected?.id, selected?.notes]);
 
   const login = async (event) => {
     event.preventDefault();
@@ -111,6 +119,32 @@ export default function Studio() {
     }
   };
 
+  const saveNotes = async () => {
+    if (!selected) return;
+    setSaving(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/studio/requests/${selected.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes: notesDraft }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || label("تعذر حفظ الملاحظة.", "Could not save the note."));
+      setRequests((current) => current.map((item) => (item.id === selected.id ? result.request : item)));
+      setSelected(result.request);
+    } catch (saveError) {
+      setError(saveError.message || label("تعذر حفظ الملاحظة.", "Could not save the note."));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const exportRequests = () => {
+    const query = filter === "all" ? "" : `?status=${encodeURIComponent(filter)}`;
+    window.open(`/api/studio/export.csv${query}`, "_blank", "noopener,noreferrer");
+  };
+
   const visibleRequests = useMemo(() => {
     const query = search.trim().toLowerCase();
     return requests.filter((request) => {
@@ -127,6 +161,7 @@ export default function Studio() {
     total: requests.length,
     new: requests.filter((request) => request.status === "new").length,
     contacted: requests.filter((request) => request.status === "contacted").length,
+    inProgress: requests.filter((request) => request.status === "in-progress").length,
     won: requests.filter((request) => request.status === "won").length,
   }), [requests]);
 
@@ -184,6 +219,10 @@ export default function Studio() {
             <button type="button" onClick={loadRequests} className="flex h-10 w-10 items-center justify-center border border-white/20 text-white/70 transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00]" aria-label={label("تحديث", "Refresh")}>
               <RefreshCw size={16} />
             </button>
+            <button type="button" onClick={exportRequests} className="hidden items-center gap-2 border border-white/20 px-4 py-2 text-xs font-bold text-white/70 transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00] sm:flex">
+              <Download size={15} />
+              {label("تصدير", "Export")}
+            </button>
             <button type="button" onClick={logout} className="flex items-center gap-2 border border-white/20 px-4 py-2 text-xs font-bold text-white/70 transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00]">
               <LogOut size={15} />
               {label("خروج", "Log out")}
@@ -203,11 +242,12 @@ export default function Studio() {
           <p className="max-w-sm text-sm leading-6 text-black/55">{label("كل بريف هو بداية خطوة جديدة. رتب، تابع، وخد القرار من مكان واحد.", "Every brief is the beginning of a next move. Organize, follow up, and decide from one place.")}</p>
         </div>
 
-        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {[
             [label("كل الطلبات", "ALL REQUESTS"), counts.total],
             [label("جديد", "NEW"), counts.new],
             [label("تم التواصل", "CONTACTED"), counts.contacted],
+            [label("قيد التنفيذ", "IN PROGRESS"), counts.inProgress],
             [label("تم الاتفاق", "WON"), counts.won],
           ].map(([title, value]) => (
             <div key={title} className="border border-black/15 bg-white p-5">
@@ -216,6 +256,42 @@ export default function Studio() {
             </div>
           ))}
         </div>
+
+        {insights && (
+          <section className="mt-6 border border-black/15 bg-white p-5 md:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-black/10 pb-4">
+              <div className="flex items-center gap-3">
+                <BarChart3 size={18} />
+                <div>
+                  <p className="font-mono text-[10px] font-bold tracking-[0.16em] text-black/45">ZOOMIX / SIGNALS</p>
+                  <h2 className="mt-1 text-xl font-black">{label("الصورة من جوه الطلبات", "The signal inside the requests")}</h2>
+                </div>
+              </div>
+              <p className="text-xs text-black/45">{label("ملخص تشغيلي بدون بيانات حساسة.", "Operational summary — no sensitive data.")}</p>
+            </div>
+            <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+              {[
+                [label("المسارات", "PATHS"), insights.routes],
+                [label("الاحتياجات", "NEEDS"), insights.services],
+                [label("مصادر الوصول", "SOURCES"), insights.sources],
+                [label("تفاعل الموقع", "SITE ACTIONS"), insights.events],
+              ].map(([title, items]) => (
+                <div key={title}>
+                  <p className="font-mono text-[10px] font-bold tracking-[0.14em] text-black/45">{title}</p>
+                  <div className="mt-3 space-y-2">
+                    {(items || []).slice(0, 5).map((item) => (
+                      <div key={`${title}-${item.key}`} className="flex items-center justify-between gap-3 border-b border-black/10 pb-2 text-sm">
+                        <span className="truncate">{item.key}</span>
+                        <span className="font-mono font-bold text-[#5e7c00]">{item.count}</span>
+                      </div>
+                    ))}
+                    {!items?.length && <p className="text-sm text-black/40">{label("لسه مفيش بيانات", "No data yet")}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <div className="mt-10 flex flex-col gap-3 border-y border-black/15 py-4 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap gap-2">
@@ -308,6 +384,22 @@ export default function Studio() {
                   <select value={selected.status} onChange={(event) => updateStatus(selected.id, event.target.value)} disabled={saving} className="mt-3 w-full border border-white/20 bg-white/5 px-3 py-3 text-white outline-none focus:border-[#BBFF00]">
                     {STATUS_OPTIONS.map((status) => <option key={status.value} value={status.value} className="bg-[#0A0A0A]">{status[language]}</option>)}
                   </select>
+                </div>
+                <div className="mt-6 border-t border-white/15 pt-5">
+                  <label htmlFor="studio-notes" className="font-mono text-[10px] tracking-[0.14em] text-white/45">{label("ملاحظة داخلية", "INTERNAL NOTE")}</label>
+                  <textarea
+                    id="studio-notes"
+                    value={notesDraft}
+                    onChange={(event) => setNotesDraft(event.target.value)}
+                    rows={4}
+                    maxLength={4000}
+                    placeholder={label("اكتب الخطوة الجاية أو آخر تواصل...", "Write the next move or last contact...")}
+                    className="mt-3 w-full resize-y border border-white/20 bg-white/5 px-3 py-3 text-sm leading-6 text-white outline-none placeholder:text-white/30 focus:border-[#BBFF00]"
+                  />
+                  <button type="button" onClick={saveNotes} disabled={saving} className="mt-3 inline-flex items-center gap-2 border border-[#BBFF00] px-4 py-2 text-xs font-bold text-[#BBFF00] transition-colors hover:bg-[#BBFF00] hover:text-[#0A0A0A] disabled:opacity-50">
+                    <Save size={14} />
+                    {saving ? label("جارٍ الحفظ", "Saving") : label("حفظ الملاحظة", "Save note")}
+                  </button>
                 </div>
                 <p className="mt-5 flex items-center gap-2 font-mono text-[10px] tracking-[0.08em] text-white/40">
                   <Check size={14} className="text-[#BBFF00]" />

@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState, memo } from "react";
+import { useEffect, useMemo, useState, memo, useRef } from "react";
 import { ArrowUpLeft, ArrowUpRight, Check, MessageCircle } from "lucide-react";
 import { useLanguage } from "../i18n";
+import { trackEvent } from "../utils/analytics";
 import { ZOOMIX_PACKAGES } from "../data/zoomixPackages";
 import {
   ZOOMIX_CONTENT_PACKAGES,
@@ -171,6 +172,8 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
   const [messageCopied, setMessageCopied] = useState(false);
   const [referenceCode, setReferenceCode] = useState("");
   const [submitError, setSubmitError] = useState("");
+  const sectionRef = useRef(null);
+  const briefStartedRef = useRef(false);
 
   useEffect(() => {
     const applyPackage = (id) =>
@@ -215,6 +218,19 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       window.removeEventListener("zoomix:package-select", onPackageSelect);
       window.removeEventListener("zoomix:route-select", onRouteSelect);
     };
+  }, []);
+
+  useEffect(() => {
+    const node = sectionRef.current;
+    if (!node) return undefined;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        trackEvent("reach_project_brief", { source_section: "project_brief" });
+        observer.disconnect();
+      }
+    }, { threshold: 0.2 });
+    observer.observe(node);
+    return () => observer.disconnect();
   }, []);
 
   const label = (ar, en) => (isArabic ? ar : en);
@@ -401,6 +417,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
     }
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) {
+      trackEvent("validation_error", { field_name: Object.keys(nextErrors)[0] || "unknown" });
       setSubmitted(false);
       return;
     }
@@ -417,7 +434,9 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       if (!response.ok) throw new Error(result.error || label("حصلت مشكلة أثناء حفظ الطلب.", "We could not save the brief."));
       setReferenceCode(result.referenceCode || "");
       setSubmitted(true);
+      trackEvent("brief_submitted", { route: form.route || "unknown", package_id: form.offerId || form.packageId || "none" });
       if (form.contactPreference === "whatsapp") {
+        trackEvent("send_to_whatsapp", { route: form.route || "unknown", package_id: form.offerId || form.packageId || "none" });
         const whatsappWindow = window.open(
           `https://wa.me/201555451535?text=${encodeURIComponent(buildMessage(result.referenceCode))}`,
           "_blank",
@@ -438,6 +457,12 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
     } catch {
       setMessageCopied(false);
     }
+  };
+
+  const handleBriefFocus = () => {
+    if (briefStartedRef.current) return;
+    briefStartedRef.current = true;
+    trackEvent("start_brief", { source_section: "project_brief" });
   };
 
   const field = (key, labelText, type = "text", required = false) => (
@@ -497,6 +522,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
 
   return (
     <section
+      ref={sectionRef}
       id="contact-section"
       className="zoomix-section relative overflow-hidden bg-[#0A0A0A] text-white"
       dir={isArabic ? "rtl" : "ltr"}
@@ -563,6 +589,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
           </div>
           <form
             onSubmit={handleSubmit}
+            onFocusCapture={handleBriefFocus}
             noValidate
             className="relative grid min-w-0 gap-5 overflow-hidden border border-white/10 bg-[#F5F4EF] p-5 text-[#0A0A0A] shadow-[0_16px_60px_rgba(0,0,0,0.22)] sm:grid-cols-2 md:p-10"
           >

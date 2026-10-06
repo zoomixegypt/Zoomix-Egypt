@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import Studio from "./pages/Studio";
 import ProjectDetailModal from "./components/projects/ProjectDetailModal";
 import SectionSkeleton from "./components/SectionSkeleton";
+import AnalyticsConsent from "./components/AnalyticsConsent";
 
 const RouteFinder = lazy(() => import("./pages/RouteFinder"));
 
@@ -123,6 +124,7 @@ export default function App() {
           <Route path="/projects/:slug" element={<ProjectDetailModal />} />
         </Routes>
       )}
+      {!location.pathname.startsWith("/studio") && <AnalyticsConsent />}
     </>
   );
 }

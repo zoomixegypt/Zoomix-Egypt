@@ -3,6 +3,7 @@ import { Check } from "lucide-react";
 import { useLanguage } from "../i18n";
 import { Gsap } from "../utils/gsapAnimate";
 import { ZOOMIX_PACKAGES } from "../data/zoomixPackages";
+import { trackEvent } from "../utils/analytics";
 import {
   ZOOMIX_CONTENT_PACKAGES,
   ZOOMIX_EVENT_PACKAGES,
@@ -12,7 +13,7 @@ import {
 
 const labelFor = (value, language) => value?.[language] || value || "";
 
-function saveSelection(route, offerId, isStart = false) {
+function saveSelection(route, offerId, isStart = false, language = "ar") {
   const selection = { route, packageId: offerId, savedAt: new Date().toISOString() };
   if (isStart) {
     window.localStorage.setItem("zoomix-selected-package", offerId);
@@ -24,6 +25,7 @@ function saveSelection(route, offerId, isStart = false) {
     window.dispatchEvent(new CustomEvent("zoomix:package-select", { detail: offerId }));
   }
   window.dispatchEvent(new CustomEvent("zoomix:route-select", { detail: selection }));
+  trackEvent("choose_package", { package_id: offerId, source_section: "packages", language });
   document.getElementById("contact-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -88,7 +90,7 @@ function OfferTierCard({ offer, language, route, isStart, index }) {
       {note && <p className="mt-5 text-xs leading-5 text-white/45">{note}</p>}
       <button
         type="button"
-        onClick={() => saveSelection(route, offer.id, isStart)}
+        onClick={() => saveSelection(route, offer.id, isStart, language)}
         data-cursor-label={isArabic ? "اختار" : "CHOOSE"}
         className={`mt-6 zoomix-button w-full ${offer.featured ? "bg-[#BBFF00] text-[#0A0A0A]" : "border-white/30 text-white"}`}
       >
@@ -228,7 +230,7 @@ const PackagesSection = memo(function PackagesSection() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.2 }}
                   transition={{ duration: 0.45, delay: index * 0.04, ease: "easeOut" }}
-                  onClick={() => saveSelection("one-off", service.id)}
+                  onClick={() => saveSelection("one-off", service.id, false, language)}
                   className="direct-service-card flex min-h-20 items-center justify-between gap-3 border border-white/15 px-4 py-3 text-start transition-colors hover:border-[#BBFF00]"
                 >
                   <span className="text-sm font-bold text-white/85">{service.name}</span>

@@ -7,6 +7,7 @@ import {
   ZOOMIX_PARTNER_PACKAGES,
 } from "../data/zoomixOfferings";
 import { ZOOMIX_PACKAGES as ZOOMIX_START_PACKAGES } from "../data/zoomixPackages";
+import { trackEvent } from "../utils/analytics";
 
 const copy = {
   ar: {
@@ -203,10 +204,11 @@ function scrollToSection(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function saveRoute(route, packageId = "") {
+function saveRoute(route, packageId = "", language = "ar") {
   const selection = { route, packageId, savedAt: new Date().toISOString() };
   window.localStorage.setItem("zoomix-project-route", JSON.stringify(selection));
   window.dispatchEvent(new CustomEvent("zoomix:route-select", { detail: selection }));
+  trackEvent("route_finder_recommendation", { route, package_id: packageId, language });
 }
 
 function getRecommendation(stage, need, goal) {
@@ -314,12 +316,13 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false } =
   const selectedValue = step === 1 ? answers.stage : step === 2 ? answers.need : answers.goal;
 
   const chooseAnswer = (value) => {
+    trackEvent("route_finder_answer", { step, answer: value });
     if (step === 1) setAnswers({ stage: value, need: "", goal: "" });
     if (step === 2) setAnswers((current) => ({ ...current, need: value, goal: "" }));
     if (step === 3) {
       setAnswers((current) => ({ ...current, goal: value }));
       const nextRecommendation = getRecommendation(answers.stage, answers.need, value);
-      saveRoute(nextRecommendation.route, nextRecommendation.packageId || "");
+      saveRoute(nextRecommendation.route, nextRecommendation.packageId || "", language);
     }
     if (step < 3) setStep((current) => current + 1);
   };
@@ -332,7 +335,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false } =
   };
 
   const chooseOffer = (route, id) => {
-    saveRoute(route, id);
+    saveRoute(route, id, language);
     scrollToSection(standalone ? "route-finder-contact" : "contact-section");
   };
 
@@ -362,6 +365,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false } =
   };
 
   const startMatch = (route) => {
+    trackEvent("route_finder_start", { route });
     setSelectedRoute(route);
     setAnswers({ stage: route, need: "", goal: "" });
     setStep(2);
