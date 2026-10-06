@@ -99,13 +99,15 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
 
   const field = (key, labelText, type = "text", required = false) => (
     <label className="block">
-      <span className="mb-2 block text-sm font-bold">{labelText}</span>
+      <span className="mb-2 block font-mono text-xs font-bold uppercase tracking-[0.08em] text-black/75">
+        {labelText}
+      </span>
       <input
         id={`brief-${key}`}
         type={type}
         value={form[key]}
         onChange={(event) => updateField(key, event.target.value)}
-        className={`min-w-0 w-full border bg-white px-4 py-3 outline-none transition-colors focus:border-[#6b8d00] ${errors[key] ? "border-red-500" : "border-black/30"}`}
+        className={`min-w-0 w-full border bg-white px-4 py-3.5 outline-none transition-colors focus:border-[#6b8d00] focus:ring-2 focus:ring-[#BBFF00]/35 ${errors[key] ? "border-red-500" : "border-black/25"}`}
         aria-invalid={Boolean(errors[key])}
         aria-describedby={errors[key] ? `brief-${key}-error` : undefined}
         required={required}
@@ -175,14 +177,18 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
               target="_blank"
               rel="noreferrer"
             >
-              <MessageCircle size={20} /> +20 15 5545 1535
+              <MessageCircle size={20} />
+              <span dir="ltr" className="[unicode-bidi:isolate]">
+                +20 15 5545 1535
+              </span>
             </a>
           </div>
           <form
             onSubmit={handleSubmit}
             noValidate
-            className="grid min-w-0 gap-5 overflow-hidden bg-[#F5F4EF] p-5 text-[#0A0A0A] shadow-[0_16px_60px_rgba(0,0,0,0.16)] sm:grid-cols-2 md:p-10"
+            className="relative grid min-w-0 gap-5 overflow-hidden border border-white/10 bg-[#F5F4EF] p-5 text-[#0A0A0A] shadow-[0_16px_60px_rgba(0,0,0,0.22)] sm:grid-cols-2 md:p-10"
           >
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-[#BBFF00]" />
             {Object.keys(errors).length > 0 && (
               <div
                 className="sm:col-span-2 border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800"
@@ -200,11 +206,13 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
             {field("activity", label("نوع النشاط", "Business type"))}
             {field("service", label("نوع الخدمة *", "Service type *"), "text", true)}
             <label className="block">
-              <span className="block text-sm font-bold mb-2">{label("الباقة", "Package")}</span>
+              <span className="mb-2 block font-mono text-xs font-bold uppercase tracking-[0.08em] text-black/75">
+                {label("الباقة", "Package")}
+              </span>
               <select
                 value={form.packageId}
                 onChange={(event) => updateField("packageId", event.target.value)}
-                className="min-w-0 w-full border border-black/30 bg-white px-4 py-3 outline-none transition-colors focus:border-[#6b8d00]"
+                className="min-w-0 w-full border border-black/25 bg-white px-4 py-3.5 outline-none transition-colors focus:border-[#6b8d00] focus:ring-2 focus:ring-[#BBFF00]/35"
               >
                 <option value="">{label("اختار الباقة", "Choose a package")}</option>
                 {ZOOMIX_PACKAGES.map((pkg) => (
@@ -218,7 +226,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
             {field("budget", label("الميزانية التقريبية", "Approx. budget"))}
             {field("launchDate", label("موعد الإطلاق", "Launch date"), "date")}
             <label className="block sm:col-span-2">
-              <span className="block text-sm font-bold mb-2">
+              <span className="mb-2 block font-mono text-xs font-bold uppercase tracking-[0.08em] text-black/75">
                 {label("وصف مختصر *", "Short description *")}
               </span>
               <textarea
@@ -226,7 +234,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 rows="5"
                 value={form.description}
                 onChange={(event) => updateField("description", event.target.value)}
-                className={`min-h-36 min-w-0 w-full resize-y border bg-white px-4 py-3 outline-none transition-colors focus:border-[#6b8d00] ${errors.description ? "border-red-500" : "border-black/30"}`}
+                className={`min-h-36 min-w-0 w-full resize-y border bg-white px-4 py-3.5 outline-none transition-colors focus:border-[#6b8d00] focus:ring-2 focus:ring-[#BBFF00]/35 ${errors.description ? "border-red-500" : "border-black/25"}`}
                 aria-invalid={Boolean(errors.description)}
                 aria-describedby={errors.description ? "brief-description-error" : undefined}
                 required
@@ -239,15 +247,9 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
               )}
             </label>
             <div className="sm:col-span-2 flex flex-col items-stretch justify-between gap-4 pt-3 sm:flex-row sm:items-center">
-              <p className="text-xs leading-5 text-black/65">
-                {label(
-                  "سيتم فتح واتساب بعد الضغط فقط، ولا يتم حفظ البيانات على Server.",
-                  "WhatsApp opens only after submit; no server database is used.",
-                )}
-              </p>
               <button
                 type="submit"
-                className="zoomix-button w-full bg-[#BBFF00] text-[#0A0A0A] sm:w-auto"
+                className="zoomix-button w-full bg-[#BBFF00] text-[#0A0A0A] shadow-[0_8px_24px_rgba(187,255,0,0.15)] sm:w-auto"
               >
                 {label("إرسال على واتساب", "Send to WhatsApp")} <ActionArrow size={18} />
               </button>
