@@ -12,7 +12,7 @@ export const PROJECT_META = [
     badgeAr: "مشروع نظام محتوى",
     badgeEn: "Content system project",
     color: "bg-[#BBFF00]",
-    img: "/social-master.svg",
+    img: "/mawj-coffee.jpg",
   },
   {
     id: 2,
@@ -27,7 +27,7 @@ export const PROJECT_META = [
     badgeAr: "مشروع نظام قصص",
     badgeEn: "Story system project",
     color: "bg-[#A5A5A5]",
-    img: "/story-master.svg",
+    img: "/nawa-learning.jpg",
   },
   {
     id: 3,
@@ -42,7 +42,7 @@ export const PROJECT_META = [
     badgeAr: "مشروع نظام فيديو قصير",
     badgeEn: "Short-form video project",
     color: "bg-[#A5A5A5]",
-    img: "/reel-master.svg",
+    img: "/tawazon-studio.jpg",
   },
   {
     id: 4,

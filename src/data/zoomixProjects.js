@@ -36,7 +36,7 @@ export const ZOOMIX_PROJECTS = {
         "Four-week launch plan",
       ],
     },
-    image: "/social-master.svg",
+    image: "/mawj-coffee.jpg",
   },
   "story-system": {
     slug: "story-system",
@@ -75,7 +75,7 @@ export const ZOOMIX_PROJECTS = {
         "Team usage guide",
       ],
     },
-    image: "/story-master.svg",
+    image: "/nawa-learning.jpg",
   },
   "reel-system": {
     slug: "reel-system",
@@ -114,7 +114,7 @@ export const ZOOMIX_PROJECTS = {
         "Publish-ready output pack",
       ],
     },
-    image: "/reel-master.svg",
+    image: "/tawazon-studio.jpg",
   },
   "mirsa-brand-world": {
     slug: "mirsa-brand-world",
