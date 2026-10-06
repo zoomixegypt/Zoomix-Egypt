@@ -46,6 +46,9 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
           >
             {t("hero", "description")}
           </p>
+          <p className="zoomix-reveal zoomix-reveal-delay-2 mt-3 max-w-xl text-sm leading-6 text-[#BBFF00]/80">
+            {t("hero", "partnerLine")}
+          </p>
           <div className="zoomix-reveal zoomix-reveal-delay-3 relative z-10 -mx-2 mt-9 flex w-fit flex-wrap items-center gap-3 rounded-full bg-[#0A0A0A]/85 px-2 py-2">
             <a href="#contact-section" className="zoomix-button bg-[#BBFF00] text-black">
               {t("nav", "start")} <ActionArrow size={20} />

@@ -22,6 +22,7 @@ const translations = {
       titleAccent: "يظهر",
       titleB: "بالشكل اللي يستحقه.",
       description: "هوية، محتوى، تصوير وحضور رقمي في اتجاه واحد واضح.",
+      partnerLine: "شريكك الإبداعي من أول فكرة مشروعك لحد ما يبقى جاهز للظهور والانطلاق.",
       work: "شوف أعمالنا",
       build: "BUILD THE BRAND",
       show: "SHOW THE WORK",
@@ -42,6 +43,8 @@ const translations = {
       eyebrow: "01. الأساس",
       problem: "مش لازم تتعامل مع خمس جهات علشان تبدأ صح.",
       intro: "Zoomix تجمع الهوية والمحتوى والتصوير والمطبوعات والحضور الرقمي في اتجاه واحد.",
+      partnerIntro:
+        "مش مجرد خدمات منفصلة؛ إحنا شريك عملي للمشروعات الصغيرة والناشئة، بنرتب الصورة ونتحمل مسؤولية تنفيذها.",
       build: "نبني الأساس",
       buildText: "اللوجو والهوية والتطبيقات والمطبوعات.",
       show: "نظهر المشروع",
@@ -50,7 +53,7 @@ const translations = {
       launchText: "Landing Page وتجهيز الحسابات وخطة الإطلاق.",
       why: "ليه Zoomix؟",
       whyItems: [
-        "شريك واحد بدل جهات متعددة.",
+        "مشروعك مشروعنا — من الفكرة للتنفيذ.",
         "اتجاه بصري متسق.",
         "نطاق وسعر واضح.",
         "مخرجات جاهزة للاستخدام.",
@@ -62,6 +65,7 @@ const translations = {
       title: "جاهز نرتب",
       accent: "صورة مشروعك؟",
       description: "هوية، محتوى، تصوير وحضور رقمي في اتجاه واحد واضح.",
+      promise: "إنت ركّز في شغلك، وإحنا نرتب الصورة.",
       sitemap: "روابط الموقع",
       socials: "السوشيال ميديا",
       whatsapp: "واتساب",
@@ -89,6 +93,8 @@ const translations = {
       titleB: "the way it deserves.",
       description:
         "Identity, content, photography and digital presence, built in one clear direction.",
+      partnerLine:
+        "Your creative partner from the first idea to a project ready to show up and launch.",
       work: "View our work",
       build: "BUILD THE BRAND",
       show: "SHOW THE WORK",
@@ -110,6 +116,8 @@ const translations = {
       problem: "You should not need five different partners to start right.",
       intro:
         "Zoomix brings identity, content, photography, print and digital presence into one clear direction.",
+      partnerIntro:
+        "Not a list of separate services; a practical creative partner for small and growing businesses, organizing the work and owning the execution.",
       build: "BUILD — The foundation",
       buildText: "Logo, identity, applications and print.",
       show: "SHOW — The project",
@@ -118,7 +126,7 @@ const translations = {
       launchText: "Landing page, account setup and launch plan.",
       why: "Why Zoomix?",
       whyItems: [
-        "One partner instead of many.",
+        "Your project is ours — from idea to execution.",
         "A consistent visual direction.",
         "Clear scope and pricing.",
         "Ready-to-use deliverables.",
@@ -131,6 +139,7 @@ const translations = {
       accent: "BUILD.",
       description:
         "Identity, content, photography and digital presence, built in one clear direction.",
+      promise: "Focus on your business. We will organize the creative picture.",
       sitemap: "Sitemap",
       socials: "Social networks",
       whatsapp: "WhatsApp",

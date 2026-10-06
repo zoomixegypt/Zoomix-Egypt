@@ -33,6 +33,9 @@ const ServicesSection = memo(function ServicesSection() {
             <p className="mb-14 max-w-2xl text-xl leading-[1.65] text-black/75 md:text-2xl">
               {t("services", "intro")}
             </p>
+            <p className="-mt-8 mb-10 max-w-2xl text-base leading-7 text-black/60 md:text-lg">
+              {t("services", "partnerIntro")}
+            </p>
             <div className="connection-line mb-12" aria-hidden="true" />
             <div className="grid md:grid-cols-3 gap-8">
               {serviceKeys.map(([number, titleKey, textKey]) => (

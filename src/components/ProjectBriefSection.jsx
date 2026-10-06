@@ -149,6 +149,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 "Share the essentials and we will organize the next step on WhatsApp.",
               )}
             </p>
+            <p className="mt-4 text-[#BBFF00] leading-7">{t("footer", "promise")}</p>
             <div className="mt-8 grid max-w-sm grid-cols-3 gap-2">
               {[
                 label("واتساب مباشر", "DIRECT WHATSAPP"),
