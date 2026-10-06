@@ -33,9 +33,9 @@ const MarqueeBanner = memo(function MarqueeBanner() {
     >
       <div className="bg-black shadow-[0_0_40px_rgba(187,255,0,0.12)]">
         {/* ── Row 1: Solid Lime Text, scrolling left ── */}
-        <div className="py-4 md:py-6 overflow-hidden relative group border-b border-neutral-800/60">
+        <div className="relative overflow-hidden border-b border-neutral-800/60 py-3 sm:py-4 md:py-6">
           <div
-            className="flex whitespace-nowrap gap-6 md:gap-14 will-change-transform group-hover:[animation-play-state:paused]"
+            className="group flex w-max whitespace-nowrap gap-5 will-change-transform hover:[animation-play-state:paused] sm:gap-8 md:gap-14"
             dir="ltr"
             style={{
               animation: `${language === "ar" ? "marquee-scroll-right" : "marquee-scroll-left"} 28s linear infinite`,
@@ -44,10 +44,10 @@ const MarqueeBanner = memo(function MarqueeBanner() {
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className={`flex gap-6 md:gap-14 text-lg sm:text-2xl md:text-4xl font-extrabold uppercase items-center ${marqueeFont}`}
+                className={`flex items-center gap-5 text-base font-extrabold uppercase sm:gap-8 sm:text-2xl md:gap-14 md:text-4xl ${marqueeFont}`}
               >
                 {skills.map((skill, j) => (
-                  <span key={j} className="flex items-center gap-6 md:gap-14">
+                  <span key={j} className="flex items-center gap-5 sm:gap-8 md:gap-14">
                     <button
                       type="button"
                       onClick={() => scrollToSkill(skill.target)}
@@ -63,14 +63,14 @@ const MarqueeBanner = memo(function MarqueeBanner() {
           </div>
 
           {/* Edge Fades */}
-          <div className="absolute inset-y-0 left-0 w-16 md:w-32 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none" />
-          <div className="absolute inset-y-0 right-0 w-16 md:w-32 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-black to-transparent sm:w-16 md:w-32" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-black to-transparent sm:w-16 md:w-32" />
         </div>
 
         {/* ── Row 2: Green background, scrolling right ── */}
-        <div className="py-2.5 md:py-4 bg-[#BBFF00] overflow-hidden relative group">
+        <div className="relative overflow-hidden bg-[#BBFF00] py-2 sm:py-3 md:py-4">
           <div
-            className="flex whitespace-nowrap gap-6 md:gap-12 will-change-transform group-hover:[animation-play-state:paused]"
+            className="group flex w-max whitespace-nowrap gap-5 will-change-transform hover:[animation-play-state:paused] sm:gap-8 md:gap-12"
             dir="ltr"
             style={{
               animation: `${language === "ar" ? "marquee-scroll-left" : "marquee-scroll-right"} 32s linear infinite`,
@@ -79,10 +79,10 @@ const MarqueeBanner = memo(function MarqueeBanner() {
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className={`flex gap-6 md:gap-12 text-base sm:text-lg md:text-2xl font-extrabold uppercase items-center ${marqueeFont}`}
+                className={`flex items-center gap-5 text-sm font-extrabold uppercase sm:gap-8 sm:text-lg md:gap-12 md:text-2xl ${marqueeFont}`}
               >
                 {skills.map((skill, j) => (
-                  <span key={j} className="flex items-center gap-6 md:gap-12">
+                  <span key={j} className="flex items-center gap-5 sm:gap-8 md:gap-12">
                     <button
                       type="button"
                       onClick={() => scrollToSkill(skill.target)}
@@ -98,8 +98,8 @@ const MarqueeBanner = memo(function MarqueeBanner() {
           </div>
 
           {/* Edge Fades */}
-          <div className="absolute inset-y-0 left-0 w-12 md:w-24 bg-gradient-to-r from-[#BBFF00] to-transparent z-10 pointer-events-none" />
-          <div className="absolute inset-y-0 right-0 w-12 md:w-24 bg-gradient-to-l from-[#BBFF00] to-transparent z-10 pointer-events-none" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-gradient-to-r from-[#BBFF00] to-transparent sm:w-12 md:w-24" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l from-[#BBFF00] to-transparent sm:w-12 md:w-24" />
         </div>
       </div>
     </div>

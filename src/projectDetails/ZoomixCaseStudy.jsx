@@ -69,6 +69,8 @@ export default function ZoomixCaseStudy() {
               width="1080"
               height="1350"
               loading="eager"
+              fetchPriority="high"
+              decoding="async"
               className="w-full h-full object-cover"
               fallbackClassName="w-full h-full aspect-[4/5]"
             />

@@ -419,7 +419,7 @@ export default function ProjectGallery({ onOpenProject }) {
               </div>
 
               {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/65 to-transparent" />
 
               {/* Number badge */}
               <div className="absolute top-4 right-4 z-10">
@@ -429,7 +429,7 @@ export default function ProjectGallery({ onOpenProject }) {
               </div>
 
               {/* Category + Title */}
-              <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
+              <div className="absolute bottom-0 left-0 right-0 z-10 border-t border-white/10 bg-black/35 p-5 backdrop-blur-[2px]">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#BBFF00] shadow-[0_0_6px_rgba(187,255,0,0.8)]" />
                   <span className="text-[10px] font-mono font-bold uppercase tracking-[0.16em] text-white/70">
@@ -437,7 +437,7 @@ export default function ProjectGallery({ onOpenProject }) {
                   </span>
                 </div>
                 {project.isConcept && (
-                  <span className="mb-2 inline-flex border border-[#BBFF00]/50 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-[#BBFF00]">
+                  <span className="mb-2 inline-flex border border-[#BBFF00] bg-[#BBFF00]/90 px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-black shadow-[0_0_12px_rgba(187,255,0,0.2)]">
                     {project.isSelfInitiated
                       ? project.badge
                       : language === "ar"
@@ -554,10 +554,10 @@ export default function ProjectGallery({ onOpenProject }) {
               </div>
 
               {/* Premium dark gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90 transition-opacity duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent opacity-95 transition-opacity duration-500" />
 
               {/* Info panel */}
-              <div className="absolute bottom-0 left-0 w-full p-10 flex flex-col justify-end translate-y-4 group-hover:translate-y-0 transition-transform duration-500 ease-out z-10">
+              <div className="absolute bottom-0 left-0 z-10 flex w-full translate-y-4 flex-col justify-end border-t border-white/10 bg-black/40 p-8 backdrop-blur-[3px] transition-transform duration-500 ease-out group-hover:translate-y-0 lg:p-10">
                 <div className="flex justify-between items-end gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-3">
@@ -567,7 +567,7 @@ export default function ProjectGallery({ onOpenProject }) {
                       </span>
                     </div>
                     {project.isConcept && (
-                      <span className="mb-3 inline-flex border border-[#BBFF00]/50 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-[#BBFF00]">
+                      <span className="mb-3 inline-flex border border-[#BBFF00] bg-[#BBFF00]/90 px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-black shadow-[0_0_14px_rgba(187,255,0,0.2)]">
                         {project.isSelfInitiated
                           ? project.badge
                           : language === "ar"

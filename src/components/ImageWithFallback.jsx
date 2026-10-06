@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function ImageWithFallback({
   src,
@@ -6,9 +6,16 @@ export default function ImageWithFallback({
   fallbackLabel = "ZOOMIX",
   className = "",
   fallbackClassName = "",
+  style,
   ...props
 }) {
   const [hasError, setHasError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+    setIsLoaded(false);
+  }, [src]);
 
   if (hasError) {
     return (
@@ -23,6 +30,14 @@ export default function ImageWithFallback({
   }
 
   return (
-    <img src={src} alt={alt} onError={() => setHasError(true)} {...props} className={className} />
+    <img
+      src={src}
+      alt={alt}
+      onLoad={() => setIsLoaded(true)}
+      onError={() => setHasError(true)}
+      {...props}
+      className={`${className} transition-opacity duration-500`}
+      style={{ ...style, opacity: isLoaded ? style?.opacity : 0.18 }}
+    />
   );
 }
