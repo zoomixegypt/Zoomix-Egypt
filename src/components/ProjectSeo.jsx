@@ -66,6 +66,12 @@ export default function ProjectSeo({ project }) {
     return () => {
       document.title = language === "ar" ? "ZOOMIX — شريكك الإبداعي" : "ZOOMIX — Creative Partner";
       document.head.querySelector('link[rel="canonical"]')?.setAttribute("href", `${SITE_URL}/`);
+      document
+        .querySelector('meta[property="og:image"]')
+        ?.setAttribute("content", `${SITE_URL}/og-image.svg`);
+      document
+        .querySelector('meta[name="twitter:image"]')
+        ?.setAttribute("content", `${SITE_URL}/og-image.svg`);
       document.getElementById(schemaId)?.remove();
     };
   }, [language, project]);

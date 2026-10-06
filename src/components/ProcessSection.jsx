@@ -2,6 +2,7 @@ import { useState, memo } from "react";
 import { ChevronDown } from "lucide-react";
 import { useLanguage } from "../i18n";
 import { PROCESS_STEPS, FAQ_ITEMS } from "../data/processFaq";
+import { Gsap } from "../utils/gsapAnimate";
 
 const ProcessSection = memo(function ProcessSection() {
   const { language } = useLanguage();
@@ -27,12 +28,16 @@ const ProcessSection = memo(function ProcessSection() {
         </h2>
         <div className="mt-16 grid md:grid-cols-4 gap-8 relative">
           <div
-            className="connection-line absolute top-0 left-0 right-0 hidden md:block"
+            className="connection-line process-connection-line absolute top-0 left-0 right-0 hidden md:block"
             aria-hidden="true"
           />
-          {PROCESS_STEPS.map((step) => (
-            <article
+          {PROCESS_STEPS.map((step, index) => (
+            <Gsap.article
               key={step.key}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.65, delay: index * 0.08, ease: "easeOut" }}
               className="relative pt-8 border-t md:border-t-0 border-black/20"
             >
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#BBFF00] font-mono text-[10px] font-bold text-black">
@@ -46,7 +51,7 @@ const ProcessSection = memo(function ProcessSection() {
                   : step.key.toUpperCase()}
               </h3>
               <p className="mt-4 text-black/60 leading-7">{isArabic ? step.ar : step.en}</p>
-            </article>
+            </Gsap.article>
           ))}
         </div>
 

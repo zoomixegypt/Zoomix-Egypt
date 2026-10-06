@@ -2,6 +2,12 @@ import { useEffect, useMemo, useState, memo } from "react";
 import { ArrowUpLeft, ArrowUpRight, Check, MessageCircle } from "lucide-react";
 import { useLanguage } from "../i18n";
 import { ZOOMIX_PACKAGES } from "../data/zoomixPackages";
+import {
+  ZOOMIX_CONTENT_PACKAGES,
+  ZOOMIX_EVENT_PACKAGES,
+  ZOOMIX_PARTNER_PACKAGES,
+  ZOOMIX_ONE_OFF_SERVICES,
+} from "../data/zoomixOfferings";
 
 const initialForm = {
   name: "",
@@ -10,6 +16,8 @@ const initialForm = {
   activity: "",
   service: "",
   packageId: "",
+  route: "",
+  offerId: "",
   stage: "",
   budget: "",
   launchDate: "",
@@ -27,17 +35,89 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
 
   useEffect(() => {
     const applyPackage = (id) =>
-      setForm((current) => ({ ...current, packageId: id || current.packageId }));
+      setForm((current) => ({
+        ...current,
+        packageId: id || current.packageId,
+        offerId: id || current.offerId,
+        route: id ? "start" : current.route,
+      }));
+    const normalizeRoute = (route) => {
+      if (route === "content" || route === "events") return "show";
+      if (route === "partner") return "continue";
+      if (route === "one-off") return "one-thing";
+      return route || "";
+    };
+    const applyRoute = (selection) => {
+      if (!selection) return;
+      const route = normalizeRoute(selection.route);
+      const isStartRoute = route === "start";
+      setForm((current) => ({
+        ...current,
+        route,
+        packageId: isStartRoute ? selection.packageId || current.packageId : "",
+        offerId: selection.packageId || "",
+      }));
+    };
     applyPackage(window.localStorage.getItem("zoomix-selected-package"));
+    try {
+      applyRoute(JSON.parse(window.localStorage.getItem("zoomix-project-route") || "null"));
+    } catch {
+      // Ignore malformed local selection and keep the form empty.
+    }
     const onPackageSelect = (event) => applyPackage(event.detail);
+    const onRouteSelect = (event) => applyRoute(event.detail);
     window.addEventListener("zoomix:package-select", onPackageSelect);
-    return () => window.removeEventListener("zoomix:package-select", onPackageSelect);
+    window.addEventListener("zoomix:route-select", onRouteSelect);
+    return () => {
+      window.removeEventListener("zoomix:package-select", onPackageSelect);
+      window.removeEventListener("zoomix:route-select", onRouteSelect);
+    };
   }, []);
 
+  const label = (ar, en) => (isArabic ? ar : en);
   const selectedPackage = useMemo(
     () => ZOOMIX_PACKAGES.find((pkg) => pkg.id === form.packageId),
     [form.packageId],
   );
+  const selectedOfferName = useMemo(() => {
+    if (!form.offerId) return selectedPackage?.name[language] || "";
+    const packageGroups = [
+      ...ZOOMIX_CONTENT_PACKAGES,
+      ...ZOOMIX_EVENT_PACKAGES,
+      ...ZOOMIX_PARTNER_PACKAGES,
+    ];
+    const offer = packageGroups.find((pkg) => pkg.id === form.offerId);
+    if (offer) return offer.name[language];
+    return ZOOMIX_ONE_OFF_SERVICES[language].find((service) => service.id === form.offerId)?.name || selectedPackage?.name[language] || "";
+  }, [form.offerId, language, selectedPackage]);
+  const offerCatalog = useMemo(() => [
+    {
+      label: label("باقات البداية", "START PACKAGES"),
+      route: "start",
+      offers: ZOOMIX_PACKAGES.map((offer) => ({ ...offer, displayName: offer.name[language], priceLabel: `${offer.price} ${label("جنيه", "EGP")}` })),
+    },
+    {
+      label: label("باقات المحتوى", "CONTENT PACKAGES"),
+      route: "show",
+      offers: ZOOMIX_CONTENT_PACKAGES.map((offer) => ({ ...offer, displayName: offer.name[language], priceLabel: `${offer.price} ${label("جنيه", "EGP")}` })),
+    },
+    {
+      label: label("باقات الإيفنت", "EVENT PACKAGES"),
+      route: "show",
+      offers: ZOOMIX_EVENT_PACKAGES.map((offer) => ({ ...offer, displayName: offer.name[language], priceLabel: `${offer.price} ${label("جنيه", "EGP")}` })),
+    },
+    {
+      label: label("الشراكة الشهرية", "MONTHLY PARTNERSHIP"),
+      route: "continue",
+      offers: ZOOMIX_PARTNER_PACKAGES.map((offer) => ({ ...offer, displayName: offer.name[language], priceLabel: `${offer.price} ${label("جنيه / شهريًا", "EGP / month")}` })),
+    },
+    {
+      label: label("خدمات منفصلة", "ONE-OFF SERVICES"),
+      route: "one-thing",
+      offers: ZOOMIX_ONE_OFF_SERVICES[language].map((offer) => ({ ...offer, displayName: offer.name, priceLabel: offer.price })),
+    },
+  ], [language, isArabic]);
+  const selectedOfferId = form.offerId || form.packageId;
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
   const updateField = (key, value) => {
     update(key, value);
@@ -49,8 +129,13 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       });
     }
   };
-  const label = (ar, en) => (isArabic ? ar : en);
   const ActionArrow = isArabic ? ArrowUpLeft : ArrowUpRight;
+  const pathLabel = {
+    start: label("البداية", "Start"),
+    show: label("الظهور", "Show"),
+    continue: label("الاستمرار", "Continue"),
+    "one-thing": label("خدمة واحدة", "One thing"),
+  };
 
   const buildMessage = () =>
     [
@@ -60,7 +145,8 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       `${label("رقم الهاتف", "Phone")}: ${form.phone}`,
       `${label("نوع النشاط", "Activity")}: ${form.activity}`,
       `${label("نوع الخدمة", "Service")}: ${form.service}`,
-      `${label("الباقة", "Package")}: ${selectedPackage?.name[language] || label("لم يتم الاختيار", "Not selected")}`,
+      `${label("المسار", "Path")}: ${pathLabel[form.route] || label("لم يتم الاختيار", "Not selected")}`,
+      `${label("الاختيار", "Selected offer")}: ${selectedOfferName || label("لم يتم الاختيار", "Not selected")}`,
       `${label("المرحلة الحالية", "Current stage")}: ${form.stage}`,
       `${label("الميزانية التقريبية", "Approx. budget")}: ${form.budget}`,
       `${label("موعد الإطلاق", "Launch date")}: ${form.launchDate}`,
@@ -207,20 +293,76 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
             {field("service", label("نوع الخدمة *", "Service type *"), "text", true)}
             <label className="block">
               <span className="mb-2 block font-mono text-xs font-bold uppercase tracking-[0.08em] text-black/75">
-                {label("الباقة", "Package")}
+                {label("مسار المشروع", "Project path")}
               </span>
               <select
-                value={form.packageId}
-                onChange={(event) => updateField("packageId", event.target.value)}
+                value={form.route}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setForm((current) => ({
+                    ...current,
+                    route: value,
+                    packageId: value === "start" ? current.packageId : "",
+                    offerId: value === "start" ? current.offerId : "",
+                  }));
+                  if (errors.route) {
+                    setErrors((current) => {
+                      const next = { ...current };
+                      delete next.route;
+                      return next;
+                    });
+                  }
+                }}
                 className="min-w-0 w-full border border-black/25 bg-white px-4 py-3.5 outline-none transition-colors focus:border-[#6b8d00] focus:ring-2 focus:ring-[#BBFF00]/35"
               >
-                <option value="">{label("اختار الباقة", "Choose a package")}</option>
-                {ZOOMIX_PACKAGES.map((pkg) => (
-                  <option key={pkg.id} value={pkg.id}>
-                    {pkg.name[language]} — {pkg.price} {label("جنيه", "EGP")}
-                  </option>
+                <option value="">{label("اختار المسار", "Choose a path")}</option>
+                <option value="start">{label("البداية", "Start")}</option>
+                <option value="show">{label("الظهور", "Show")}</option>
+                <option value="continue">{label("الاستمرار", "Continue")}</option>
+                <option value="one-thing">{label("خدمة واحدة", "One thing")}</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-2 block font-mono text-xs font-bold uppercase tracking-[0.08em] text-black/75">
+                {label("العرض المختار", "Selected offer")}
+              </span>
+              <select
+                value={selectedOfferId}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  const group = offerCatalog.find((item) => item.offers.some((offer) => offer.id === value));
+                  setForm((current) => ({
+                    ...current,
+                    packageId: group?.route === "start" ? value : "",
+                    offerId: value,
+                    route: group?.route || current.route,
+                  }));
+                  if (errors.packageId) {
+                    setErrors((current) => {
+                      const next = { ...current };
+                      delete next.packageId;
+                      return next;
+                    });
+                  }
+                }}
+                className="min-w-0 w-full border border-black/25 bg-white px-4 py-3.5 outline-none transition-colors focus:border-[#6b8d00] focus:ring-2 focus:ring-[#BBFF00]/35"
+              >
+                <option value="">{label("اختار الباقة أو الخدمة", "Choose a package or service")}</option>
+                {offerCatalog.map((group) => (
+                  <optgroup key={group.label} label={group.label}>
+                    {group.offers.map((offer) => (
+                      <option key={offer.id} value={offer.id}>
+                        {offer.displayName} — {offer.priceLabel}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
+              {selectedOfferName && form.offerId && (
+                <p className="mt-2 text-xs text-black/55">
+                  {label("الاختيار من المسار: ", "Selected from your path: ")}{selectedOfferName}
+                </p>
+              )}
             </label>
             {field("stage", label("المرحلة الحالية", "Current stage"))}
             {field("budget", label("الميزانية التقريبية", "Approx. budget"))}

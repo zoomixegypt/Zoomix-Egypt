@@ -1,13 +1,16 @@
-import { useLayoutEffect } from "react";
+import { lazy, Suspense, useLayoutEffect } from "react";
 import { Routes, Route, useLocation, useNavigationType } from "react-router-dom";
 import Home from "./pages/Home";
 import ProjectDetailModal from "./components/projects/ProjectDetailModal";
+import SectionSkeleton from "./components/SectionSkeleton";
+
+const RouteFinder = lazy(() => import("./pages/RouteFinder"));
 
 // Component untuk scroll ke atas setiap kali route berubah
 function ScrollToTop() {
   const location = useLocation();
   const navType = useNavigationType();
-  const { pathname, search } = location;
+  const { pathname, search, hash } = location;
   const isProjectModal = pathname.startsWith("/projects/") && location.state?.backgroundLocation;
 
   // useLayoutEffect untuk memastikan scroll terjadi SEBELUM render
@@ -81,7 +84,12 @@ function ScrollToTop() {
 
       // JANGAN scroll ke atas jika ada query param scrollTo
       // Biarkan Home.jsx yang handle scroll ke project card
-      if (!hasScrollTo) {
+      if (hash) {
+        const targetId = decodeURIComponent(hash.slice(1));
+        requestAnimationFrame(() => {
+          document.getElementById(targetId)?.scrollIntoView({ behavior: "auto", block: "start" });
+        });
+      } else if (!hasScrollTo) {
         // Scroll to top only when there is no scrollTo query param
         window.scrollTo(0, 0);
       }
@@ -90,7 +98,7 @@ function ScrollToTop() {
     return () => {
       cancelled = true;
     };
-  }, [pathname, search, isProjectModal, navType]);
+  }, [pathname, search, hash, isProjectModal, navType]);
 
   return null;
 }
@@ -104,6 +112,7 @@ export default function App() {
       <ScrollToTop />
       <Routes location={backgroundLocation || location}>
         <Route path="/" element={<Home />} />
+        <Route path="/route-finder" element={<Suspense fallback={<SectionSkeleton className="min-h-screen" />}><RouteFinder /></Suspense>} />
         <Route path="/projects/:slug" element={<ProjectDetailModal />} />
       </Routes>
 

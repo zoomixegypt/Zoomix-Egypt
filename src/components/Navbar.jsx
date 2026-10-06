@@ -5,11 +5,14 @@ import Magnetic from "./Magnetic";
 import { exponentialEaseOut } from "../utils/easing";
 import { useLanguage } from "../i18n";
 import ZoomixLogo from "./ZoomixLogo";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const DARK_SECTION_IDS = ["hero-section", "project-section", "packages-section", "contact-section"];
 
 const Navbar = memo(function Navbar() {
   const { language, setLanguage, t } = useLanguage();
+  const navigate = useNavigate();
+  const location = useLocation();
   const NAV_ITEMS = [
     { label: t("nav", "about"), sectionId: "about-section" },
     { label: t("nav", "services"), sectionId: "services-section" },
@@ -27,7 +30,8 @@ const Navbar = memo(function Navbar() {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const previousBodyOverflowRef = useRef("");
   const menuStoppedLenisRef = useRef(false);
-  const logoOnDark = isOnDarkSection || !scrolled;
+  const isRouteFinderPage = location.pathname === "/route-finder";
+  const logoOnDark = isOnDarkSection || (!scrolled && !isRouteFinderPage);
 
   useEffect(() => {
     let ticking = false;
@@ -95,6 +99,11 @@ const Navbar = memo(function Navbar() {
   const scrollTo = (sectionId) => {
     setIsMenuOpen(false);
 
+    if (location.pathname !== "/") {
+      navigate(`/#${sectionId}`);
+      return;
+    }
+
     setTimeout(() => {
       const target = document.getElementById(sectionId);
       if (!target) return;
@@ -114,6 +123,7 @@ const Navbar = memo(function Navbar() {
 
   return (
     <nav
+      aria-label={language === "ar" ? "التنقل الرئيسي" : "Primary navigation"}
       className={`fixed top-0 left-0 w-full p-4 md:p-6 flex justify-between items-center z-50 pointer-events-none transition-all duration-500`}
     >
       {/* ── Logo ── */}
@@ -145,8 +155,11 @@ const Navbar = memo(function Navbar() {
       {/* ── Mobile Menu Toggle ── */}
       <div className="lg:hidden pointer-events-auto relative z-50">
         <button
+          type="button"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-label={isMenuOpen ? t("nav", "close") : t("nav", "menu")}
+          aria-expanded={isMenuOpen}
+          aria-controls="zoomix-mobile-menu"
           className={`w-11 h-11 flex items-center justify-center rounded-full backdrop-blur-md border transition-all duration-300 ${isMenuOpen ? "bg-white/85 border-black/10 text-black shadow-[0_8px_24px_rgba(0,0,0,0.08)]" : isOnDarkSection ? "bg-black/25 border-white/25 text-white shadow-[0_8px_24px_rgba(0,0,0,0.22)]" : scrolled ? "bg-white/85 border-black/10 text-black shadow-[0_8px_24px_rgba(0,0,0,0.08)]" : "bg-[#F5F4EF]/70 border-black/10 text-black"}`}
         >
           {isMenuOpen ? <X size={20} strokeWidth={2} /> : <Menu size={20} strokeWidth={2} />}
@@ -162,6 +175,10 @@ const Navbar = memo(function Navbar() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.28 }}
             className={`fixed inset-0 z-40 pointer-events-auto lg:hidden backdrop-blur-md overflow-hidden ${isOnDarkSection ? "bg-black/72" : "bg-[#F5F4EF]/96"}`}
+            id="zoomix-mobile-menu"
+            role="dialog"
+            aria-modal="true"
+            aria-label={language === "ar" ? "قائمة الموقع" : "Site menu"}
           >
             <div
               className={`absolute inset-0 opacity-[0.1] pointer-events-none [background-size:28px_28px] ${isOnDarkSection ? "[background-image:linear-gradient(to_right,rgba(255,255,255,0.24)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.24)_1px,transparent_1px)]" : "[background-image:linear-gradient(to_right,rgba(0,0,0,0.16)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.16)_1px,transparent_1px)]"}`}

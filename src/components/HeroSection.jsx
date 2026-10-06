@@ -19,8 +19,8 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
       dir={language === "ar" ? "rtl" : "ltr"}
       className="min-h-[100svh] bg-[#0A0A0A] text-white relative overflow-hidden flex flex-col justify-start pt-32 pb-12 lg:justify-center lg:flex-row lg:items-end md:pb-24 md:pt-28"
     >
-      <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:56px_56px]" />
-      <div className="absolute -right-[18vw] bottom-[-20vw] h-[68vw] w-[68vw] rounded-full border border-white/20 shadow-[0_0_0_90px_rgba(255,255,255,.025),0_0_0_180px_rgba(255,255,255,.018)]" />
+      <div className="hero-grid absolute inset-0 opacity-20 [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:56px_56px]" />
+      <div className="hero-orbit absolute -right-[18vw] bottom-[-20vw] h-[68vw] w-[68vw] rounded-full border border-white/20 shadow-[0_0_0_90px_rgba(255,255,255,.025),0_0_0_180px_rgba(255,255,255,.018)]" />
       <div className="relative z-10 w-full max-w-[1380px] mx-auto px-6 md:px-12 grid lg:grid-cols-[1.2fr_.8fr] gap-12 items-end">
         <Gsap.div
           initial={{ opacity: 0, y: 30 }}
@@ -65,7 +65,7 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
           className="pointer-events-none absolute bottom-2 left-6 right-6 z-10 hidden rounded-full bg-transparent sm:block md:left-12 md:right-12"
           aria-hidden="true"
         >
-          <div className="connection-line translate-y-1.5" />
+          <div className="connection-line hero-connection-line translate-y-1.5" />
           <p
             className="absolute left-1/2 top-10 flex -translate-x-1/2 items-center gap-7 whitespace-nowrap bg-[#0A0A0A]/85 px-2 py-1 font-mono text-[18px] leading-6 tracking-[.16em] text-white/60"
             dir="ltr"

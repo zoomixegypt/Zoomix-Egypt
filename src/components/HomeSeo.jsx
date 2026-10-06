@@ -13,6 +13,8 @@ const HOME_COPY = {
   },
 };
 
+const HOME_IMAGE = "https://zoomixegypt.com/og-image.svg";
+
 export default function HomeSeo() {
   const { language } = useLanguage();
 
@@ -27,10 +29,12 @@ export default function HomeSeo() {
     document
       .querySelector('meta[property="og:url"]')
       ?.setAttribute("content", "https://zoomixegypt.com/");
+    document.querySelector('meta[property="og:image"]')?.setAttribute("content", HOME_IMAGE);
     document.querySelector('meta[name="twitter:title"]')?.setAttribute("content", copy.title);
     document
       .querySelector('meta[name="twitter:description"]')
       ?.setAttribute("content", copy.description);
+    document.querySelector('meta[name="twitter:image"]')?.setAttribute("content", HOME_IMAGE);
     document
       .querySelector('link[rel="canonical"]')
       ?.setAttribute("href", "https://zoomixegypt.com/");

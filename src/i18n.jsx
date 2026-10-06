@@ -48,9 +48,9 @@ const translations = {
       build: "نبني الأساس",
       buildText: "اللوجو والهوية والتطبيقات والمطبوعات.",
       show: "نظهر المشروع",
-      showText: "محتوى السوشيال والتصميم والتصوير وReels.",
+      showText: "محتوى مخطط وتغطية إيفنتات تخلي المشروع يظهر بالشكل اللي يستحقه.",
       launch: "نجهز الانطلاق",
-      launchText: "Landing Page وتجهيز الحسابات وخطة الإطلاق.",
+      launchText: "Landing Page وتجهيز الحسابات ومحتوى الإطلاق.",
       why: "ليه Zoomix؟",
       whyItems: [
         "مشروعك مشروعنا — من الفكرة للتنفيذ.",
@@ -121,9 +121,9 @@ const translations = {
       build: "BUILD — The foundation",
       buildText: "Logo, identity, applications and print.",
       show: "SHOW — The project",
-      showText: "Social content, design, photography and Reels.",
+      showText: "Planned content and event coverage that makes the work show up.",
       launch: "LAUNCH — The rollout",
-      launchText: "Landing page, account setup and launch plan.",
+      launchText: "Landing page, account setup and launch content.",
       why: "Why Zoomix?",
       whyItems: [
         "Your project is ours — from idea to execution.",

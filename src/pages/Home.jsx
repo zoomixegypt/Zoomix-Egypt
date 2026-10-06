@@ -11,6 +11,7 @@ import HomeSeo from "../components/HomeSeo";
 const MarqueeBanner = lazy(() => import("../components/MarqueeBanner"));
 const Footer = lazy(() => import("../components/Footer"));
 const ServicesSection = lazy(() => import("../components/ServicesSection"));
+const RouteFinderEntry = lazy(() => import("../components/RouteFinderEntry"));
 const PackagesSection = lazy(() => import("../components/PackagesSection"));
 const ProcessSection = lazy(() => import("../components/ProcessSection"));
 const ProjectBriefSection = lazy(() => import("../components/ProjectBriefSection"));
@@ -88,7 +89,16 @@ export default function Home() {
         <Suspense fallback={<SectionSkeleton className="min-h-[40vh]" />}>
           <ServicesSection />
         </Suspense>
-        <div id="project-section" ref={galleryRef} className="bg-neutral-900">
+        <Suspense fallback={<SectionSkeleton className="min-h-[40vh]" />}>
+          <RouteFinderEntry />
+        </Suspense>
+        <div className="route-to-work-transition" aria-label="Transition to the work gallery">
+          <div className="route-to-work-transition__inner">
+            <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/45">SHOW THE WORK</span>
+            <span className="route-to-work-transition__signal" aria-hidden="true">→</span>
+          </div>
+        </div>
+        <div id="project-section" ref={galleryRef} className="overflow-anchor-none bg-neutral-900" style={{ overflowAnchor: "none" }}>
           <Suspense fallback={<SectionSkeleton tone="dark" className="min-h-screen" />}>
             <ProjectGallery onOpenProject={handleOpenProject} />
           </Suspense>

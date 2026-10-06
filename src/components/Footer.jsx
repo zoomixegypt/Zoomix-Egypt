@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { ArrowUpRight, Instagram, Linkedin, MessageCircle } from "lucide-react";
+import { ArrowUpRight, Instagram, MessageCircle } from "lucide-react";
 import { useLanguage } from "../i18n";
 import ZoomixLogo from "./ZoomixLogo";
 
@@ -11,7 +11,6 @@ const Footer = memo(function Footer() {
   const socials = [
     ["Instagram", "https://www.instagram.com/zoomixegypt", Instagram],
     ["TikTok", "https://www.tiktok.com/@zoomixegypt", ArrowUpRight],
-    ["LinkedIn", "https://www.linkedin.com/in/zoomixegypt", Linkedin],
     ["X / Twitter", "https://x.com/zoomixegypt", ArrowUpRight],
   ];
 
@@ -119,10 +118,11 @@ const Footer = memo(function Footer() {
           <span className="font-mono text-[10px] md:text-xs text-white/45 uppercase tracking-[0.16em]">
             {t("footer", "cairo")}
           </span>
-          <button
-            type="button"
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="inline-flex items-center gap-2 font-mono text-[10px] md:text-xs uppercase tracking-[0.16em] text-[#BBFF00] hover:text-white transition-colors"
+            <button
+              type="button"
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              aria-label={t("footer", "top")}
+              className="inline-flex items-center gap-2 font-mono text-[10px] md:text-xs uppercase tracking-[0.16em] text-[#BBFF00] hover:text-white transition-colors"
           >
             {t("footer", "top")}{" "}
             <ArrowUpRight

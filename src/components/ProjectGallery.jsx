@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Gsap } from "../utils/gsapAnimate";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 
@@ -84,6 +84,22 @@ export default function ProjectGallery({ onOpenProject }) {
 
   const projects = getProjectMeta(language);
   const projectCount = projects.length;
+
+  // Always start the localized gallery at project 01. In RTL documents the
+  // browser can otherwise preserve the previous horizontal scroll position
+  // and make the Arabic version appear to begin with the last projects.
+  useLayoutEffect(() => {
+    activeProjectIndexRef.current = 0;
+    setActiveProjectIndex(0);
+
+    if (mobileScrollRef.current) {
+      mobileScrollRef.current.scrollLeft = 0;
+    }
+
+    if (trackRef.current) {
+      gsap.set(trackRef.current, { x: 0 });
+    }
+  }, [language, projectCount]);
 
   const scrollToMobileProject = (index) => {
     const nextIndex = Math.max(0, Math.min(projectCount - 1, index));
@@ -252,7 +268,7 @@ export default function ProjectGallery({ onOpenProject }) {
         end: () => `+=${maxScroll}`,
         pin: true,
         scrub: true,
-        anticipatePin: 0.5,
+        anticipatePin: 1,
         fastScrollEnd: false,
         invalidateOnRefresh: true,
         onUpdate: (self) => {
@@ -408,11 +424,15 @@ export default function ProjectGallery({ onOpenProject }) {
           ref={mobileScrollRef}
           dir="ltr"
           aria-label={t("gallery", "explore")}
+          style={{ direction: "ltr", unicodeBidi: "isolate" }}
           className="flex gap-4 overflow-x-auto snap-x snap-mandatory px-6 scrollbar-hide [-webkit-overflow-scrolling:touch] [touch-action:pan-x] pb-4"
         >
           {projects.map((project, index) => (
             <Gsap.div
               key={project.id}
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: Math.min(index, 3) * 0.06, ease: "easeOut" }}
               id={`project-${project.id}`}
               onClick={() => onOpenProject?.(project)}
               role="button"
@@ -527,14 +547,20 @@ export default function ProjectGallery({ onOpenProject }) {
 
       {/* Horizontal scroll track */}
       <div className="flex w-full h-[100dvh] items-center overflow-hidden">
-        <Gsap.div ref={trackRef} dir="ltr" className="flex gap-12 px-24">
+        <Gsap.div
+          ref={trackRef}
+          dir="ltr"
+          style={{ direction: "ltr", unicodeBidi: "isolate" }}
+          className="flex gap-12 px-24"
+        >
           {/* Intro Card */}
           <Gsap.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="flex flex-col justify-center shrink-0 h-[70vh] w-[40vw]"
+            className="relative flex flex-col justify-center shrink-0 h-[70vh] w-[40vw]"
           >
+            <span className="project-ghost-word" aria-hidden="true">SHOW</span>
             <h2
               className={`${language === "ar" ? "font-arabic tracking-normal" : "font-display"} text-6xl lg:text-8xl font-black text-white uppercase leading-[0.92]`}
             >

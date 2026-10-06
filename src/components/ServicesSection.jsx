@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { useLanguage } from "../i18n";
+import { Gsap } from "../utils/gsapAnimate";
 
 const serviceKeys = [
   ["01", "build", "buildText"],
@@ -36,10 +37,17 @@ const ServicesSection = memo(function ServicesSection() {
             <p className="-mt-8 mb-10 max-w-2xl text-base leading-7 text-black/60 md:text-lg">
               {t("services", "partnerIntro")}
             </p>
-            <div className="connection-line mb-12" aria-hidden="true" />
+            <div className="connection-line services-connection-line mb-12" aria-hidden="true" />
             <div className="grid md:grid-cols-3 gap-8">
-              {serviceKeys.map(([number, titleKey, textKey]) => (
-                <article key={number} className="border-t border-black/20 pt-5">
+              {serviceKeys.map(([number, titleKey, textKey], index) => (
+                <Gsap.article
+                  key={number}
+                  initial={{ opacity: 0, y: 22 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.25 }}
+                  transition={{ duration: 0.65, delay: index * 0.08, ease: "easeOut" }}
+                  className="border-t border-black/20 pt-5"
+                >
                   <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#BBFF00] font-mono text-[10px] font-bold tracking-[0.08em] text-black">
                     {number}
                   </span>
@@ -50,7 +58,7 @@ const ServicesSection = memo(function ServicesSection() {
                   </h3>
                   <p className="mt-4 leading-7 text-black/70">{t("services", textKey)}</p>
                   <ArrowUpRight className="mt-8 text-[#0A0A0A]" size={22} aria-hidden="true" />
-                </article>
+                </Gsap.article>
               ))}
             </div>
           </div>
@@ -64,15 +72,19 @@ const ServicesSection = memo(function ServicesSection() {
           </h2>
           <ul className="grid sm:grid-cols-2 gap-x-10 gap-y-6">
             {whyItems.map((item, index) => (
-              <li
+              <Gsap.li
                 key={item}
+                initial={{ opacity: 0, x: 16 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.55, delay: index * 0.06, ease: "easeOut" }}
                 className="flex items-start gap-4 border-b border-black/15 pb-5 text-lg"
               >
                 <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#BBFF00] font-mono text-[9px] font-bold text-black">
                   0{index + 1}
                 </span>
                 <span>{item}</span>
-              </li>
+              </Gsap.li>
             ))}
           </ul>
         </div>
