@@ -368,6 +368,28 @@ async function studioExport(request, env) {
   });
 }
 
+async function studioBackup(request, env) {
+  const auth = await authenticateStudio(request, env);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+  const [requests, events] = await Promise.all([
+    env.DB.prepare("SELECT * FROM brief_requests ORDER BY created_at DESC").all(),
+    env.DB.prepare("SELECT * FROM analytics_events ORDER BY created_at DESC LIMIT 10000").all(),
+  ]);
+  const payload = {
+    exportedAt: now(),
+    requests: requests.results || [],
+    analyticsEvents: events.results || [],
+  };
+  return new Response(`\ufeff${JSON.stringify(payload, null, 2)}`, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json; charset=UTF-8",
+      "Content-Disposition": `attachment; filename="zoomix-studio-backup-${new Date().toISOString().slice(0, 10)}.json"`,
+      "Cache-Control": "no-store",
+    },
+  });
+}
+
 async function studioRequestUpdate(request, env, id) {
   const auth = await authenticateStudio(request, env);
   if (!auth.ok) return json({ error: auth.error }, auth.status);
@@ -405,6 +427,7 @@ async function api(request, env, ctx) {
   if (request.method === "GET" && url.pathname === "/api/studio/requests") return studioRequests(request, env);
   if (request.method === "GET" && url.pathname === "/api/studio/insights") return studioInsights(request, env);
   if (request.method === "GET" && url.pathname === "/api/studio/export.csv") return studioExport(request, env);
+  if (request.method === "GET" && url.pathname === "/api/studio/backup.json") return studioBackup(request, env);
   if (request.method === "POST" && url.pathname === "/api/analytics/events") return analyticsEvent(request, env);
   const updateMatch = url.pathname.match(/^\/api\/studio\/requests\/(\d+)$/);
   if (request.method === "PATCH" && updateMatch) return studioRequestUpdate(request, env, updateMatch[1]);

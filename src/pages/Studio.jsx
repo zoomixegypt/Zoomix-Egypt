@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { BarChart3, Check, Download, LogOut, RefreshCw, Save, Search, X } from "lucide-react";
+import { BarChart3, Check, Download, FileJson, LogOut, Mail, MessageCircle, Phone, RefreshCw, Save, Search, X } from "lucide-react";
 import { useLanguage } from "../i18n";
 
 const STATUS_OPTIONS = [
@@ -145,6 +145,15 @@ export default function Studio() {
     window.open(`/api/studio/export.csv${query}`, "_blank", "noopener,noreferrer");
   };
 
+  const backupStudio = () => {
+    window.open("/api/studio/backup.json", "_blank", "noopener,noreferrer");
+  };
+
+  const phoneValue = String(selected?.phone || "").trim();
+  const whatsappNumber = phoneValue.replace(/[^\d]/g, "");
+  const whatsappHref = whatsappNumber ? `https://wa.me/${whatsappNumber.replace(/^00/, "")}` : "";
+  const emailHref = selected?.email ? `mailto:${encodeURIComponent(selected.email)}?subject=${encodeURIComponent(`${selected.reference_code} — ZOOMIX`)}` : "";
+
   const visibleRequests = useMemo(() => {
     const query = search.trim().toLowerCase();
     return requests.filter((request) => {
@@ -222,6 +231,10 @@ export default function Studio() {
             <button type="button" onClick={exportRequests} className="hidden items-center gap-2 border border-white/20 px-4 py-2 text-xs font-bold text-white/70 transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00] sm:flex">
               <Download size={15} />
               {label("تصدير", "Export")}
+            </button>
+            <button type="button" onClick={backupStudio} className="hidden items-center gap-2 border border-white/20 px-4 py-2 text-xs font-bold text-white/70 transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00] sm:flex">
+              <FileJson size={15} />
+              {label("نسخة احتياطية", "Backup")}
             </button>
             <button type="button" onClick={logout} className="flex items-center gap-2 border border-white/20 px-4 py-2 text-xs font-bold text-white/70 transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00]">
               <LogOut size={15} />
@@ -375,6 +388,13 @@ export default function Studio() {
                     </div>
                   ))}
                 </div>
+                {(phoneValue || selected.email) && (
+                  <div className="mt-6 flex flex-wrap gap-2 border-y border-white/15 py-4">
+                    {whatsappHref && <a href={whatsappHref} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 border border-[#BBFF00] px-3 py-2 text-xs font-bold text-[#BBFF00] transition-colors hover:bg-[#BBFF00] hover:text-[#0A0A0A]"><MessageCircle size={14} /> WhatsApp</a>}
+                    {phoneValue && <a href={`tel:${encodeURIComponent(phoneValue)}`} className="inline-flex items-center gap-2 border border-white/20 px-3 py-2 text-xs font-bold text-white/75 transition-colors hover:border-white hover:text-white"><Phone size={14} /> {label("اتصال", "Call")}</a>}
+                    {emailHref && <a href={emailHref} className="inline-flex items-center gap-2 border border-white/20 px-3 py-2 text-xs font-bold text-white/75 transition-colors hover:border-white hover:text-white"><Mail size={14} /> Email</a>}
+                  </div>
+                )}
                 <div className="mt-6">
                   <p className="font-mono text-[10px] tracking-[0.14em] text-white/45">{label("الوصف", "DESCRIPTION")}</p>
                   <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-white/70">{text(selected.description, language)}</p>

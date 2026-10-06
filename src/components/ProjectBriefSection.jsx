@@ -736,7 +736,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
             {selectField("budget", label("الميزانية التقريبية", "Approx. budget"), BUDGET_OPTIONS)}
             {selectField("launchDate", label("التوقيت المطلوب", "When do you want to start?"), TIMELINE_OPTIONS)}
             {selectField("source", label("عرفتنا منين؟", "How did you hear about us?"), SOURCE_OPTIONS)}
-            {field("projectLink", label("رابط المشروع (اختياري)", "Project link (optional)"), "url")}
+            {field("projectLink", label("رابط المشروع أو الملفات (اختياري)", "Project or files link (optional)"), "url")}
             {field("goal", label("الهدف الأساسي", "Main goal"))}
             <label className="block sm:col-span-2">
               <span className="mb-2 block font-mono text-xs font-bold uppercase tracking-[0.08em] text-black/75">
