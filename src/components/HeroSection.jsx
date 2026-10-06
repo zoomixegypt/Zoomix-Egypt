@@ -26,6 +26,7 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
           initial={{ opacity: 0, y: 30 }}
           animate={isRevealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          className="relative z-10"
         >
           <p
             className="zoomix-reveal font-mono text-[11px] tracking-[.2em] text-[#BBFF00] mb-7"
@@ -45,17 +46,20 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
           >
             {t("hero", "description")}
           </p>
-          <div className="zoomix-reveal zoomix-reveal-delay-3 mt-9 flex flex-wrap items-center gap-3">
+          <div className="zoomix-reveal zoomix-reveal-delay-3 relative z-10 -mx-2 mt-9 flex w-fit flex-wrap items-center gap-3 rounded-full bg-[#0A0A0A]/85 px-2 py-2">
             <a href="#contact-section" className="zoomix-button bg-[#BBFF00] text-black">
               {t("nav", "start")} <ActionArrow size={20} />
             </a>
-            <a href="#project-section" className="zoomix-button border-white/50 text-white">
+            <a
+              href="#project-section"
+              className="zoomix-button bg-[#0A0A0A]/90 border-white/50 text-white"
+            >
               {t("hero", "work")} <ActionArrow size={20} />
             </a>
           </div>
         </Gsap.div>
         <div
-          className="absolute bottom-10 left-6 right-6 md:left-12 md:right-12 hidden sm:block rounded-full bg-[#141A0A]/70 px-2 py-2 shadow-[0_0_0_1px_rgba(187,255,0,0.08),0_0_24px_rgba(187,255,0,0.08)]"
+          className="pointer-events-none absolute bottom-10 left-6 right-6 z-0 hidden rounded-full bg-[#141A0A]/70 px-2 py-2 shadow-[0_0_0_1px_rgba(187,255,0,0.08),0_0_24px_rgba(187,255,0,0.08)] sm:block md:left-12 md:right-12"
           aria-hidden="true"
         >
           <div className="connection-line" />
