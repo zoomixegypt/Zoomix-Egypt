@@ -330,7 +330,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 <option value="start">{label("البداية", "Start")}</option>
                 <option value="show">{label("الظهور", "Show")}</option>
                 <option value="continue">{label("الاستمرار", "Continue")}</option>
-                <option value="one-thing">{label("خدمة واحدة", "One thing")}</option>
+                <option value="one-thing">{label("خدمة واحدة", "One thing — one specific service")}</option>
               </select>
             </label>
             <label className="block">

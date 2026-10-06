@@ -4,12 +4,12 @@ import { useLanguage } from "../i18n";
 const HOME_COPY = {
   ar: {
     title: "ZOOMIX — شريكك الإبداعي",
-    description: "هوية، محتوى، تصوير وحضور رقمي في اتجاه واحد واضح.",
+    description: "شريك إبداعي واحد للمشروعات: هوية، محتوى، تصوير وحضور رقمي في اتجاه واضح.",
   },
   en: {
     title: "ZOOMIX — Creative Partner",
     description:
-      "Identity, content, photography and digital presence, built in one clear direction.",
+      "One creative partner for identity, content, photography and digital presence — all in one clear direction.",
   },
 };
 

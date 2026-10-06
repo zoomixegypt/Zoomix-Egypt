@@ -36,6 +36,7 @@ const copy = {
     routeMapEyebrow: "ZOOMIX / خطوتك الجاية",
     routeMapTitle: "شوف طريقك قبل ما تختار.",
     routeMapIntro: "اختار بين 4 طرق. كل محطة بتوضح إمتى تناسبك وإيه اللي هتخرج بيه.",
+    routeMapSystemNote: "المسارات دي طريقة اختيار العميل؛ أما تنفيذ المشروع فبيتحرك من Build إلى Show إلى Launch.",
     routeMapSwitch: "ساعدني أختار",
     quickPrompt: "مش عارف تبدأ منين؟",
     quickDescription: "جاوب على 3 أسئلة، وZoomix ترشح لك المسار والباقة الأنسب.",
@@ -45,10 +46,10 @@ const copy = {
     routeMapChoose: "اعرف الاختيار الأنسب",
     routeMapBrowse: "شوف كل باقات المسار",
     routeMap: [
-      { value: "start", code: "BUILD", title: "البداية", description: "لما تكون لسه بتبدأ أو محتاج ترتب أساس البراند.", reason: "محتاج هوية واتجاه واضح قبل ما تبدأ الظهور.", outputs: ["هوية مرتبة", "حضور بداية", "مخرجات جاهزة للاستخدام"] },
+      { value: "start", code: "START", title: "البداية", description: "لما تكون لسه بتبدأ أو محتاج ترتب أساس البراند.", reason: "محتاج هوية واتجاه واضح قبل ما تبدأ الظهور.", outputs: ["هوية مرتبة", "حضور بداية", "مخرجات جاهزة للاستخدام"] },
       { value: "show", code: "SHOW", title: "الظهور", description: "لما البراند يكون جاهز ويحتاج مادة تخليه يظهر بشكل أقوى.", reason: "الأساس موجود، لكن محتاج محتوى أو تغطية تحكي الشغل.", outputs: ["محتوى مخطط", "صور وفيديو أفقي", "مادة جاهزة للنشر"] },
       { value: "continue", code: "CONTINUE", title: "الاستمرار", description: "لما تحتاج شريكًا يحافظ على الاتجاه ويطوره كل شهر.", reason: "عاوز حضور ثابت وحد يكمّل معاك بدل حلول متقطعة.", outputs: ["اتجاه مستمر", "إنتاج شهري", "تطوير تدريجي للبراند"] },
-      { value: "one-thing", code: "ONE THING", title: "خدمة واحدة", description: "لما تكون عارف الجزء المحدد اللي محتاج يتحل من غير باقة كاملة.", reason: "محتاج مخرجًا واضحًا ومحددًا، مش رحلة كاملة.", outputs: ["خدمة محددة", "نطاق واضح", "تسعير مباشر"] },
+      { value: "one-thing", code: "ONE THING", title: "خدمة واحدة", description: "لما تكون عارف الجزء المحدد اللي محتاج يتحل من غير باقة كاملة.", reason: "محتاج مخرج واضح ومحدد، مش رحلة كاملة.", outputs: ["خدمة محددة", "نطاق واضح", "تسعير مباشر"] },
     ],
     stages: [
       { value: "start", label: "لسه ببدأ", description: "محتاج أرتب الأساس قبل ما أظهر." },
@@ -105,7 +106,7 @@ const copy = {
   en: {
     eyebrow: "ZOOMIX / FIND YOUR NEXT MOVE",
     title: "Every project has a next move.",
-    intro: "Answer three short questions and we will guide you to the closest route without making you scan a service catalogue.",
+    intro: "Answer three short questions and we will guide you to the closest route without making you scan a service catalog.",
     steps: ["Where you are", "What is missing", "What you want next"],
     back: "Previous question",
     reset: "Start over",
@@ -129,6 +130,7 @@ const copy = {
     routeMapEyebrow: "ZOOMIX / NEXT MOVE",
     routeMapTitle: "See your route before you choose.",
     routeMapIntro: "Choose between four routes. Each stop shows when it fits and what you will leave with.",
+    routeMapSystemNote: "These are client routes; the work itself moves from Build to Show to Launch.",
     routeMapSwitch: "Help me choose",
     quickPrompt: "Not sure where to start?",
     quickDescription: "Answer three questions and Zoomix will match you with the right route, service or package.",
@@ -138,20 +140,20 @@ const copy = {
     routeMapChoose: "Find my best fit",
     routeMapBrowse: "See all route packages",
     routeMap: [
-      { value: "start", code: "BUILD", title: "START", description: "For a business starting out or organising its foundation.", reason: "You need a clear identity and direction before showing up.", outputs: ["Organised identity", "A starting presence", "Ready-to-use foundations"] },
+      { value: "start", code: "START", title: "START", description: "For a business starting out or organizing its foundation.", reason: "You need a clear identity and direction before showing up.", outputs: ["Organized identity", "A starting presence", "Ready-to-use foundations"] },
       { value: "show", code: "SHOW", title: "SHOW", description: "For a ready brand that needs work that makes it show up stronger.", reason: "The foundation is there, but the work needs content or coverage.", outputs: ["Planned content", "Landscape photo and video", "Publish-ready material"] },
       { value: "continue", code: "CONTINUE", title: "CONTINUE", description: "For a brand that needs a partner to maintain and develop the direction monthly.", reason: "You need consistent presence instead of disconnected one-off fixes.", outputs: ["Ongoing direction", "Monthly production", "Steady brand development"] },
       { value: "one-thing", code: "ONE THING", title: "ONE THING", description: "For when you know the specific piece you need without a full package.", reason: "You need one clear output, not a complete route.", outputs: ["One defined service", "Clear scope", "Direct pricing"] },
     ],
     stages: [
-      { value: "start", label: "I am starting", description: "I need to organise the foundation before showing up." },
+      { value: "start", label: "I am starting", description: "I need to organize the foundation before showing up." },
       { value: "show", label: "The brand is ready", description: "I need content or coverage that makes the work visible." },
       { value: "continue", label: "I want to keep going", description: "I need a partner to maintain and develop the direction." },
       { value: "one-thing", label: "I need one specific thing", description: "I want to solve one defined piece without a full package." },
     ],
     needs: {
       start: [
-        { value: "foundation", label: "The foundation", description: "A clear identity and organised start." },
+        { value: "foundation", label: "The foundation", description: "A clear identity and organized start." },
         { value: "presence", label: "The presence", description: "Get the brand ready to show up and welcome customers." },
         { value: "launch", label: "The launch", description: "Identity, presence and real content from day one." },
       ],
@@ -387,7 +389,10 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false } =
               <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-black/45">{text.routeMapEyebrow}</span>
               <h3 className={`${isArabic ? "font-arabic" : "font-display tracking-[-0.04em]"} route-map-title mt-4 text-4xl font-black leading-none md:text-6xl`}><span className="route-title-mark">{text.routeMapTitle}</span></h3>
             </div>
-            <p className="max-w-md text-sm leading-6 text-black/60 md:text-base">{text.routeMapIntro}</p>
+            <div className="max-w-lg">
+              <p className="text-sm leading-6 text-black/60 md:text-base">{text.routeMapIntro}</p>
+              <p className="mt-4 border-s-2 border-[#BBFF00] ps-3 font-mono text-[10px] uppercase leading-5 tracking-[0.12em] text-black/45">{text.routeMapSystemNote}</p>
+            </div>
           </div>
 
           <div className="grid gap-8 lg:grid-cols-[0.7fr_1.3fr]">

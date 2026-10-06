@@ -34,9 +34,9 @@ export const FAQ_ITEMS = [
   },
   {
     qAr: "ما مدة التنفيذ؟",
-    aAr: "Start من 12 إلى 14 يومًا، Launch من 18 إلى 21 يومًا، وLaunch + Content من 24 إلى 28 يومًا. يبدأ الجدول بعد المقدم ووصول بيانات المشروع.",
+    aAr: "البداية (ORIGIN) من 12 إلى 14 يومًا، الحضور (PRESENCE) من 18 إلى 21 يومًا، والانطلاقة (MOMENTUM) من 24 إلى 28 يومًا. يبدأ الجدول بعد المقدم ووصول بيانات المشروع.",
     qEn: "How long does delivery take?",
-    aEn: "Start takes 12–14 days, Launch 18–21 days, and Launch + Content 24–28 days. The schedule starts after the deposit and receiving the project information.",
+    aEn: "Origin takes 12–14 days, Presence 18–21 days, and Momentum 24–28 days. The schedule starts after the deposit and receiving the project information.",
   },
   {
     qAr: "كيف يكون الدفع؟",
@@ -51,10 +51,10 @@ export const FAQ_ITEMS = [
     aEn: "No. Physical printing, equipment rental, transport and production expenses are quoted separately when needed.",
   },
   {
-    qAr: "هل الدومين والاستضافة داخل Launch؟",
-    aAr: "الباقة تشمل تصميم وتنفيذ Landing Page ضمن النطاق، لكن الدومين وأي خدمة تقنية مدفوعة منفصلان.",
-    qEn: "Are domain and hosting included in Launch?",
-    aEn: "The package includes the Landing Page within scope, but the domain and any paid technical service are separate.",
+    qAr: "هل الدومين والاستضافة داخل الحضور أو الانطلاقة؟",
+    aAr: "باقتا الحضور والانطلاقة تشملان تصميم وتنفيذ Landing Page ضمن النطاق، لكن الدومين والاستضافة وأي خدمة تقنية مدفوعة منفصلة.",
+    qEn: "Are domain and hosting included in Presence or Momentum?",
+    aEn: "Presence and Momentum include the Landing Page within scope, but the domain, hosting and any paid technical service are separate.",
   },
   {
     qAr: "ماذا يحدث إذا تأخر رد العميل؟",
@@ -64,9 +64,9 @@ export const FAQ_ITEMS = [
   },
   {
     qAr: "ما المقصود بالـLanding Page؟",
-    aAr: "صفحة واحدة مركزة ومتجاوبة مع الموبايل. في Launch بحد أقصى 6 أقسام، وليست متجرًا أو نظام حجز أو Dashboard.",
+    aAr: "صفحة واحدة مركزة ومتجاوبة مع الموبايل. في الحضور والانطلاقة بحد أقصى 6 أقسام، وليست متجرًا أو نظام حجز أو Dashboard.",
     qEn: "What is the Landing Page scope?",
-    aEn: "A focused, responsive one-page site. Launch includes up to 6 sections; it is not an online store, booking system or dashboard.",
+    aEn: "A focused, responsive one-page site. Presence and Momentum include up to 6 sections; it is not an online store, booking system or dashboard.",
   },
   {
     qAr: "هل أستلم Raw Files؟",

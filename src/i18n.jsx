@@ -51,6 +51,7 @@ const translations = {
       showText: "محتوى مخطط وتغطية إيفنتات تخلي المشروع يظهر بالشكل اللي يستحقه.",
       launch: "نجهز الانطلاق",
       launchText: "Landing Page وتجهيز الحسابات ومحتوى الإطلاق.",
+      systemLabel: "نظام الشغل: BUILD / SHOW / LAUNCH",
       why: "ليه Zoomix؟",
       whyItems: [
         "مشروعك مشروعنا — من الفكرة للتنفيذ.",
@@ -124,6 +125,7 @@ const translations = {
       showText: "Planned content and event coverage that makes the work show up.",
       launch: "LAUNCH — The rollout",
       launchText: "Landing page, account setup and launch content.",
+      systemLabel: "THE ZOOMIX SYSTEM: BUILD / SHOW / LAUNCH",
       why: "Why Zoomix?",
       whyItems: [
         "Your project is ours — from idea to execution.",

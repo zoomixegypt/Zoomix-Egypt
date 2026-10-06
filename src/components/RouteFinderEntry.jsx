@@ -1,7 +1,7 @@
 import { useLanguage } from "../i18n";
 
 const stages = [
-  { code: "BUILD", ar: "البداية", en: "START" },
+  { code: "START", ar: "البداية", en: "START" },
   { code: "SHOW", ar: "الظهور", en: "SHOW" },
   { code: "CONTINUE", ar: "الاستمرار", en: "CONTINUE" },
   { code: "ONE THING", ar: "خدمة واحدة", en: "ONE THING" },
@@ -26,7 +26,7 @@ export default function RouteFinderEntry() {
             <p className="mt-6 max-w-xl text-lg leading-8 text-black/60 md:text-xl">
               {isArabic
                 ? "خلّي Zoomix ترتب لك الخطوة الجاية. جاوب على كام سؤال بسيط، وشوف الطريق اللي يناسب مشروعك قبل ما تدخل في أي تفاصيل."
-                : "Let Zoomix organise your next move. Answer a few simple questions and see the route that fits your project before getting into the details."}
+                : "Let Zoomix organize your next move. Answer a few simple questions and see the route that fits your project before getting into the details."}
             </p>
             <a href="/route-finder" className="zoomix-button mt-8 bg-[#0A0A0A] text-white hover:bg-[#BBFF00] hover:text-black">
               {isArabic ? "ساعدني أختار" : "Help me choose"}
@@ -50,7 +50,9 @@ export default function RouteFinderEntry() {
               ))}
             </div>
             <p className="mt-10 max-w-md border-s-2 border-[#BBFF00] ps-4 text-sm leading-6 text-black/55">
-              {isArabic ? "مش قائمة خدمات؛ دي طريقة نفهم بيها مشروعك ونحدد له الاتجاه الأقرب." : "Not a service list — a way to understand your project and point it in the right direction."}
+              {isArabic
+                ? "مش قائمة خدمات؛ دي مسارات تساعدنا نفهم مشروعك ونحدد طريقة التعامل الأقرب. نظام التنفيذ نفسه: BUILD / SHOW / LAUNCH."
+                : "Not a service list — these routes help us understand your project and choose the right way to work together. The delivery system itself is BUILD / SHOW / LAUNCH."}
             </p>
           </div>
         </div>

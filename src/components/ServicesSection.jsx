@@ -19,7 +19,7 @@ const ServicesSection = memo(function ServicesSection() {
       className="zoomix-section bg-[#F5F4EF] text-[#0A0A0A]"
       dir={language === "ar" ? "rtl" : "ltr"}
     >
-      <div id="services-section" className="max-w-[1400px] mx-auto px-6 md:px-12">
+      <div className="max-w-[1400px] mx-auto px-6 md:px-12">
         <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-12 lg:gap-24 items-start">
           <div>
             <p className="zoomix-label mb-6">{t("services", "eyebrow")}</p>
@@ -37,6 +37,9 @@ const ServicesSection = memo(function ServicesSection() {
             <p className="-mt-8 mb-10 max-w-2xl text-base leading-7 text-black/60 md:text-lg">
               {t("services", "partnerIntro")}
             </p>
+            <div id="services-section" className="mb-6 flex items-center gap-3 border-s border-[#BBFF00] ps-3 font-mono text-[10px] tracking-[0.16em] text-black/45">
+              <span>{t("services", "systemLabel")}</span>
+            </div>
             <div className="connection-line services-connection-line mb-12" aria-hidden="true" />
             <div className="grid md:grid-cols-3 gap-8">
               {serviceKeys.map(([number, titleKey, textKey], index) => (

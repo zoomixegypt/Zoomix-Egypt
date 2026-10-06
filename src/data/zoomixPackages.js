@@ -26,7 +26,7 @@ export const ZOOMIX_PACKAGES = [
         "30–45 minute online Brief",
         "Mini Brand Direction and Moodboard",
         "Final logo: primary, black-and-white and digital icon",
-        "Suggested brand colours and type",
+        "Suggested brand colors and type",
         "Mini Brand Guide PDF",
         "Profile image, Cover and suggested Bio",
         "4 launch posts with short Captions",

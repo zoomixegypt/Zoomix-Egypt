@@ -106,7 +106,7 @@ const PackagesSection = memo(function PackagesSection() {
       id: "start",
       number: "01",
       title: isArabic ? "البداية" : "START",
-      description: isArabic ? "لما تكون لسه بتبدأ أو محتاج ترتب أساس البراند." : "For a business starting out or organising its foundation.",
+      description: isArabic ? "لما تكون لسه بتبدأ أو محتاج ترتب أساس البراند." : "For a business starting out or organizing its foundation.",
       result: isArabic ? "نظام واضح تقدر تبني عليه." : "A clear system you can build on.",
       route: "start",
       lanes: [{ label: isArabic ? "باقات التأسيس" : "FOUNDATION PACKAGES", packages: ZOOMIX_PACKAGES, start: true }],
@@ -119,8 +119,8 @@ const PackagesSection = memo(function PackagesSection() {
       result: isArabic ? "محتوى أو تغطية جاهزة للاستخدام." : "Content or coverage ready to use.",
       route: "show",
       lanes: [
-        { label: isArabic ? "باقات المحتوى" : "CONTENT PACKAGES", packages: ZOOMIX_CONTENT_PACKAGES },
-        { label: isArabic ? "باقات الإيفنت" : "EVENT PACKAGES", packages: ZOOMIX_EVENT_PACKAGES },
+        { label: isArabic ? "باقات صناعة المحتوى" : "CONTENT PRODUCTION PACKAGES", packages: ZOOMIX_CONTENT_PACKAGES },
+        { label: isArabic ? "باقات تغطية الإيفنتات" : "EVENT COVERAGE PACKAGES", packages: ZOOMIX_EVENT_PACKAGES },
       ],
     },
     {
@@ -152,7 +152,12 @@ const PackagesSection = memo(function PackagesSection() {
             <p className="max-w-xl text-lg leading-8 text-white/70 md:text-xl">
               {isArabic
                 ? "مش كل مشروع محتاج نفس الحل. اختار المسار الأقرب لمرحلتك، وإحنا نرتب التفاصيل من هناك."
-                : "Every project needs a different route. Choose the one closest to your stage and we will organise the details from there."}
+                : "Every project needs a different route. Choose the one closest to your stage and we will organize the details from there."}
+            </p>
+            <p className="mt-4 max-w-xl border-s-2 border-[#BBFF00] ps-3 text-sm leading-6 text-white/50">
+              {isArabic
+                ? "نظام التنفيذ داخل كل مشروع: Build / Show / Launch. المسارات الأربعة هنا بتحدد طريقة الشراكة الأنسب ليك."
+                : "Every project still follows Build / Show / Launch. These four routes simply define the right way to work together."}
             </p>
             <a href="/route-finder" className="mt-5 inline-flex text-sm font-bold text-[#BBFF00] underline decoration-[#BBFF00]/40 underline-offset-4 hover:text-white">
               {isArabic ? "لسه محتار؟ استخدم Route Finder" : "Still deciding? Use the Route Finder"}
