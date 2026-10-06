@@ -62,10 +62,10 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
           </div>
         </Gsap.div>
         <div
-          className="pointer-events-none absolute bottom-0 left-6 right-6 z-10 hidden rounded-full bg-transparent sm:block md:left-12 md:right-12"
+          className="pointer-events-none absolute bottom-2 left-6 right-6 z-10 hidden rounded-full bg-transparent sm:block md:left-12 md:right-12"
           aria-hidden="true"
         >
-          <div className="connection-line" />
+          <div className="connection-line translate-y-0.5" />
           <p
             className="absolute left-1/2 top-10 flex -translate-x-1/2 items-center gap-7 whitespace-nowrap bg-[#0A0A0A]/85 px-2 py-1 font-mono text-xs leading-6 tracking-[.16em] text-white/60"
             dir="ltr"
