@@ -65,7 +65,7 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
           className="pointer-events-none absolute bottom-2 left-6 right-6 z-10 hidden rounded-full bg-transparent sm:block md:left-12 md:right-12"
           aria-hidden="true"
         >
-          <div className="connection-line translate-y-1" />
+          <div className="connection-line translate-y-1.5" />
           <p
             className="absolute left-1/2 top-10 flex -translate-x-1/2 items-center gap-7 whitespace-nowrap bg-[#0A0A0A]/85 px-2 py-1 font-mono text-[18px] leading-6 tracking-[.16em] text-white/60"
             dir="ltr"
