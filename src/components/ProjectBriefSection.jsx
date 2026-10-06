@@ -131,6 +131,13 @@ const ROUTE_OPTIONS = [
   { value: "one-thing", ar: "خدمة واحدة", en: "One thing — one specific service" },
 ];
 
+const ROUTE_DESCRIPTIONS = {
+  start: { ar: "لما تكون بتبدأ وعاوز أساس واضح", en: "When you need a clear foundation" },
+  show: { ar: "لما تكون جاهز تظهر بقوة", en: "When the work is ready to show up" },
+  continue: { ar: "لما تحتاج شريك يكمل معاك", en: "When you need an ongoing partner" },
+  "one-thing": { ar: "لما تحتاج حل واحد محدد", en: "When you need one specific solution" },
+};
+
 function inferShowType(offerId = "") {
   if (offerId.startsWith("event-")) return "events";
   if (offerId.startsWith("content-")) return "content";
@@ -251,6 +258,13 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
   const isEventBrief = form.route === "show" && activeShowType === "events";
   const isContentBrief = form.route === "show" && activeShowType === "content";
   const optionLabel = (options, value) => options.find((option) => option.value === value)?.[language] || "";
+  const briefStep = form.description || form.projectLink || form.goal ? 3 : form.route || form.service ? 2 : 1;
+  const briefProgressWidth = briefStep === 1 ? "w-1/3" : briefStep === 2 ? "w-2/3" : "w-full";
+  const briefSteps = [
+    { number: "01", ar: "الإشارة", en: "SIGNAL" },
+    { number: "02", ar: "الاتجاه", en: "DIRECTION" },
+    { number: "03", ar: "الخطوة", en: "NEXT MOVE" },
+  ];
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
   const clearSavedSelection = () => {
     window.localStorage.removeItem("zoomix-selected-package");
@@ -447,38 +461,44 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
         </div>
         <div className="grid lg:grid-cols-[0.75fr_1.25fr] gap-12 items-start">
           <div className="lg:sticky lg:top-24">
+            <div className="mb-7 flex items-center justify-between border-b border-white/15 pb-4 font-mono text-[11px] tracking-[0.18em] text-white/45">
+              <span>{label("نرتب الخطوة الجاية", "FIND THE NEXT MOVE")}</span>
+              <span className="text-[#BBFF00]">{String(briefStep).padStart(2, "0")} / 03</span>
+            </div>
             <h2
               className={`${isArabic ? "font-arabic tracking-normal" : "font-display tracking-[-0.06em]"} text-5xl md:text-7xl font-black leading-[0.92]`}
             >
-              {label("جاهز نرتب", "LET'S BUILD")}
+              {label("نرتب الخطوة", "FIND THE NEXT")}
               <br />
-              <span className="text-[#BBFF00]">{label("صورة مشروعك؟", "SOMETHING CLEAR.")}</span>
+              <span className="text-[#BBFF00]">{label("الجاية.", "MOVE.")}</span>
             </h2>
             <p className="mt-8 text-white/60 leading-7">
               {label(
-                "ابعت التفاصيل الأساسية، وهنرتب الخطوة التالية على واتساب.",
-                "Share the essentials and we will organize the next step on WhatsApp.",
+                "مش محتاج تجهز كل الإجابات. إحنا نرتب الصورة معاك.",
+                "You do not need every answer. We will organize the picture with you.",
               )}
             </p>
             <p className="mt-4 text-[#BBFF00] leading-7">
               {label(
-                "إنت ركّز في شغلك، وإحنا نرتب الصورة.",
-                "Focus on your business. We will organize the creative picture.",
+                "اختار الاتجاه، وسيب لنا ترتيب الخطوة التالية.",
+                "Choose the direction. We will organize the next move.",
               )}
             </p>
-            <div className="mt-8 grid max-w-sm grid-cols-3 gap-2">
-              {[
-                label("نراجع التفاصيل", "WE REVIEW"),
-                label("نحدد الخطوة", "NEXT STEP"),
-                label("واتساب مباشر", "DIRECT WHATSAPP"),
-              ].map((item) => (
-                <span
-                  key={item}
-                  className="border border-white/15 px-2 py-3 text-center font-mono text-[9px] leading-4 tracking-[0.08em] text-white/55"
-                >
-                  {item}
-                </span>
-              ))}
+            <div className="relative mt-10 max-w-sm border-t border-white/15 pt-6">
+              <div className="absolute inset-x-0 top-0 h-px bg-[#BBFF00] transition-all duration-500" style={{ width: `${briefStep * 33.333}%` }} />
+              <div className="grid grid-cols-3 gap-3">
+                {briefSteps.map((step, index) => {
+                  const isActive = briefStep >= index + 1;
+                  return (
+                    <div key={step.number} className={`transition-colors duration-300 ${isActive ? "text-white" : "text-white/30"}`}>
+                      <span className={`mb-3 flex h-8 w-8 items-center justify-center rounded-full border font-mono text-[11px] ${isActive ? "border-[#BBFF00] bg-[#BBFF00] text-[#0A0A0A]" : "border-white/20"}`}>
+                        {step.number}
+                      </span>
+                      <span className="block font-mono text-[10px] tracking-[0.12em]">{label(step.ar, step.en)}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
             <a
               href="https://wa.me/201555451535"
@@ -498,6 +518,25 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
             className="relative grid min-w-0 gap-5 overflow-hidden border border-white/10 bg-[#F5F4EF] p-5 text-[#0A0A0A] shadow-[0_16px_60px_rgba(0,0,0,0.22)] sm:grid-cols-2 md:p-10"
           >
             <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-[#BBFF00]" />
+            <div className="sm:col-span-2 -mx-5 -mt-5 border-b border-black/15 bg-white px-5 pb-5 pt-6 md:-mx-10 md:-mt-10 md:px-10">
+              <div className="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <p className="font-mono text-[11px] font-bold tracking-[0.18em] text-black/45">ZOOMIX / PROJECT BRIEF</p>
+                  <p className="mt-2 text-xl font-black tracking-[-0.03em]">{label("خلّي الخطوة واضحة.", "MAKE THE NEXT MOVE CLEAR.")}</p>
+                </div>
+                <span className="font-mono text-xs font-bold tracking-[0.16em] text-black/50">
+                  {String(briefStep).padStart(2, "0")} / 03
+                </span>
+              </div>
+              <div className="mt-5 h-1 bg-black/10">
+                <div className={`h-full bg-[#BBFF00] transition-all duration-500 ${briefProgressWidth}`} />
+              </div>
+              <div className="mt-3 flex items-center justify-between font-mono text-[10px] tracking-[0.1em] text-black/45">
+                <span>{label("الإشارة", "SIGNAL")}</span>
+                <span>{label("الاتجاه", "DIRECTION")}</span>
+                <span>{label("الخطوة التالية", "NEXT MOVE")}</span>
+              </div>
+            </div>
             {Object.keys(errors).length > 0 && (
               <div
                 className="sm:col-span-2 border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800"
@@ -513,31 +552,41 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
             {field("project", label("اسم المشروع", "Project name"))}
             {field("phone", label("رقم الهاتف *", "Phone *"), "tel", true)}
             {field("activity", label("نوع النشاط", "Business type"))}
+            <div className="sm:col-span-2 mt-2 border-t border-black/15 pt-5">
+              <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-black/45">01 / {label("الإشارة", "SIGNAL")}</p>
+              <p className="mt-2 text-sm text-black/55">{label("إحنا محتاجين نعرف نقطة البداية بس.", "We only need to understand where you are starting from.")}</p>
+            </div>
             {selectField("service", label("إيه اللي محتاجه؟ *", "What do you need? *"), serviceOptions, true, label("اختار احتياجك", "Choose what you need"))}
-            <label className="block">
-              <span className="mb-2 block font-mono text-xs font-bold uppercase tracking-[0.08em] text-black/75">
-                {label("مسار المشروع", "Project path")}
-              </span>
-              <select
-                value={form.route}
-                onChange={(event) => handleRouteChange(event.target.value)}
-                className={`min-w-0 w-full border bg-white px-4 py-3.5 outline-none transition-colors focus:border-[#6b8d00] focus:ring-2 focus:ring-[#BBFF00]/35 ${errors.route ? "border-red-500" : "border-black/25"}`}
-                aria-invalid={Boolean(errors.route)}
-                aria-describedby={errors.route ? "brief-route-error" : undefined}
-              >
-                <option value="">{label("اختار المسار", "Choose a path")}</option>
-                {ROUTE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option[language]}
-                  </option>
-                ))}
-              </select>
-              {errors.route && (
-                <span id="brief-route-error" className="block mt-1 text-xs text-red-600">
-                  {errors.route}
-                </span>
-              )}
-            </label>
+            <div className="sm:col-span-2 mt-2 border-t border-black/15 pt-5">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-black/45">02 / {label("الاتجاه", "DIRECTION")}</p>
+                  <p className="mt-2 text-sm text-black/55">{label("اختار أقرب وصف لاحتياجك.", "Choose the direction closest to what you need.")}</p>
+                </div>
+                {form.route && <span className="font-mono text-[11px] font-bold tracking-[0.12em] text-[#5e7c00]">{pathLabel[form.route]}</span>}
+              </div>
+              <div className="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                {ROUTE_OPTIONS.map((option, index) => {
+                  const selected = form.route === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => handleRouteChange(option.value)}
+                      aria-pressed={selected}
+                      className={`group min-h-32 border p-4 text-start transition-all duration-300 ${selected ? "border-[#6b8d00] bg-[#BBFF00] text-[#0A0A0A] shadow-[4px_4px_0_#0A0A0A]" : "border-black/20 bg-white hover:border-black/60 hover:-translate-y-0.5"}`}
+                    >
+                      <span className={`mb-5 flex h-8 w-8 items-center justify-center rounded-full border font-mono text-[11px] transition-colors ${selected ? "border-black bg-black text-[#BBFF00]" : "border-black/20 text-black/55 group-hover:border-black"}`}>
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <span className="block text-lg font-black leading-tight">{option[language]}</span>
+                      <span className={`mt-2 block text-xs leading-5 ${selected ? "text-black/70" : "text-black/55"}`}>{ROUTE_DESCRIPTIONS[option.value][language]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {errors.route && <span className="mt-2 block text-xs text-red-600">{errors.route}</span>}
+            </div>
             <label className="block">
               <span className="mb-2 block font-mono text-xs font-bold uppercase tracking-[0.08em] text-black/75">
                 {label("العرض المختار", "Selected offer")}
@@ -603,6 +652,10 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 {selectField("coverageType", label("شكل التغطية", "Coverage style"), EVENT_COVERAGE_OPTIONS)}
               </div>
             )}
+            <div className="sm:col-span-2 mt-2 border-t border-black/15 pt-5">
+              <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-black/45">03 / {label("الخطوة التالية", "NEXT MOVE")}</p>
+              <p className="mt-2 text-sm text-black/55">{label("آخر شوية تفاصيل تساعدنا نحدد البداية الصح.", "A few final details help us define the right starting point.")}</p>
+            </div>
             {selectField("stage", label("المرحلة الحالية", "Current stage"), STAGE_OPTIONS)}
             {selectField("budget", label("الميزانية التقريبية", "Approx. budget"), BUDGET_OPTIONS)}
             {selectField("launchDate", label("التوقيت المطلوب", "When do you want to start?"), TIMELINE_OPTIONS)}
