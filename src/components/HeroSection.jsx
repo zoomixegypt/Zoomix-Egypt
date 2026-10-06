@@ -67,14 +67,18 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
         >
           <div className="connection-line" />
           <p
-            className="absolute left-1/2 top-4 -translate-x-1/2 bg-[#0A0A0A]/85 px-2 py-1 font-mono text-[10px] leading-6 tracking-[.18em] text-white/40"
+            className="absolute left-1/2 top-4 flex -translate-x-1/2 items-center gap-5 whitespace-nowrap bg-[#0A0A0A]/85 px-2 py-1 font-mono text-[10px] leading-6 tracking-[.18em] text-white/40"
             dir="ltr"
           >
-            {t("hero", "build")}
-            <br />
-            {t("hero", "show")}
-            <br />
-            {t("hero", "launch")}
+            <span>{t("hero", "build")}</span>
+            <span aria-hidden="true" className="text-[#BBFF00]/60">
+              /
+            </span>
+            <span>{t("hero", "show")}</span>
+            <span aria-hidden="true" className="text-[#BBFF00]/60">
+              /
+            </span>
+            <span>{t("hero", "launch")}</span>
           </p>
         </div>
         <Gsap.div
