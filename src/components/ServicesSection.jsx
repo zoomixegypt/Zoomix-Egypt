@@ -37,7 +37,7 @@ const ServicesSection = memo(function ServicesSection() {
             <div className="grid md:grid-cols-3 gap-8">
               {serviceKeys.map(([number, titleKey, textKey]) => (
                 <article key={number} className="border-t border-black/20 pt-5">
-                  <span className="font-mono text-xs text-black/45 tracking-[0.16em]">
+                  <span className="inline-flex bg-[#BBFF00] px-2 py-1 font-mono text-[10px] font-bold tracking-[0.16em] text-black">
                     {number}
                   </span>
                   <h3

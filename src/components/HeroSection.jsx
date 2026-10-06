@@ -59,7 +59,7 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
           </div>
         </Gsap.div>
         <div
-          className="pointer-events-none absolute bottom-10 left-6 right-6 z-0 hidden rounded-full bg-[#141A0A]/70 px-2 py-2 shadow-[0_0_0_1px_rgba(187,255,0,0.08),0_0_24px_rgba(187,255,0,0.08)] sm:block md:left-12 md:right-12"
+          className="pointer-events-none absolute bottom-10 left-6 right-6 z-0 hidden rounded-full bg-transparent sm:block md:left-12 md:right-12"
           aria-hidden="true"
         >
           <div className="connection-line" />

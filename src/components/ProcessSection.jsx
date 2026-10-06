@@ -35,7 +35,9 @@ const ProcessSection = memo(function ProcessSection() {
               key={step.key}
               className="relative pt-8 border-t md:border-t-0 border-black/20"
             >
-              <span className="font-mono text-xs text-[#5f7f00]">{step.number}</span>
+              <span className="inline-flex bg-[#BBFF00] px-2 py-1 font-mono text-[10px] font-bold text-black">
+                {step.number}
+              </span>
               <h3 className="mt-5 text-2xl font-black">
                 {isArabic
                   ? step.key === "direction"
