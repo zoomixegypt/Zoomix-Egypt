@@ -257,8 +257,8 @@ export default function ProjectGallery({ onOpenProject }) {
         invalidateOnRefresh: true,
         onUpdate: (self) => {
           const current = self.progress * maxScroll;
-          // Keep the project track LTR in both languages so Arabic starts with project 01.
-          setX(-current);
+          // RTL layout needs the opposite transform so project 01 remains the starting card.
+          setX(language === "ar" ? current : -current);
 
           const nextActiveIndex = Math.max(
             0,
@@ -310,7 +310,7 @@ export default function ProjectGallery({ onOpenProject }) {
     activeProjectIndexRef.current = nextIndex;
     setActiveProjectIndex(nextIndex);
     gsap.to(trackRef.current, {
-      x: -target,
+      x: language === "ar" ? target : -target,
       duration: 0.8,
       ease: "power3.out",
       overwrite: true,
