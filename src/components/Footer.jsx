@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { ArrowUpRight, Instagram, Linkedin, MessageCircle } from "lucide-react";
 import { useLanguage } from "../i18n";
-import ImageWithFallback from "./ImageWithFallback";
+import ZoomixLogo from "./ZoomixLogo";
 
 const Footer = memo(function Footer() {
   const { language, t } = useLanguage();
@@ -40,14 +40,12 @@ const Footer = memo(function Footer() {
 
         <div className="mb-20 flex flex-col justify-between gap-12 lg:flex-row">
           <div className="lg:w-1/2">
-            <ImageWithFallback
-              src="/zoomix-logo.svg"
-              alt="ZOOMIX"
-              width="250"
-              height="100"
+            <ZoomixLogo
+              variant="dark"
+              width={250}
+              height={100}
+              className="mb-8 w-44"
               loading="lazy"
-              className="w-44 h-auto mb-8 brightness-0 invert"
-              fallbackClassName="aspect-[5/2] w-44 mb-8"
             />
             <p className="font-mono text-xs tracking-[0.2em] text-[#BBFF00] mb-6">
               {t("footer", "partner")}

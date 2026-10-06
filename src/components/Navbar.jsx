@@ -4,8 +4,9 @@ import { Menu, X, ArrowUpRight } from "lucide-react";
 import Magnetic from "./Magnetic";
 import { exponentialEaseOut } from "../utils/easing";
 import { useLanguage } from "../i18n";
+import ZoomixLogo from "./ZoomixLogo";
 
-const DARK_SECTION_IDS = ["hero-section", "project-section", "contact-section"];
+const DARK_SECTION_IDS = ["hero-section", "project-section", "packages-section", "contact-section"];
 
 const Navbar = memo(function Navbar() {
   const { language, setLanguage, t } = useLanguage();
@@ -132,12 +133,11 @@ const Navbar = memo(function Navbar() {
           aria-label="ZOOMIX"
           className={`group pointer-events-auto flex items-center px-1.5 py-1 md:px-2 md:py-1.5 transition-all duration-500 cursor-pointer ${logoOnDark ? "" : "drop-shadow-[0_2px_8px_rgba(0,0,0,0.12)]"}`}
         >
-          <img
-            src="/zoomix-logo.svg"
-            alt="ZOOMIX"
-            width="180"
-            height="60"
-            className={`h-auto w-24 md:w-32 object-contain transition-all duration-500 ${logoOnDark ? "" : "brightness-0"}`}
+          <ZoomixLogo
+            variant={logoOnDark ? "dark" : "light"}
+            className="h-auto w-24 md:w-32"
+            width={180}
+            height={60}
           />
         </button>
       </Magnetic>

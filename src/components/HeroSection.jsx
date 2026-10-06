@@ -2,7 +2,7 @@ import { memo, useRef } from "react";
 import { ArrowDownLeft, ArrowDownRight } from "lucide-react";
 import { Gsap, useGsapScroll, useGsapTransform } from "../utils/gsapAnimate";
 import { useLanguage } from "../i18n";
-import ImageWithFallback from "./ImageWithFallback";
+import ZoomixLogo from "./ZoomixLogo";
 
 const HeroSection = memo(function HeroSection({ isRevealed = true }) {
   const { language, t } = useLanguage();
@@ -57,8 +57,14 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
               {t("hero", "work")} <ActionArrow size={20} />
             </a>
           </div>
+        </Gsap.div>
+        <div
+          className="pointer-events-none absolute bottom-16 left-6 right-6 z-10 hidden rounded-full bg-transparent sm:block md:left-12 md:right-12"
+          aria-hidden="true"
+        >
+          <div className="connection-line" />
           <p
-            className="relative z-10 mt-4 w-fit bg-[#0A0A0A]/85 px-2 py-1 font-mono text-[10px] leading-6 tracking-[.18em] text-white/40"
+            className="absolute left-1/2 top-4 -translate-x-1/2 bg-[#0A0A0A]/85 px-2 py-1 font-mono text-[10px] leading-6 tracking-[.18em] text-white/40"
             dir="ltr"
           >
             {t("hero", "build")}
@@ -67,12 +73,6 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
             <br />
             {t("hero", "launch")}
           </p>
-        </Gsap.div>
-        <div
-          className="pointer-events-none absolute bottom-5 left-6 right-6 z-0 hidden rounded-full bg-transparent sm:block md:left-12 md:right-12"
-          aria-hidden="true"
-        >
-          <div className="connection-line" />
         </div>
         <Gsap.div
           style={{ y: reduceMotion ? 0 : artY }}
@@ -81,13 +81,11 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
           transition={{ duration: reduceMotion ? 0 : 1, delay: reduceMotion ? 0 : 0.12 }}
           className="hidden self-end border-r border-white/15 pb-16 pr-9 lg:block lg:-translate-y-4"
         >
-          <ImageWithFallback
-            src="/zoomix-logo.svg"
-            alt="ZOOMIX"
-            width="250"
-            height="100"
-            className="w-full max-w-sm mx-auto opacity-100 drop-shadow-[0_0_18px_rgba(255,255,255,0.08)]"
-            fallbackClassName="aspect-[5/2] w-full max-w-sm mx-auto"
+          <ZoomixLogo
+            variant="dark"
+            width={250}
+            height={100}
+            className="mx-auto w-full max-w-sm drop-shadow-[0_0_18px_rgba(255,255,255,0.08)]"
           />
         </Gsap.div>
       </div>
