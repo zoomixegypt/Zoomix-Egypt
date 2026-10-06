@@ -37,7 +37,7 @@ const ServicesSection = memo(function ServicesSection() {
             <div className="grid md:grid-cols-3 gap-8">
               {serviceKeys.map(([number, titleKey, textKey]) => (
                 <article key={number} className="border-t border-black/20 pt-5">
-                  <span className="inline-flex bg-[#BBFF00] px-2 py-1 font-mono text-[10px] font-bold tracking-[0.16em] text-black">
+                  <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#BBFF00] font-mono text-[10px] font-bold tracking-[0.08em] text-black">
                     {number}
                   </span>
                   <h3
@@ -65,7 +65,9 @@ const ServicesSection = memo(function ServicesSection() {
                 key={item}
                 className="flex items-start gap-4 border-b border-black/15 pb-5 text-lg"
               >
-                <span className="font-mono text-xs text-[#5f7f00] pt-1">0{index + 1}</span>
+                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#BBFF00] font-mono text-[9px] font-bold text-black">
+                  0{index + 1}
+                </span>
                 <span>{item}</span>
               </li>
             ))}

@@ -35,7 +35,7 @@ const ProcessSection = memo(function ProcessSection() {
               key={step.key}
               className="relative pt-8 border-t md:border-t-0 border-black/20"
             >
-              <span className="inline-flex bg-[#BBFF00] px-2 py-1 font-mono text-[10px] font-bold text-black">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#BBFF00] font-mono text-[10px] font-bold text-black">
                 {step.number}
               </span>
               <h3 className="mt-5 text-2xl font-black">
