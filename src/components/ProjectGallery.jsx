@@ -257,8 +257,8 @@ export default function ProjectGallery({ onOpenProject }) {
         invalidateOnRefresh: true,
         onUpdate: (self) => {
           const current = self.progress * maxScroll;
-          // RTL layout needs the opposite transform so project 01 remains the starting card.
-          setX(language === "ar" ? current : -current);
+          // Keep the desktop track LTR so project 01 is always the starting card.
+          setX(-current);
 
           const nextActiveIndex = Math.max(
             0,
@@ -310,7 +310,7 @@ export default function ProjectGallery({ onOpenProject }) {
     activeProjectIndexRef.current = nextIndex;
     setActiveProjectIndex(nextIndex);
     gsap.to(trackRef.current, {
-      x: language === "ar" ? target : -target,
+      x: -target,
       duration: 0.8,
       ease: "power3.out",
       overwrite: true,
@@ -508,7 +508,7 @@ export default function ProjectGallery({ onOpenProject }) {
   return (
     <section
       ref={sectionRef}
-      dir={language === "ar" ? "rtl" : "ltr"}
+      dir="ltr"
       className="relative bg-neutral-900 overflow-hidden h-[100dvh]"
     >
       {/* Section Header */}
@@ -595,7 +595,10 @@ export default function ProjectGallery({ onOpenProject }) {
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent opacity-95 transition-opacity duration-500" />
 
               {/* Info panel */}
-              <div className="absolute bottom-0 left-0 z-10 flex w-full translate-y-4 flex-col justify-end border-t border-white/10 bg-black/40 p-8 backdrop-blur-[3px] transition-transform duration-500 ease-out group-hover:translate-y-0 lg:p-10">
+              <div
+                dir={language === "ar" ? "rtl" : "ltr"}
+                className="absolute bottom-0 left-0 z-10 flex w-full translate-y-4 flex-col justify-end border-t border-white/10 bg-black/40 p-8 backdrop-blur-[3px] transition-transform duration-500 ease-out group-hover:translate-y-0 lg:p-10"
+              >
                 <div className="flex justify-between items-end gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-3">
