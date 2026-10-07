@@ -281,7 +281,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
     },
   ], [language, isArabic]);
   const selectedOfferId = form.offerId || form.packageId;
-  const guidedSelection = selectionOrigin === "route-finder" && Boolean(selectedOfferId || form.route);
+  const guidedSelection = selectionOrigin !== "manual" && Boolean(selectedOfferId || form.route);
   const activeShowType = form.showType || inferShowType(form.offerId);
   const serviceOptions =
     form.route === "start"
