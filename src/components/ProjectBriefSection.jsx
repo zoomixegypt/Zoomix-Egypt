@@ -25,10 +25,8 @@ const initialForm = {
   eventDate: "",
   eventLocation: "",
   coverageType: "",
-  stage: "",
   budget: "",
   launchDate: "",
-  source: "",
   projectLink: "",
   goal: "",
   description: "",
@@ -98,13 +96,6 @@ const EVENT_TYPE_OPTIONS = [
   { value: "other", ar: "نوع آخر", en: "Other" },
 ];
 
-const STAGE_OPTIONS = [
-  { value: "idea", ar: "فكرة أو مشروع جديد", en: "Idea or new project" },
-  { value: "existing", ar: "مشروع قائم ويحتاج ترتيب", en: "Existing project that needs structure" },
-  { value: "ready", ar: "جاهز للظهور أو الإطلاق", en: "Ready to show up or launch" },
-  { value: "growing", ar: "شغال وعاوز يتطور", en: "Already running and ready to grow" },
-];
-
 const BUDGET_OPTIONS = [
   { value: "under-5000", ar: "أقل من 5,000 جنيه", en: "Under 5,000 EGP" },
   { value: "5000-10000", ar: "من 5,000 إلى 10,000 جنيه", en: "5,000–10,000 EGP" },
@@ -120,22 +111,6 @@ const TIMELINE_OPTIONS = [
   { value: "not-sure", ar: "لسه مش محدد", en: "Not decided yet" },
 ];
 
-const SOURCE_OPTIONS = [
-  { value: "instagram", ar: "Instagram", en: "Instagram" },
-  { value: "facebook", ar: "Facebook", en: "Facebook" },
-  { value: "google", ar: "Google", en: "Google" },
-  { value: "referral", ar: "ترشيح من شخص", en: "Referral" },
-  { value: "event", ar: "إيفنت أو مقابلة", en: "Event or meeting" },
-  { value: "other", ar: "مصدر آخر", en: "Other" },
-];
-
-const ROUTE_OPTIONS = [
-  { value: "start", ar: "البداية", en: "Start" },
-  { value: "show", ar: "الظهور", en: "Show" },
-  { value: "continue", ar: "الاستمرار", en: "Continue" },
-  { value: "one-thing", ar: "خدمة واحدة", en: "One thing — one specific service" },
-];
-
 const CONTACT_OPTIONS = [
   { value: "whatsapp", ar: "واتساب", en: "WhatsApp" },
   { value: "call", ar: "مكالمة هاتفية", en: "Phone call" },
@@ -149,17 +124,18 @@ const CALL_TIME_OPTIONS = [
   { value: "anytime", ar: "أي وقت مناسب", en: "Any suitable time" },
 ];
 
-const ROUTE_DESCRIPTIONS = {
-  start: { ar: "لما تكون بتبدأ وعاوز أساس واضح", en: "When you need a clear foundation" },
-  show: { ar: "لما تكون جاهز تظهر بقوة", en: "When the work is ready to show up" },
-  continue: { ar: "لما تحتاج شريك يكمل معاك", en: "When you need an ongoing partner" },
-  "one-thing": { ar: "لما تحتاج حل واحد محدد", en: "When you need one specific solution" },
-};
-
 function inferShowType(offerId = "") {
   if (offerId.startsWith("event-")) return "events";
   if (offerId.startsWith("content-")) return "content";
   return "";
+}
+
+function inferService(route, showType) {
+  if (route === "start") return "identity";
+  if (route === "show" && showType === "events") return "event-highlight";
+  if (route === "show") return "content-production";
+  if (route === "continue") return "monthly-partnership";
+  return "not-sure";
 }
 
 const ProjectBriefSection = memo(function ProjectBriefSection() {
@@ -172,13 +148,11 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
   const [messageCopied, setMessageCopied] = useState(false);
   const [referenceCode, setReferenceCode] = useState("");
   const [submitError, setSubmitError] = useState("");
-  const [selectionOrigin, setSelectionOrigin] = useState("");
   const sectionRef = useRef(null);
   const briefStartedRef = useRef(false);
 
   useEffect(() => {
     const applyPackage = (id) => {
-      if (id) setSelectionOrigin("package");
       setForm((current) => ({
         ...current,
         packageId: id || current.packageId,
@@ -198,7 +172,6 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       if (!selection) return;
       const route = normalizeRoute(selection.route);
       const isStartRoute = route === "start";
-      setSelectionOrigin(selection.source === "packages" ? "package" : "route-finder");
       setForm((current) => ({
         ...current,
         route,
@@ -253,35 +226,8 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
     if (offer) return offer.name[language];
     return ZOOMIX_ONE_OFF_SERVICES[language].find((service) => service.id === form.offerId)?.name || selectedPackage?.name[language] || "";
   }, [form.offerId, language, selectedPackage]);
-  const offerCatalog = useMemo(() => [
-    {
-      label: label("باقات البداية", "START PACKAGES"),
-      route: "start",
-      offers: ZOOMIX_PACKAGES.map((offer) => ({ ...offer, displayName: offer.name[language], priceLabel: `${offer.price} ${label("جنيه", "EGP")}` })),
-    },
-    {
-      label: label("صناعة المحتوى", "CONTENT PRODUCTION"),
-      route: "show",
-      offers: ZOOMIX_CONTENT_PACKAGES.map((offer) => ({ ...offer, displayName: offer.name[language], priceLabel: `${offer.price} ${label("جنيه", "EGP")}` })),
-    },
-    {
-      label: label("تغطية الإيفنتات", "EVENT COVERAGE"),
-      route: "show",
-      offers: ZOOMIX_EVENT_PACKAGES.map((offer) => ({ ...offer, displayName: offer.name[language], priceLabel: `${offer.price} ${label("جنيه", "EGP")}` })),
-    },
-    {
-      label: label("الشراكة الشهرية", "MONTHLY PARTNERSHIP"),
-      route: "continue",
-      offers: ZOOMIX_PARTNER_PACKAGES.map((offer) => ({ ...offer, displayName: offer.name[language], priceLabel: `${offer.price} ${label("جنيه / شهريًا", "EGP / month")}` })),
-    },
-    {
-      label: label("خدمات منفصلة", "ONE-OFF SERVICES"),
-      route: "one-thing",
-      offers: ZOOMIX_ONE_OFF_SERVICES[language].map((offer) => ({ ...offer, displayName: offer.name, priceLabel: offer.price })),
-    },
-  ], [language, isArabic]);
   const selectedOfferId = form.offerId || form.packageId;
-  const guidedSelection = selectionOrigin !== "manual" && Boolean(selectedOfferId || form.route);
+  const guidedSelection = Boolean(selectedOfferId || form.route);
   const activeShowType = form.showType || inferShowType(form.offerId);
   const serviceOptions =
     form.route === "start"
@@ -298,33 +244,13 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
   const isEventBrief = form.route === "show" && activeShowType === "events";
   const isContentBrief = form.route === "show" && activeShowType === "content";
   const optionLabel = (options, value) => options.find((option) => option.value === value)?.[language] || "";
-  const briefStep = form.description || form.projectLink || form.goal ? 3 : form.route || form.service ? 2 : 1;
-  const briefProgressWidth = briefStep === 1 ? "w-1/3" : briefStep === 2 ? "w-2/3" : "w-full";
+  const briefStep = form.description || form.projectLink || form.goal ? 2 : 1;
+  const briefProgressWidth = briefStep === 1 ? "w-1/2" : "w-full";
   const briefSteps = [
-    { number: "01", ar: "الإشارة", en: "SIGNAL" },
-    { number: "02", ar: "الاتجاه", en: "DIRECTION" },
-    { number: "03", ar: "الخطوة", en: "NEXT MOVE" },
+    { number: "01", ar: "الاختيار", en: "CHOICE" },
+    { number: "02", ar: "التفاصيل", en: "DETAILS" },
   ];
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
-  const clearSavedSelection = () => {
-    window.localStorage.removeItem("zoomix-selected-package");
-    window.localStorage.removeItem("zoomix-project-route");
-    setForm((current) => ({
-      ...current,
-      packageId: "",
-      route: "",
-      offerId: "",
-      service: "",
-      showType: "",
-      contentSource: "",
-      eventType: "",
-      eventDate: "",
-      eventLocation: "",
-      coverageType: "",
-    }));
-    setSelectionOrigin("");
-    setSubmitted(false);
-  };
   const updateField = (key, value) => {
     update(key, value);
     if (errors[key]) {
@@ -343,37 +269,13 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
     "one-thing": label("خدمة واحدة", "One thing — one specific service"),
   };
 
-  const handleRouteChange = (value) => {
-    setSelectionOrigin("manual");
-    setForm((current) => ({
-      ...current,
-      route: value,
-      packageId: value === "start" ? current.packageId : "",
-      offerId: value === "start" ? current.offerId : "",
-      service: "",
-      showType: value === "show" ? inferShowType(current.offerId) || current.showType : "",
-      contentSource: value === "show" ? current.contentSource : "",
-      eventType: value === "show" ? current.eventType : "",
-      eventDate: value === "show" ? current.eventDate : "",
-      eventLocation: value === "show" ? current.eventLocation : "",
-      coverageType: value === "show" ? current.coverageType : "",
-    }));
-    setErrors((current) => {
-      const next = { ...current };
-      delete next.route;
-      delete next.showType;
-      delete next.eventDate;
-      return next;
-    });
-  };
-
   const buildMessage = (reference = referenceCode) => {
     const lines = [
       [label("الاسم", "Name"), form.name],
       [label("اسم المشروع", "Project"), form.project],
       [label("رقم الهاتف", "Phone"), form.phone],
       [label("نوع النشاط", "Activity"), form.activity],
-      [label("نوع الخدمة", "Service"), optionLabel(serviceOptions, form.service)],
+      [label("نوع الخدمة", "Service"), selectedOfferName || optionLabel(serviceOptions, form.service) || pathLabel[form.route]],
       [label("المسار", "Path"), pathLabel[form.route]],
       [label("الاختيار", "Selected offer"), selectedOfferName],
       [label("نوع الطلب", "Request type"), optionLabel(SHOW_TYPE_OPTIONS, activeShowType)],
@@ -382,10 +284,8 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       [label("تاريخ الإيفنت", "Event date"), form.eventDate],
       [label("مكان الإيفنت", "Event location"), form.eventLocation],
       [label("نوع التغطية", "Coverage type"), optionLabel(EVENT_COVERAGE_OPTIONS, form.coverageType)],
-      [label("المرحلة الحالية", "Current stage"), optionLabel(STAGE_OPTIONS, form.stage)],
       [label("الميزانية التقريبية", "Approx. budget"), optionLabel(BUDGET_OPTIONS, form.budget)],
       [label("التوقيت المطلوب", "Timeline"), optionLabel(TIMELINE_OPTIONS, form.launchDate)],
-      [label("عرفتنا منين", "How they found us"), optionLabel(SOURCE_OPTIONS, form.source)],
       [label("رابط المشروع", "Project link"), form.projectLink],
       [label("الهدف الأساسي", "Main goal"), form.goal],
       [label("وسيلة التواصل", "Preferred contact"), optionLabel(CONTACT_OPTIONS, form.contactPreference)],
@@ -400,7 +300,8 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const required = ["name", "service", "description", "contactPreference"];
+    const required = ["name", "description", "contactPreference"];
+    const resolvedService = form.service || inferService(form.route, activeShowType);
     const nextErrors = Object.fromEntries(
       required.filter((key) => !form[key].trim()).map((key) => [key, label("مطلوب", "Required")]),
     );
@@ -435,7 +336,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       const response = await fetch("/api/briefs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, offerName: selectedOfferName }),
+        body: JSON.stringify({ ...form, service: resolvedService, offerName: selectedOfferName }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || label("حصلت مشكلة أثناء حفظ الطلب.", "We could not save the brief."));
@@ -545,7 +446,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
           <div className="lg:sticky lg:top-24">
             <div className="mb-7 flex items-center justify-between border-b border-white/15 pb-4 font-mono text-[11px] tracking-[0.18em] text-white/45">
               <span>{label("نرتب الخطوة الجاية", "FIND THE NEXT MOVE")}</span>
-              <span className="text-[#BBFF00]">{String(briefStep).padStart(2, "0")} / 03</span>
+              <span className="text-[#BBFF00]">{String(briefStep).padStart(2, "0")} / 02</span>
             </div>
             <h2
               className={`${isArabic ? "font-arabic tracking-normal" : "font-display tracking-[-0.06em]"} text-5xl md:text-7xl font-black leading-[0.92]`}
@@ -555,15 +456,14 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
               <span className="text-[#BBFF00]">{label("الجاية.", "MOVE.")}</span>
             </h2>
             <p className="mt-8 text-white/60 leading-7">
-              {label(
-                "مش محتاج تجهز كل الإجابات. إحنا نرتب الصورة معاك.",
-                "You do not need every answer. We will organize the picture with you.",
-              )}
+              {guidedSelection
+                ? label("اختيارك اتنقل خلاص. فاضل نعرف الأساسيات بس.", "Your direction is already set. We only need the essentials now.")
+                : label("مش محتاج تجهز كل الإجابات. إحنا نرتب الصورة معاك.", "You do not need every answer. We will organize the picture with you.")}
             </p>
             <p className="mt-4 text-[#BBFF00] leading-7">
               {label(
-                "اختار الاتجاه، وسيب لنا ترتيب الخطوة التالية.",
-                "Choose the direction. We will organize the next move.",
+                "اكتب لنا عن مشروعك، وإحنا نرتب الخطوة التالية.",
+                "Tell us about the project and we will organize the next move.",
               )}
             </p>
             <div className="relative mt-10 max-w-sm border-t border-white/15 pt-6">
@@ -608,16 +508,15 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                   <p className="mt-2 text-xl font-black tracking-[-0.03em]">{label("خلّي الخطوة واضحة.", "MAKE THE NEXT MOVE CLEAR.")}</p>
                 </div>
                 <span className="font-mono text-xs font-bold tracking-[0.16em] text-black/50">
-                  {String(briefStep).padStart(2, "0")} / 03
+                  {String(briefStep).padStart(2, "0")} / 02
                 </span>
               </div>
               <div className="mt-5 h-1 bg-black/10">
                 <div className={`h-full bg-[#BBFF00] transition-all duration-500 ${briefProgressWidth}`} />
               </div>
               <div className="mt-3 flex items-center justify-between font-mono text-[10px] tracking-[0.1em] text-black/45">
-                <span>{label("الإشارة", "SIGNAL")}</span>
-                <span>{label("الاتجاه", "DIRECTION")}</span>
-                <span>{label("الخطوة التالية", "NEXT MOVE")}</span>
+                <span>{label("الاختيار", "CHOICE")}</span>
+                <span>{label("التفاصيل", "DETAILS")}</span>
               </div>
             </div>
             {Object.keys(errors).length > 0 && (
@@ -636,52 +535,21 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
             {field("phone", label("رقم الهاتف", "Phone"), "tel")}
             {field("activity", label("نوع النشاط", "Business type"))}
             <div className="sm:col-span-2 mt-2 border-t border-black/15 pt-5">
-              <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-black/45">01 / {label("الإشارة", "SIGNAL")}</p>
-              <p className="mt-2 text-sm text-black/55">{label("إحنا محتاجين نعرف نقطة البداية بس.", "We only need to understand where you are starting from.")}</p>
-            </div>
-            {selectField("service", label("إيه اللي محتاجه؟ *", "What do you need? *"), serviceOptions, true, label("اختار احتياجك", "Choose what you need"))}
-            <div className="sm:col-span-2 mt-2 border-t border-black/15 pt-5">
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                  <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-black/45">02 / {label("الاتجاه", "DIRECTION")}</p>
-                  <p className="mt-2 text-sm text-black/55">{label("اختار أقرب وصف لاحتياجك.", "Choose the direction closest to what you need.")}</p>
+                  <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-black/45">01 / {label("الاختيار", "THE CHOICE")}</p>
+                  <p className="mt-2 text-sm text-black/55">{label("اختيارك من خطوتك الجاية يدخل هنا تلقائيًا.", "Your next-move choice comes through here automatically.")}</p>
                 </div>
                 {form.route && <span className="font-mono text-[11px] font-bold tracking-[0.12em] text-[#5e7c00]">{pathLabel[form.route]}</span>}
               </div>
-              <div className="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                {ROUTE_OPTIONS.map((option, index) => {
-                  const selected = form.route === option.value;
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => handleRouteChange(option.value)}
-                      aria-pressed={selected}
-                      className={`group min-h-32 border p-4 text-start transition-all duration-300 ${selected ? "border-[#6b8d00] bg-[#BBFF00] text-[#0A0A0A] shadow-[4px_4px_0_#0A0A0A]" : "border-black/20 bg-white hover:border-black/60 hover:-translate-y-0.5"}`}
-                    >
-                      <span className={`mb-5 flex h-8 w-8 items-center justify-center rounded-full border font-mono text-[11px] transition-colors ${selected ? "border-black bg-black text-[#BBFF00]" : "border-black/20 text-black/55 group-hover:border-black"}`}>
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-                      <span className="block text-lg font-black leading-tight">{option[language]}</span>
-                      <span className={`mt-2 block text-xs leading-5 ${selected ? "text-black/70" : "text-black/55"}`}>{ROUTE_DESCRIPTIONS[option.value][language]}</span>
-                    </button>
-                  );
-                })}
-              </div>
-              {errors.route && <span className="mt-2 block text-xs text-red-600">{errors.route}</span>}
-            </div>
-            <label className="block">
-              <span className="mb-2 block font-mono text-xs font-bold uppercase tracking-[0.08em] text-black/75">
-                {label("العرض المختار", "Selected offer")}
-              </span>
               {guidedSelection ? (
-                <div className="border border-[#6b8d00] bg-[#BBFF00]/15 p-4 shadow-[4px_4px_0_#0A0A0A]">
+                <div className="mt-5 border border-[#6b8d00] bg-[#BBFF00]/15 p-4 shadow-[4px_4px_0_#0A0A0A]">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                       <p className="font-mono text-[10px] font-bold tracking-[0.16em] text-[#5e7c00]">ZOOMIX / NEXT MOVE</p>
                       <p className="mt-2 text-xl font-black leading-tight">{selectedOfferName || pathLabel[form.route]}</p>
                       <p className="mt-2 text-xs leading-5 text-black/60">
-                        {label("اتنقل تلقائيًا من خطوتك الجاية — مش محتاج تختار نفس الحاجة تاني.", "Carried over from your next move — you do not need to choose it again.")}
+                        {label("الاختيار اتنقل تلقائيًا — مش محتاج تختاره تاني.", "This choice was carried over automatically — no need to choose it again.")}
                       </p>
                     </div>
                     <button
@@ -698,61 +566,12 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                   </div>
                 </div>
               ) : (
-                <>
-                  <select
-                    value={selectedOfferId}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      const group = offerCatalog.find((item) => item.offers.some((offer) => offer.id === value));
-                      setSelectionOrigin("manual");
-                      setForm((current) => ({
-                        ...current,
-                        packageId: group?.route === "start" ? value : "",
-                        offerId: value,
-                        route: group?.route || current.route,
-                        showType: group?.route === "show" ? inferShowType(value) || current.showType : "",
-                        service: "",
-                      }));
-                      if (errors.packageId) {
-                        setErrors((current) => {
-                          const next = { ...current };
-                          delete next.packageId;
-                          return next;
-                        });
-                      }
-                    }}
-                    className="min-w-0 w-full border border-black/25 bg-white px-4 py-3.5 outline-none transition-colors focus:border-[#6b8d00] focus:ring-2 focus:ring-[#BBFF00]/35"
-                  >
-                    <option value="">{label("اختار الباقة أو الخدمة", "Choose a package or service")}</option>
-                    {offerCatalog.map((group) => (
-                      <optgroup key={group.label} label={group.label}>
-                        {group.offers.map((offer) => (
-                          <option key={offer.id} value={offer.id}>
-                            {offer.displayName} — {offer.priceLabel}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
-                  {(form.route || form.offerId || form.packageId) && (
-                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-xs text-black/55">
-                        {selectedOfferName
-                          ? `${label("الاختيار من المسار: ", "Selected from your path: ")}${selectedOfferName}`
-                          : pathLabel[form.route] || label("اختيار محفوظ", "Saved selection")}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={clearSavedSelection}
-                        className="text-xs font-bold text-black/55 underline decoration-black/25 underline-offset-4 transition-colors hover:text-black"
-                      >
-                        {label("مسح الاختيار", "Clear selection")}
-                      </button>
-                    </div>
-                  )}
-                </>
+                <a href="/route-finder" className="mt-5 flex items-center justify-between border border-black/20 bg-white p-4 font-bold transition-colors hover:border-[#6b8d00] hover:bg-[#BBFF00]/15">
+                  <span>{label("ساعدني أختار المسار المناسب", "Help me choose the right route")}</span>
+                  <span aria-hidden="true">↗</span>
+                </a>
               )}
-            </label>
+            </div>
             {form.route === "show" && selectField("showType", label("نوع الطلب *", "Request type *"), SHOW_TYPE_OPTIONS, true, label("اختار نوع الطلب", "Choose a request type"))}
             {isContentBrief && selectField("contentSource", label("الخامات الموجودة", "Available footage"), CONTENT_SOURCE_OPTIONS)}
             {isEventBrief && (
@@ -764,13 +583,11 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
               </div>
             )}
             <div className="sm:col-span-2 mt-2 border-t border-black/15 pt-5">
-              <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-black/45">03 / {label("الخطوة التالية", "NEXT MOVE")}</p>
-              <p className="mt-2 text-sm text-black/55">{label("آخر شوية تفاصيل تساعدنا نحدد البداية الصح.", "A few final details help us define the right starting point.")}</p>
+              <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-black/45">02 / {label("تفاصيل المشروع", "PROJECT DETAILS")}</p>
+              <p className="mt-2 text-sm text-black/55">{label("قول لنا الأساسيات، وإحنا نرتب باقي التفاصيل معاك.", "Share the essentials and we will organize the rest with you.")}</p>
             </div>
-            {selectField("stage", label("المرحلة الحالية", "Current stage"), STAGE_OPTIONS)}
             {selectField("budget", label("الميزانية التقريبية", "Approx. budget"), BUDGET_OPTIONS)}
             {selectField("launchDate", label("التوقيت المطلوب", "When do you want to start?"), TIMELINE_OPTIONS)}
-            {selectField("source", label("عرفتنا منين؟", "How did you hear about us?"), SOURCE_OPTIONS)}
             {field("projectLink", label("رابط المشروع أو الملفات (اختياري)", "Project or files link (optional)"), "url")}
             {field("goal", label("الهدف الأساسي", "Main goal"))}
             <label className="block sm:col-span-2">
