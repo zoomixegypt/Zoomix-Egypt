@@ -542,11 +542,13 @@ export default {
     if (url.pathname.startsWith("/api/")) return api(request, env, ctx);
     const isHtmlRoute = request.method === "GET" && !url.pathname.includes(".");
     if (isHtmlRoute && url.pathname !== "/") {
-      return env.ASSETS.fetch(new Request(new URL("/index.html", request.url), request));
+      // Pages normalizes /index.html to / with a 308. Fetch the root asset
+      // internally so the browser keeps the requested client-side route.
+      return env.ASSETS.fetch(new Request(new URL("/", request.url), request));
     }
     const asset = await env.ASSETS.fetch(request);
     const needsSpaFallback = asset.status === 404 || (asset.status >= 300 && asset.status < 400);
     if (!isHtmlRoute || !needsSpaFallback) return asset;
-    return env.ASSETS.fetch(new Request(new URL("/index.html", request.url), request));
+    return env.ASSETS.fetch(new Request(new URL("/", request.url), request));
   },
 };
