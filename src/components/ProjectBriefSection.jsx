@@ -686,7 +686,11 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => setSelectionOrigin("manual")}
+                      onClick={() => {
+                        window.localStorage.removeItem("zoomix-selected-package");
+                        window.localStorage.removeItem("zoomix-project-route");
+                        window.location.assign("/route-finder");
+                      }}
                       className="shrink-0 text-xs font-bold underline decoration-black/30 underline-offset-4 transition-colors hover:text-[#5e7c00]"
                     >
                       {label("تغيير الاختيار", "Change selection")}
