@@ -1,5 +1,7 @@
 # ZOOMIX Studio Operations
 
+For hosting, deployment, Cloudflare, D1, and change-control details, use the [ZOOMIX Technical Source of Truth](./ZOOMIX-TECHNICAL-SOURCE-OF-TRUTH.md).
+
 ## Live capabilities
 
 - Project briefs are stored in Cloudflare D1 through `POST /api/briefs`.
