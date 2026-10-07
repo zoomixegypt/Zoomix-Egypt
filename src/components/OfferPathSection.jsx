@@ -1,5 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeftRight, ArrowUpLeft, ArrowUpRight, Check } from "lucide-react";
 import { useLanguage } from "../i18n";
 import {
   ZOOMIX_CONTENT_PACKAGES,
@@ -13,16 +14,17 @@ import { trackEvent } from "../utils/analytics";
 const copy = {
   ar: {
     eyebrow: "ZOOMIX / نحدد الخطوة الجاية",
-    title: "كل مشروع له خطوة تالية.",
-    intro: "جاوب على 3 أسئلة بسيطة، وإحنا نرشح لك المسار الأقرب لمشروعك من غير ما تتوه في قائمة خدمات.",
+    title: "اختار طريقتك.",
+    intro: "ممكن نرشح لك بسرعة، أو تستكشف المسارات بنفسك.",
     steps: ["مكانك دلوقتي", "اللي ناقصك", "النتيجة اللي عاوزها"],
     back: "السؤال السابق",
     reset: "ابدأ من جديد",
-    choose: "ابدأ المسار ده",
-    viewRoute: "شوف تفاصيل المسار",
-    recommended: "الترشيح الأقرب لمشروعك",
-    alternatives: "اختيارات بديلة",
-    from: "يبدأ من",
+    choose: "كمّل تفاصيل مشروعك",
+    recommended: "ترشيحنا لمشروعك",
+    alternatives: "خيارات للمقارنة فقط",
+    alternativesIntro: "لو احتياجك أبسط أو أوسع من الترشيح الحالي",
+    comparisonMarker: "اختياري / مقارنة",
+    priceLabel: "السعر",
     monthly: "جنيه شهريًا",
     direct: "التكاليف المباشرة مثل المعدات والانتقالات تتحدد حسب التنفيذ.",
     oneOffNote: "الخدمة المنفصلة تبدأ من السعر الموضح، والطلبات الأكبر تأخذ عرضًا مخصصًا.",
@@ -39,19 +41,30 @@ const copy = {
     routeMapTitle: "شوف طريقك قبل ما تختار.",
     routeMapIntro: "اختار بين 4 طرق. كل محطة بتوضح إمتى تناسبك وإيه اللي هتخرج بيه.",
     routeMapSystemNote: "المسارات دي طريقة اختيار العميل؛ أما تنفيذ المشروع فبيتحرك من Build إلى Show إلى Launch.",
-    routeMapSwitch: "ساعدني أختار",
-    decisionTitle: "اختار طريقتك.",
-    decisionIntro: "ممكن نرشح لك بسرعة، أو تستكشف المسارات بنفسك.",
+    modeLabel: "طريقة التصفح",
     quickStart: "اختيار سريع — 3 أسئلة",
     exploreRoutes: "استكشف المسارات",
-    quickPrompt: "مش عارف تبدأ منين؟",
+    quickPrompt: "خلّينا نحدد خطوتك في 3 أسئلة.",
     quickDescription: "جاوب على 3 أسئلة، وZoomix ترشح لك المسار والباقة الأنسب.",
     routeMapBack: "ارجع لاستكشاف الطرق",
     routeMapReason: "المسار ده مناسب لو",
     routeMapOutputs: "هتخرج منه بـ",
     routeDetailsLabel: "الطريق ده هيمشي إزاي",
+    routePackagesLabel: "الباقات داخل المسار",
+    routePackagesIntro: "بعد ما فهمت الطريق، دي تفاصيل كل اختيار فعليًا: المخرجات، المدة، والسعر.",
+    packageIncludes: "تشمل",
+    packageTiming: "المدة / الجدول",
+    scheduleAfterBrief: "الجدول يتحدد بعد مراجعة تفاصيل المشروع.",
+    monthlyTiming: "اشتراك شهري",
+    packageNotIncluded: "غير شامل",
+    packageNote: "ملاحظة السعر",
+    choosePackage: "اختار الباقة",
+    alternativeDetails: "تفاصيل الباقة البديلة",
+    chooseAlternative: "اختارها بدل الترشيح",
+    closeDetails: "إغلاق التفاصيل",
+    featuredPackage: "الاختيار الأشهر",
     hideRouteDetails: "اقفل التفاصيل",
-    routeMapChoose: "اعرف الاختيار الأنسب",
+    routeMapChoose: "شوف باقات المسار",
     routeMapBrowse: "شوف كل باقات المسار",
     routeMap: [
       { value: "start", code: "START", title: "البداية", description: "لما تكون لسه بتبدأ أو محتاج ترتب أساس البراند.", reason: "محتاج هوية واتجاه واضح قبل ما تبدأ الظهور.", outputs: ["هوية مرتبة", "حضور بداية", "مخرجات جاهزة للاستخدام"], details: ["نرتب الأساس والاتجاه", "نبني حضورًا قابلًا للاستخدام", "نجهزك للانطلاقة"] },
@@ -113,16 +126,17 @@ const copy = {
   },
   en: {
     eyebrow: "ZOOMIX / FIND YOUR NEXT MOVE",
-    title: "Every project has a next move.",
-    intro: "Answer three short questions and we will guide you to the closest route without making you scan a service catalog.",
+    title: "Choose your way in.",
+    intro: "Get a quick recommendation or explore the routes yourself.",
     steps: ["Where you are", "What is missing", "What you want next"],
     back: "Previous question",
     reset: "Start over",
-    choose: "Start this next move",
-    viewRoute: "See route details",
-    recommended: "THE CLOSEST ROUTE FOR YOU",
-    alternatives: "OTHER OPTIONS",
-    from: "From",
+    choose: "Continue with your project details",
+    recommended: "OUR RECOMMENDATION FOR YOUR PROJECT",
+    alternatives: "OPTIONS FOR COMPARISON ONLY",
+    alternativesIntro: "If your needs are simpler or broader than this recommendation.",
+    comparisonMarker: "OPTIONAL / COMPARE",
+    priceLabel: "Price",
     monthly: " / month",
     direct: "Direct costs such as equipment and transport depend on the production.",
     oneOffNote: "One-off services start at the listed price; larger requirements receive a custom quote.",
@@ -139,19 +153,30 @@ const copy = {
     routeMapTitle: "See your route before you choose.",
     routeMapIntro: "Choose between four routes. Each stop shows when it fits and what you will leave with.",
     routeMapSystemNote: "These are client routes; the work itself moves from Build to Show to Launch.",
-    routeMapSwitch: "Help me choose",
-    decisionTitle: "Choose your way in.",
-    decisionIntro: "Get a quick recommendation or explore the routes yourself.",
+    modeLabel: "Browse mode",
     quickStart: "Quick match — 3 questions",
     exploreRoutes: "Explore the routes",
-    quickPrompt: "Not sure where to start?",
+    quickPrompt: "Find your next move in 3 questions.",
     quickDescription: "Answer three questions and Zoomix will match you with the right route, service or package.",
     routeMapBack: "Back to route map",
     routeMapReason: "This route fits when",
     routeMapOutputs: "You leave with",
     routeDetailsLabel: "How this route moves",
+    routePackagesLabel: "Packages inside this route",
+    routePackagesIntro: "Once the route is clear, compare the real options: deliverables, timeline and price.",
+    packageIncludes: "Includes",
+    packageTiming: "Timeline / schedule",
+    scheduleAfterBrief: "The schedule is confirmed after reviewing the project details.",
+    monthlyTiming: "Monthly partnership",
+    packageNotIncluded: "Not included",
+    packageNote: "Price note",
+    choosePackage: "Choose this package",
+    alternativeDetails: "Alternative package details",
+    chooseAlternative: "Choose it instead of the recommendation",
+    closeDetails: "Close details",
+    featuredPackage: "Most popular fit",
     hideRouteDetails: "Hide details",
-    routeMapChoose: "Find my best fit",
+    routeMapChoose: "See route packages",
     routeMapBrowse: "See all route packages",
     routeMap: [
       { value: "start", code: "START", title: "START", description: "For a business starting out or organizing its foundation.", reason: "You need a clear identity and direction before showing up.", outputs: ["Organized identity", "A starting presence", "Ready-to-use foundations"], details: ["Organize the foundation and direction", "Build a usable starting presence", "Prepare the project for launch"] },
@@ -251,14 +276,62 @@ function getOfferName(offer, language) {
 function getOfferPrice(offer, language, text, kind) {
   if (kind === "one-off") return offer.price;
   if (kind === "partner") return `${offer.price} ${text.monthly}`;
-  return `${text.from} ${offer.price} ${language === "ar" ? "جنيه" : "EGP"}`;
+  return `${offer.price} ${language === "ar" ? "جنيه" : "EGP"}`;
 }
 
-function getRouteTarget(route) {
-  if (route === "start") return "offer-start";
-  if (route === "partner") return "offer-continue";
-  if (route === "one-off") return "offer-one-thing";
-  return "offer-show";
+function getOfferTiming(offer, language, text, kind) {
+  if (offer?.duration?.[language]) return offer.duration[language];
+  if (kind === "partner") return text.monthlyTiming;
+  return text.scheduleAfterBrief;
+}
+
+function getRoutePackageGroups(route, language) {
+  if (route === "start") {
+    return [{
+      key: "start",
+      route: "start",
+      kind: "start",
+      label: language === "ar" ? "باقات التأسيس" : "FOUNDATION PACKAGES",
+      packages: ZOOMIX_START_PACKAGES,
+    }];
+  }
+  if (route === "show") {
+    return [
+      {
+        key: "content",
+        route: "content",
+        kind: "content",
+        label: language === "ar" ? "صناعة المحتوى" : "CONTENT PRODUCTION",
+        packages: ZOOMIX_CONTENT_PACKAGES,
+      },
+      {
+        key: "events",
+        route: "events",
+        kind: "events",
+        label: language === "ar" ? "تغطية الإيفنتات" : "EVENT COVERAGE",
+        packages: ZOOMIX_EVENT_PACKAGES,
+      },
+    ];
+  }
+  if (route === "continue") {
+    return [{
+      key: "partner",
+      route: "partner",
+      kind: "partner",
+      label: language === "ar" ? "باقات الشراكة الشهرية" : "MONTHLY PARTNERSHIP",
+      packages: ZOOMIX_PARTNER_PACKAGES,
+    }];
+  }
+  if (route === "one-thing") {
+    return [{
+      key: "one-off",
+      route: "one-off",
+      kind: "one-off",
+      label: language === "ar" ? "الخدمات المنفصلة" : "ONE-OFF SERVICES",
+      packages: ZOOMIX_ONE_OFF_SERVICES[language] || [],
+    }];
+  }
+  return [];
 }
 
 const ROUTE_DRAFT_KEY = "zoomix-route-finder-draft";
@@ -267,12 +340,15 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
   const { language } = useLanguage();
   const navigate = useNavigate();
   const isArabic = language === "ar";
+  const ActionArrow = isArabic ? ArrowUpLeft : ArrowUpRight;
   const text = copy[language];
   const [step, setStep] = useState(1);
   const [answers, setAnswers] = useState({ stage: "", need: "", goal: "" });
-  const [mode, setMode] = useState("explore");
+  const [mode, setMode] = useState(standalone ? "quiz" : "explore");
   const [selectedRoute, setSelectedRoute] = useState("start");
   const [expandedRoute, setExpandedRoute] = useState("");
+  const [expandedAlternativeId, setExpandedAlternativeId] = useState("");
+  const alternativeTouchStartY = useRef(null);
   const routeRefs = useRef({});
   const quickMatchRef = useRef(null);
   const [quickMatchVisible, setQuickMatchVisible] = useState(false);
@@ -283,7 +359,6 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
       const draft = JSON.parse(window.sessionStorage.getItem(ROUTE_DRAFT_KEY) || "null");
       if (draft?.answers) setAnswers((current) => ({ ...current, ...draft.answers }));
       if (draft?.step >= 1 && draft.step <= 3) setStep(draft.step);
-      if (draft?.mode === "quiz" || draft?.mode === "explore") setMode(draft.mode);
     } catch {
       // Ignore malformed draft state and start clean.
     } finally {
@@ -295,6 +370,24 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
     if (!draftReady) return;
     window.sessionStorage.setItem(ROUTE_DRAFT_KEY, JSON.stringify({ answers, step, mode }));
   }, [answers, step, mode, draftReady]);
+
+  useEffect(() => {
+    setExpandedAlternativeId("");
+  }, [answers.stage, answers.need, answers.goal, language]);
+
+  useEffect(() => {
+    if (!expandedAlternativeId) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setExpandedAlternativeId("");
+    };
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [expandedAlternativeId]);
 
   useEffect(() => {
     if (mode !== "explore") return undefined;
@@ -321,7 +414,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
     }, { threshold: 0.35 });
     observer.observe(node);
     return () => observer.disconnect();
-  }, []);
+  }, [mode]);
 
   const recommendation = useMemo(
     () => getRecommendation(answers.stage, answers.need, answers.goal),
@@ -365,19 +458,16 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
   const primaryOffer = recommendation.kind === "one-off"
     ? recommendation.packages[language].find((item) => item.id === recommendation.packageId)
     : recommendation.packages.find((item) => item.id === (recommendation.packageId || recommendation.packages[1]?.id)) || recommendation.packages[0];
+  const primaryOutputs = primaryOffer?.outputs?.[language] || [];
+  const primaryTiming = getOfferTiming(primaryOffer, language, text, recommendation.kind);
+  const primaryBoundary = primaryOffer?.exclusions?.[language] || primaryOffer?.priceNote?.[language] || text.direct;
   const alternatives = recommendation.kind === "one-off" ? [] : recommendation.packages.filter((item) => item.id !== primaryOffer?.id);
+  const expandedAlternative = alternatives.find((item) => item.id === expandedAlternativeId);
   const answerSummary = [
     text.stages.find((item) => item.value === answers.stage)?.label,
     (text.needs[answers.stage] || []).find((item) => item.value === answers.need)?.label,
     (text.goals[answers.need] || text.goals.default).find((item) => item.value === answers.goal)?.label,
   ].filter(Boolean);
-  const routeStoryTarget = recommendation.route === "partner"
-    ? "continue"
-    : recommendation.route === "start"
-      ? "start"
-      : recommendation.route === "one-off"
-        ? "one-thing"
-        : "show";
   const currentQuestion = step === 1 ? text.questions.stage : step === 2 ? text.questions.need : text.questions.goal;
   const selectedRouteData = text.routeMap.find((route) => route.value === selectedRoute) || text.routeMap[0];
 
@@ -396,13 +486,35 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
     });
   };
 
-  const showRecommendedRoute = () => {
-    if (standalone) {
-      setMode("explore");
-      revealRouteDetails(routeStoryTarget);
-      return;
+  const openRouteDetails = (route) => {
+    setSelectedRoute(route);
+    setExpandedRoute(route);
+    window.requestAnimationFrame(() => {
+      const node = document.getElementById(`route-story-${route}`);
+      node?.scrollIntoView({ behavior: "smooth", block: "center" });
+      node?.focus({ preventScroll: true });
+    });
+  };
+
+  const toggleAlternativeDetails = (offerId) => {
+    const nextId = expandedAlternativeId === offerId ? "" : offerId;
+    setExpandedAlternativeId(nextId);
+    if (nextId) {
+      window.requestAnimationFrame(() => {
+        document.getElementById(`alternative-details-${nextId}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
     }
-    scrollToSection(getRouteTarget(recommendation.route));
+  };
+
+  const handleAlternativeTouchStart = (event) => {
+    alternativeTouchStartY.current = event.touches[0]?.clientY ?? null;
+  };
+
+  const handleAlternativeTouchEnd = (event) => {
+    const startY = alternativeTouchStartY.current;
+    const endY = event.changedTouches[0]?.clientY;
+    alternativeTouchStartY.current = null;
+    if (startY !== null && endY !== undefined && endY - startY > 80) setExpandedAlternativeId("");
   };
 
   const startQuickMatch = () => {
@@ -435,22 +547,23 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
 
         <div id="route-mode-chooser" className="mb-8 flex flex-col justify-between gap-5 border-y border-black/15 bg-white/35 px-5 py-5 md:flex-row md:items-center md:px-7">
           <div>
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-black/45">{text.finderName} / ENTRY</span>
-            <p className={`${isArabic ? "font-arabic" : "font-display tracking-[-0.02em]"} mt-2 text-2xl font-black`}>{text.decisionTitle}</p>
-            <p className="mt-1 text-sm text-black/55">{text.decisionIntro}</p>
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-black/45">{text.finderName} / MODE</span>
+            <p className="mt-2 text-sm font-bold text-black/70">{text.modeLabel}</p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={startQuickMatch} className="zoomix-button bg-[#BBFF00] text-black">
-              {text.quickStart}<span aria-hidden="true">↗</span>
+          <div className="flex flex-wrap gap-2" role="tablist" aria-label={text.modeLabel}>
+            <button type="button" onClick={startQuickMatch} aria-pressed={mode === "quiz"} className={`zoomix-button quick-match-primary gap-3 ${mode === "quiz" ? "bg-[#BBFF00] text-black shadow-[0_10px_24px_rgba(187,255,0,0.16)]" : "border-black/25 text-black hover:border-black hover:bg-white"}`}>
+              <span className="quick-match-badge">{isArabic ? "الأسرع" : "FASTEST"}</span>
+              <span>{text.quickStart}</span>
+              <span className="quick-match-pulse-dot" aria-hidden="true" />
+              <ActionArrow className="quick-match-arrow" size={18} aria-hidden="true" />
             </button>
-            <button type="button" onClick={() => { setMode("explore"); scrollToSection("route-map-experience"); }} className="zoomix-button border-black/25 text-black">
+            <button type="button" onClick={() => { setMode("explore"); window.requestAnimationFrame(() => scrollToSection("route-map-experience")); }} aria-pressed={mode === "explore"} className={`zoomix-button ${mode === "explore" ? "bg-[#0A0A0A] text-white" : "border-black/25 text-black hover:border-black hover:bg-white"}`}>
               {text.exploreRoutes}
             </button>
           </div>
         </div>
 
-        <div className={standalone ? "flex flex-col" : ""}>
-        <div id="route-map-experience" className={`route-map-experience mb-14 border-y border-black/15 py-8 md:py-12 ${standalone ? "order-3" : ""}`}>
+        {mode === "explore" && <div id="route-map-experience" className="route-map-experience mb-14 border-y border-black/15 py-8 md:py-12">
           <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
             <div>
               <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-black/45">{text.routeMapEyebrow}</span>
@@ -487,7 +600,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
                 <div className="mt-10 border-t border-white/15 pt-5">
                   <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/40">{text.routeMapReason}</span>
                   <p className="mt-3 text-lg font-bold leading-7 text-white/85">{selectedRouteData.reason}</p>
-                  <button type="button" onClick={() => startMatch(selectedRouteData.value)} className="zoomix-button mt-6 w-full bg-[#BBFF00] text-black">{text.routeMapChoose}<span aria-hidden="true">↗</span></button>
+                  <button type="button" onClick={() => openRouteDetails(selectedRouteData.value)} className="zoomix-button mt-6 w-full bg-[#BBFF00] text-black">{text.routeMapChoose}<span aria-hidden="true">↗</span></button>
                 </div>
               </div>
             </aside>
@@ -495,6 +608,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
             <div className="route-map-stories space-y-5">
               {text.routeMap.map((route, index) => {
                 const active = route.value === selectedRoute;
+                const packageGroups = getRoutePackageGroups(route.value, language);
                 return (
                   <article key={route.value} id={`route-story-${route.value}`} ref={(node) => { routeRefs.current[route.value] = node; }} data-route={route.value} role="tabpanel" aria-labelledby={`route-tab-${route.value}`} tabIndex="-1" className={`route-map-story relative min-h-[28rem] overflow-hidden border p-6 transition-all duration-500 md:min-h-[34rem] md:p-10 ${active ? "border-[#0A0A0A] bg-white" : "border-black/15 bg-white/40"}`}>
                     <div className="route-map-story-number absolute -end-5 -top-7 font-mono text-[11rem] font-bold leading-none text-black/[0.04]">0{index + 1}</div>
@@ -510,7 +624,6 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
                         <div>
                           <p className="max-w-lg text-2xl font-black leading-tight md:text-4xl">{route.description}</p>
                           <div className="mt-7 flex flex-wrap items-center gap-4">
-                            <button type="button" onClick={() => startMatch(route.value)} className="zoomix-button border-[#0A0A0A] bg-[#0A0A0A] text-white hover:bg-[#BBFF00] hover:text-black">{text.routeMapChoose}<span aria-hidden="true">↗</span></button>
                             <button type="button" onClick={() => standalone ? revealRouteDetails(route.value) : scrollToSection(`offer-${route.value}`)} aria-expanded={standalone ? expandedRoute === route.value : undefined} className="border-b border-black/30 pb-1 text-sm font-bold text-black/55 hover:border-black hover:text-black">{standalone ? (expandedRoute === route.value ? text.hideRouteDetails : (isArabic ? "شوف تفاصيل الطريق" : "See route details")) : route.value === "one-thing" ? (isArabic ? "شوف الخدمات المنفصلة" : "See one-off services") : text.routeMapBrowse}</button>
                           </div>
                         </div>
@@ -532,6 +645,62 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
                               </li>
                             ))}
                           </ol>
+
+                          <div className="mt-8 border-t border-black/15 pt-6">
+                            <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
+                              <div>
+                                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-black/40">{text.routePackagesLabel}</span>
+                                <p className="mt-2 max-w-2xl text-sm leading-6 text-black/60">{text.routePackagesIntro}</p>
+                              </div>
+                              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#789900]">{route.code} / OPTIONS</span>
+                            </div>
+
+                            <div className="mt-5 space-y-6">
+                              {packageGroups.map((group) => (
+                                <section key={group.key} aria-labelledby={`route-package-group-${route.value}-${group.key}`}>
+                                  <h5 id={`route-package-group-${route.value}-${group.key}`} className="font-mono text-[10px] uppercase tracking-[0.16em] text-black/45">{group.label}</h5>
+                                  <div className="mt-3 grid gap-3 lg:grid-cols-3">
+                                    {group.packages.map((offer) => {
+                                      const outputs = offer.outputs?.[language] || [];
+                                      const offerName = getOfferName(offer, language);
+                                      return (
+                                        <article key={offer.id} className={`flex h-full flex-col border p-4 transition-colors ${offer.featured ? "border-[#789900] bg-[#F3F9DE]" : "border-black/15 bg-[#F5F4EF]"}`}>
+                                          <div className="flex items-start justify-between gap-3">
+                                            <h6 className="text-lg font-black leading-tight">{offerName}</h6>
+                                            {offer.featured && <span className="shrink-0 bg-[#BBFF00] px-2 py-1 font-mono text-[9px] uppercase tracking-[0.08em] text-black">{text.featuredPackage}</span>}
+                                          </div>
+                                          {(offer.tagline?.[language] || offer.description?.[language]) && <p className="mt-2 text-xs leading-5 text-black/60">{offer.tagline?.[language] || offer.description?.[language]}</p>}
+
+                                          <div className="mt-4 border-y border-black/10 py-3">
+                                            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-black/40">{text.priceLabel}</span>
+                                            <p className="mt-1 font-mono text-xl font-bold text-[#6e8e00]" dir="ltr" style={{ unicodeBidi: "isolate" }}>{getOfferPrice(offer, language, text, group.kind)}</p>
+                                          </div>
+
+                                          {outputs.length > 0 && (
+                                            <div className="mt-4">
+                                              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-black/40">{text.packageIncludes}</span>
+                                              <ul className="mt-2 space-y-1.5 text-xs leading-5 text-black/70">
+                                                {outputs.map((output) => <li key={output} className="flex gap-2"><span className="text-[#789900]">+</span><span>{output}</span></li>)}
+                                              </ul>
+                                            </div>
+                                          )}
+
+                                          <p className="mt-4 border-t border-black/10 pt-3 text-xs leading-5 text-black/65"><span className="font-bold">{text.packageTiming}:</span> {getOfferTiming(offer, language, text, group.kind)}</p>
+                                          {(offer.exclusions?.[language] || offer.priceNote?.[language]) && (
+                                            <p className="mt-2 text-xs leading-5 text-black/50"><span className="font-bold">{offer.exclusions?.[language] ? text.packageNotIncluded : text.packageNote}:</span> {offer.exclusions?.[language] || offer.priceNote?.[language]}</p>
+                                          )}
+
+                                          <button type="button" onClick={() => chooseOffer(group.route, offer.id)} className="zoomix-button mt-5 w-full bg-[#0A0A0A] text-white transition-colors hover:bg-[#BBFF00] hover:text-black">
+                                            {text.choosePackage}<span aria-hidden="true">↗</span>
+                                          </button>
+                                        </article>
+                                      );
+                                    })}
+                                  </div>
+                                </section>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -540,9 +709,9 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
               })}
             </div>
           </div>
-        </div>
+        </div>}
 
-        <div id="next-move-quick-match" ref={quickMatchRef} data-active={mode === "quiz" ? "true" : "false"} className={`next-move-cta mb-6 scroll-mt-28 ${quickMatchVisible ? "is-visible" : ""} ${standalone ? "order-1" : ""}`}>
+        {mode === "quiz" && <div id="next-move-quick-match" ref={quickMatchRef} data-active="true" className={`next-move-cta mb-6 scroll-mt-28 ${quickMatchVisible ? "is-visible" : ""}`}>
           <div className="next-move-cta-line" aria-hidden="true" />
           <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div>
@@ -550,14 +719,14 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
               <p className={`${isArabic ? "font-arabic" : "font-display tracking-[-0.03em]"} mt-3 text-2xl font-black md:text-4xl`}>{text.quickPrompt}</p>
               <p className="mt-2 max-w-xl text-sm leading-6 text-black/60">{text.quickDescription}</p>
             </div>
-            <button type="button" onClick={() => setMode((current) => current === "explore" ? "quiz" : "explore")} className="next-move-cta-button group inline-flex shrink-0 items-center gap-3 bg-[#BBFF00] px-5 py-3 text-sm font-black text-black">
-              <span>{mode === "explore" ? text.routeMapSwitch : text.routeMapBack}</span>
+            <button type="button" onClick={() => { setMode("explore"); window.requestAnimationFrame(() => scrollToSection("route-map-experience")); }} className="next-move-cta-button group inline-flex shrink-0 items-center gap-3 bg-[#BBFF00] px-5 py-3 text-sm font-black text-black">
+              <span>{text.routeMapBack}</span>
               <span className="next-move-cta-arrow text-lg" aria-hidden="true">↗</span>
             </button>
           </div>
-        </div>
+        </div>}
 
-        {mode === "quiz" && <div className={standalone ? "order-2" : ""}>
+        {mode === "quiz" && <>
         <div className="route-progress mb-8 grid grid-cols-3 gap-2 md:gap-5" aria-label={isArabic ? "خطوات اختيار المسار" : "Route selection steps"}>
           {text.steps.map((label, index) => {
             const number = index + 1;
@@ -611,7 +780,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
                   <button key={option.value} type="button" onClick={() => chooseAnswer(option.value)} aria-pressed={selected} className={`route-option-card min-h-[126px] border p-5 text-start transition-all ${selected ? "border-[#0A0A0A] bg-[#BBFF00]" : "border-black/15 hover:border-black/50 hover:bg-white"}`}>
                     <span className="flex items-center justify-between gap-3">
                       <span className="flex items-center gap-3"><span className="font-mono text-[10px] text-black/35">0{index + 1}</span><span className="text-xl font-black">{option.label}</span></span>
-                      <span className="font-mono text-xs text-black/45">{selected ? "—" : "+"}</span>
+                      <span className="font-mono text-xs text-black/45" aria-hidden="true">{selected ? <Check className="route-option-check text-black" size={17} strokeWidth={2.5} /> : "+"}</span>
                     </span>
                     <span className="mt-3 block text-sm leading-6 text-black/60">{option.description}</span>
                   </button>
@@ -630,6 +799,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
         </div>
 
         {step === 3 && answers.goal && (
+          <>
           <div className="zoomix-result-card mt-5 border border-[#0A0A0A] bg-[#0A0A0A] p-5 text-white md:p-8">
             <div className="mb-7 flex flex-col justify-between gap-3 border-b border-white/15 pb-5 md:flex-row md:items-end">
               <div>
@@ -647,28 +817,61 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
               <span className="font-mono text-xl text-[#BBFF00]" dir="ltr" style={{ unicodeBidi: "isolate" }}>{getOfferPrice(primaryOffer, language, text, recommendation.kind)}</span>
             </div>
 
-            {recommendation.kind === "one-off" ? (
-              <p className="max-w-2xl text-white/65">{text.oneOffNote}</p>
-            ) : (
-              <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
-                <ul className="grid gap-2 text-sm leading-6 text-white/70 sm:grid-cols-2">
-                  {(primaryOffer.outputs?.[language] || []).slice(0, 4).map((output) => <li key={output} className="flex gap-2"><span className="text-[#BBFF00]">+</span>{output}</li>)}
-                </ul>
-                <p className="max-w-xs text-xs leading-5 text-white/45">{primaryOffer.priceNote?.[language] || primaryOffer.exclusions?.[language] || text.direct}</p>
+            <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
+              <div>
+                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/45">{text.packageIncludes}</span>
+                {primaryOutputs.length > 0 ? (
+                  <ul className="mt-3 grid gap-2 text-sm leading-6 text-white/70 sm:grid-cols-2">
+                    {primaryOutputs.map((output) => <li key={output} className="flex gap-2"><span className="text-[#BBFF00]">+</span><span>{output}</span></li>)}
+                  </ul>
+                ) : (
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-white/65">{text.oneOffNote}</p>
+                )}
               </div>
-            )}
+              <div className="border-s border-white/15 ps-5">
+                <div>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/45">{text.packageTiming}</span>
+                  <p className="mt-2 text-sm font-bold leading-6 text-white/80">{primaryTiming}</p>
+                </div>
+                <div className="mt-5 border-t border-white/15 pt-4">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/45">{primaryOffer?.exclusions?.[language] ? text.packageNotIncluded : text.packageNote}</span>
+                  <p className="mt-2 text-xs leading-5 text-white/45">{recommendation.kind === "one-off" ? text.oneOffNote : primaryBoundary}</p>
+                </div>
+              </div>
+            </div>
 
-            <button type="button" onClick={() => chooseOffer(recommendation.route, primaryOffer.id)} className="zoomix-button mt-7 w-full bg-[#BBFF00] text-black transition-transform hover:-translate-y-0.5 md:w-auto">{text.choose}</button>
-            <button type="button" onClick={showRecommendedRoute} className="mt-7 ms-3 inline-flex items-center border-b border-[#BBFF00] pb-1 text-sm font-bold text-white/75 transition-colors hover:text-[#BBFF00]">{text.viewRoute} <span className="ms-2" aria-hidden="true">↗</span></button>
+            <div className="mt-7">
+              <span className="primary-cta-badge">{isArabic ? "الخطوة الجاية" : "NEXT STEP"}</span>
+              <button type="button" onClick={() => chooseOffer(recommendation.route, primaryOffer.id)} className="zoomix-button group result-primary-cta bg-[#BBFF00] text-black transition-transform hover:-translate-y-0.5">
+                {text.choose}<ActionArrow className="transition-transform duration-200 group-hover:-translate-y-0.5" size={18} aria-hidden="true" />
+              </button>
+            </div>
+          </div>
 
             {recommendation.kind !== "one-off" && alternatives.length > 0 && (
-              <div className="mt-8 border-t border-white/15 pt-5">
-                <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.18em] text-white/45">{text.alternatives}</p>
-                <div className="grid gap-2 md:grid-cols-2">
-                  {alternatives.map((offer) => (
-                    <button key={offer.id} type="button" onClick={() => chooseOffer(recommendation.route, offer.id)} className="flex items-center justify-between gap-3 border border-white/15 px-4 py-3 text-start transition-colors hover:border-[#BBFF00]">
-                      <span className="font-bold">{getOfferName(offer, language)}</span>
-                      <span className="font-mono text-xs text-white/55" dir="ltr" style={{ unicodeBidi: "isolate" }}>{getOfferPrice(offer, language, text, recommendation.kind)}</span>
+              <div className="mt-6 bg-[#F5F4EF] px-5 py-5 text-[#0A0A0A] md:px-7 md:py-6">
+                <div className="flex flex-col justify-between gap-4 border-b border-black/10 pb-4 md:flex-row md:items-end">
+                  <div className="border-s-2 border-[#BBFF00] ps-3">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-black/50">{text.alternatives}</p>
+                    <p className="mt-2 text-sm leading-6 text-black/55">{text.alternativesIntro}</p>
+                  </div>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-black/35">{text.comparisonMarker}</span>
+                </div>
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  {alternatives.map((offer, index) => (
+                    <button key={offer.id} type="button" onClick={() => toggleAlternativeDetails(offer.id)} aria-expanded={expandedAlternativeId === offer.id} aria-controls={`alternative-details-${offer.id}`} className={`min-h-[122px] border p-4 text-start transition-all hover:-translate-y-0.5 md:p-5 ${expandedAlternativeId === offer.id ? "border-[#789900] bg-[#EDF7C8]" : "border-black/15 bg-white/80 hover:border-black/45"}`}>
+                      <span className="flex items-start justify-between gap-4">
+                        <span className="flex min-w-0 items-center gap-3">
+                          <span className="font-mono text-[10px] text-[#789900]">{String(index + 1).padStart(2, "0")}</span>
+                          <span className="text-sm font-black text-black/85">{getOfferName(offer, language)}</span>
+                        </span>
+                        <span className="shrink-0 font-mono text-xs text-black/55" dir="ltr" style={{ unicodeBidi: "isolate" }}>{getOfferPrice(offer, language, text, recommendation.kind)}</span>
+                      </span>
+                      {(offer.tagline?.[language] || offer.description?.[language]) && <span className="mt-3 block text-[11px] leading-5 text-black/50">{offer.tagline?.[language] || offer.description?.[language]}</span>}
+                      <span className="mt-4 flex items-center justify-between border-t border-black/10 pt-3">
+                        <span className="text-[10px] text-black/40">{expandedAlternativeId === offer.id ? text.hideRouteDetails : (isArabic ? "شوف التفاصيل" : "See details")}</span>
+                        <span className="text-sm text-[#789900]" aria-hidden="true">↗</span>
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -676,22 +879,92 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
             )}
 
             {recommendation.kind === "one-off" && (
-              <div className="mt-8 border-t border-white/15 pt-5">
-                <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.18em] text-white/45">{text.alternatives}</p>
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {recommendation.packages[language].filter((offer) => offer.id !== primaryOffer?.id).map((offer) => (
-                    <button key={offer.id} type="button" onClick={() => chooseOffer(recommendation.route, offer.id)} className="flex items-center justify-between gap-3 border border-white/15 px-4 py-3 text-start transition-colors hover:border-[#BBFF00]">
-                      <span className="text-sm font-bold">{offer.name}</span>
-                      <span className="font-mono text-[10px] text-white/55" dir="ltr" style={{ unicodeBidi: "isolate" }}>{offer.price}</span>
+              <div className="mt-6 bg-[#F5F4EF] px-5 py-5 text-[#0A0A0A] md:px-7 md:py-6">
+                <div className="flex flex-col justify-between gap-4 border-b border-black/10 pb-4 md:flex-row md:items-end">
+                  <div className="border-s-2 border-[#BBFF00] ps-3">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-black/50">{text.alternatives}</p>
+                    <p className="mt-2 text-sm leading-6 text-black/55">{text.alternativesIntro}</p>
+                  </div>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-black/35">{text.comparisonMarker}</span>
+                </div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {recommendation.packages[language].filter((offer) => offer.id !== primaryOffer?.id).map((offer, index) => (
+                    <button key={offer.id} type="button" onClick={() => toggleAlternativeDetails(offer.id)} aria-expanded={expandedAlternativeId === offer.id} aria-controls={`alternative-details-${offer.id}`} className={`min-h-[122px] border p-4 text-start transition-all hover:-translate-y-0.5 ${expandedAlternativeId === offer.id ? "border-[#789900] bg-[#EDF7C8]" : "border-black/15 bg-white/80 hover:border-black/45"}`}>
+                      <span className="flex items-start justify-between gap-3">
+                        <span className="flex min-w-0 items-center gap-3">
+                          <span className="font-mono text-[10px] text-[#789900]">{String(index + 1).padStart(2, "0")}</span>
+                          <span className="text-sm font-black text-black/85">{offer.name}</span>
+                        </span>
+                        <span className="shrink-0 font-mono text-[10px] text-black/55" dir="ltr" style={{ unicodeBidi: "isolate" }}>{offer.price}</span>
+                      </span>
+                      {offer.description && <span className="mt-3 block text-[11px] leading-5 text-black/50">{offer.description}</span>}
+                      <span className="mt-4 flex items-center justify-between border-t border-black/10 pt-3">
+                        <span className="text-[10px] text-black/40">{expandedAlternativeId === offer.id ? text.hideRouteDetails : (isArabic ? "شوف التفاصيل" : "See details")}</span>
+                        <span className="text-sm text-[#789900]" aria-hidden="true">↗</span>
+                      </span>
                     </button>
                   ))}
                 </div>
               </div>
             )}
-          </div>
+
+            {expandedAlternative && (
+              <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70 p-0 backdrop-blur-[2px] md:items-center md:p-6" role="dialog" aria-modal="true" aria-labelledby={`alternative-dialog-title-${expandedAlternative.id}`} onMouseDown={(event) => { if (event.target === event.currentTarget) setExpandedAlternativeId(""); }}>
+                <div className="relative flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-[22px] border border-white/15 bg-[#0A0A0A] text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)] md:max-h-[88vh] md:rounded-none">
+                  <div className="relative flex shrink-0 items-start justify-between gap-5 border-b border-white/15 px-5 py-5 md:px-7 md:py-6" onTouchStart={handleAlternativeTouchStart} onTouchEnd={handleAlternativeTouchEnd}>
+                    <span className="absolute left-1/2 top-2 h-1 w-12 -translate-x-1/2 rounded-full bg-white/25 md:hidden" aria-hidden="true" />
+                    <div>
+                      <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#BBFF00]">{text.alternativeDetails}</span>
+                      <h4 id={`alternative-dialog-title-${expandedAlternative.id}`} className="mt-2 text-2xl font-black md:text-3xl">{getOfferName(expandedAlternative, language)}</h4>
+                    </div>
+                    <button type="button" onClick={() => setExpandedAlternativeId("")} aria-label={text.closeDetails} className="flex h-10 w-10 shrink-0 items-center justify-center border border-white/20 text-2xl leading-none text-white/75 transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00]">×</button>
+                  </div>
+
+                  <div className="overflow-y-auto overscroll-contain px-5 py-5 md:px-7 md:py-6">
+                    <div className="mb-5 flex items-center justify-between gap-4 border-b border-white/15 pb-5">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/45">{text.priceLabel}</span>
+                      <span className="font-mono text-xl text-[#BBFF00]" dir="ltr" style={{ unicodeBidi: "isolate" }}>{getOfferPrice(expandedAlternative, language, text, recommendation.kind)}</span>
+                    </div>
+                    <div className="grid gap-7 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
+                      <div>
+                        {expandedAlternative.outputs?.[language]?.length > 0 ? (
+                          <>
+                            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/45">{text.packageIncludes}</span>
+                            <ul className="mt-3 grid gap-2 text-sm leading-6 text-white/70 sm:grid-cols-2">
+                              {expandedAlternative.outputs[language].map((output) => <li key={output} className="flex gap-2"><span className="text-[#BBFF00]">+</span><span>{output}</span></li>)}
+                            </ul>
+                          </>
+                        ) : (
+                          <p className="text-sm leading-6 text-white/65">{text.oneOffNote}</p>
+                        )}
+                      </div>
+                      <div className="border-s border-white/15 ps-5">
+                        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/45">{text.packageTiming}</span>
+                        <p className="mt-2 text-sm font-bold leading-6 text-white/80">{getOfferTiming(expandedAlternative, language, text, recommendation.kind)}</p>
+                        <div className="mt-5 border-t border-white/15 pt-4">
+                          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/45">{expandedAlternative.exclusions?.[language] ? text.packageNotIncluded : text.packageNote}</span>
+                          <p className="mt-2 text-xs leading-5 text-white/45">{recommendation.kind === "one-off" ? text.oneOffNote : expandedAlternative.exclusions?.[language] || expandedAlternative.priceNote?.[language] || text.direct}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 border-t border-white/15 bg-[#0A0A0A] px-5 py-4 md:px-7">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button type="button" onClick={() => chooseOffer(recommendation.route, expandedAlternative.id)} className="zoomix-button bg-[#BBFF00] text-black transition-transform hover:-translate-y-0.5">
+                        <ArrowLeftRight size={18} aria-hidden="true" />{text.chooseAlternative}
+                      </button>
+                      <button type="button" onClick={() => setExpandedAlternativeId("")} className="zoomix-button border-white/25 text-white/80 transition-colors hover:border-white hover:text-white">
+                        {isArabic ? "رجوع" : "Back"}<span aria-hidden="true">↩</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
-        </div>}
-        </div>
+        </>}
       </div>
     </section>
   );

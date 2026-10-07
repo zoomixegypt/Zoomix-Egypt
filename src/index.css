@@ -72,6 +72,100 @@
     transform: translateY(-2px);
   }
 
+  .quick-match-badge {
+    align-items: center;
+    background: var(--zoomix-lime);
+    color: var(--zoomix-black);
+    display: inline-flex;
+    font-family: var(--font-mono);
+    font-size: 0.56rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    line-height: 1;
+    padding: 0.32rem 0.45rem;
+    text-transform: uppercase;
+  }
+
+  .quick-match-pulse-dot {
+    background: var(--zoomix-lime);
+    border-radius: 999px;
+    box-shadow: 0 0 0 0 rgba(187, 255, 0, 0.42);
+    display: inline-block;
+    flex: 0 0 auto;
+    height: 0.45rem;
+    width: 0.45rem;
+    animation: quick-match-dot-pulse 3.8s ease-in-out infinite;
+  }
+
+  .quick-match-arrow {
+    animation: quick-match-arrow-nudge 5s ease-in-out infinite;
+  }
+
+  .quick-match-primary .quick-match-badge {
+    background: var(--zoomix-black);
+    color: var(--zoomix-lime);
+  }
+
+  .quick-match-primary .quick-match-pulse-dot {
+    background: var(--zoomix-black);
+    box-shadow: 0 0 0 0 rgba(10, 10, 10, 0.35);
+  }
+
+  .quick-match-primary:hover .quick-match-badge,
+  .quick-match-primary:focus-visible .quick-match-badge {
+    background: var(--zoomix-lime);
+    color: var(--zoomix-black);
+  }
+
+  .quick-match-primary:hover .quick-match-pulse-dot,
+  .quick-match-primary:focus-visible .quick-match-pulse-dot {
+    background: var(--zoomix-lime);
+  }
+
+  .brief-next-arrow {
+    transition: transform 220ms var(--zoomix-ease);
+  }
+
+  .zoomix-button:hover .brief-next-arrow,
+  .zoomix-button:focus-visible .brief-next-arrow {
+    transform: translateY(-0.14rem);
+  }
+
+  .hero-start-icon {
+    animation: hero-start-icon-in 900ms var(--zoomix-ease) 850ms both;
+  }
+
+  .primary-cta-badge {
+    align-items: center;
+    color: var(--zoomix-lime);
+    display: inline-flex;
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    font-weight: 700;
+    gap: 0.45rem;
+    letter-spacing: 0.14em;
+    margin-bottom: 0.55rem;
+    text-transform: uppercase;
+  }
+
+  .primary-cta-badge::before {
+    background: var(--zoomix-lime);
+    border-radius: 999px;
+    content: "";
+    height: 0.42rem;
+    width: 0.42rem;
+  }
+
+  .result-primary-cta {
+    animation: result-primary-cta-pulse 3.8s ease-in-out 750ms 2;
+  }
+
+  .route-option-check,
+  .brief-step-check,
+  .brief-success-icon {
+    animation: zoomix-check-pop 360ms var(--zoomix-ease) both;
+  }
+
   .connection-line {
     background: var(--zoomix-lime);
     border-radius: 999px;
@@ -122,6 +216,8 @@
 
   .route-finder-fixed-entry {
     align-items: center;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(10, 10, 10, 0.14);
     display: flex;
     bottom: max(1.25rem, env(safe-area-inset-bottom));
     gap: 0.45rem;
@@ -139,11 +235,15 @@
   }
 
   .route-finder-fixed-entry--dark {
+    background: rgba(10, 10, 10, 0.88);
+    border-color: rgba(255, 255, 255, 0.16);
     color: rgba(255, 255, 255, 0.82);
   }
 
   .route-finder-fixed-entry--light {
+    background: rgba(245, 244, 239, 0.94);
     color: var(--zoomix-black);
+    box-shadow: 0 8px 24px rgba(10, 10, 10, 0.08);
   }
 
   .route-finder-fixed-entry:hover,
@@ -295,6 +395,69 @@
 
   50% {
     box-shadow: 0 0 0 0.5rem rgba(187, 255, 0, 0);
+  }
+}
+
+@keyframes quick-match-dot-pulse {
+  0%,
+  72%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(187, 255, 0, 0.42);
+  }
+
+  82% {
+    box-shadow: 0 0 0 0.42rem rgba(187, 255, 0, 0);
+  }
+}
+
+@keyframes quick-match-arrow-nudge {
+  0%,
+  84%,
+  100% {
+    transform: translateY(0);
+  }
+
+  90% {
+    transform: translateY(-0.16rem);
+  }
+
+  95% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-start-icon-in {
+  from {
+    opacity: 0;
+    transform: rotate(-22deg) scale(0.7);
+  }
+
+  to {
+    opacity: 1;
+    transform: rotate(0) scale(1);
+  }
+}
+
+@keyframes result-primary-cta-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(187, 255, 0, 0.24);
+  }
+
+  50% {
+    box-shadow: 0 0 0 0.45rem rgba(187, 255, 0, 0);
+  }
+}
+
+@keyframes zoomix-check-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.65) rotate(-12deg);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0);
   }
 }
 
@@ -612,7 +775,7 @@
 }
 
 .next-move-cta.is-visible .next-move-cta-button {
-  animation: next-move-button-pulse 2.8s ease-in-out 1.25s 2;
+  animation: none;
 }
 
 .next-move-cta-button:hover,

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowUpLeft, ArrowUpRight } from "lucide-react";
 import Cursor from "../components/Cursor";
 import Navbar from "../components/Navbar";
 import OfferPathSection from "../components/OfferPathSection";
@@ -10,6 +11,7 @@ import { useLanguage } from "../i18n";
 export default function RouteFinder() {
   const { language } = useLanguage();
   const isArabic = language === "ar";
+  const ActionArrow = isArabic ? ArrowUpLeft : ArrowUpRight;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editToken = searchParams.get("edit");
@@ -46,9 +48,6 @@ export default function RouteFinder() {
             <span><b className="text-[#789900]">03</b> {isArabic ? "خد خطوتك" : "Take the next move"}</span>
           </div>
           <div className="mt-8 flex flex-wrap gap-3">
-            <a href="#route-mode-chooser" className="zoomix-button bg-[#BBFF00] text-black">
-              {isArabic ? "اختيار سريع — 3 أسئلة" : "Quick match — 3 questions"}<span aria-hidden="true">↘</span>
-            </a>
             <a href="/#packages-section" className="zoomix-button border-black/25 text-black hover:border-black hover:bg-white">
               {isArabic ? "عارف احتياجك؟ شوف الباقات" : "Know what you need? See packages"}
             </a>
@@ -76,8 +75,8 @@ export default function RouteFinder() {
               }}
               className="zoomix-button shrink-0 bg-[#BBFF00] text-black"
             >
-              {returnTo ? (isArabic ? "ارجع للبريف" : "Back to the brief") : (isArabic ? "ابعت تفاصيل مشروعك" : "Send your project brief")}
-              <span aria-hidden="true">↗</span>
+              {returnTo ? (isArabic ? "ارجع لتفاصيل مشروعك" : "Back to your project details") : (isArabic ? "كمّل تفاصيل مشروعك" : "Continue with your project details")}
+              <ActionArrow size={18} aria-hidden="true" />
             </a>
           </div>
         </section>

@@ -546,10 +546,11 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
               <div className="grid grid-cols-3 gap-3">
                 {briefSteps.map((step, index) => {
                   const isActive = briefStep >= index + 1;
+                  const isComplete = briefStep > index + 1;
                   return (
                     <div key={step.number} className={`transition-colors duration-300 ${isActive ? "text-white" : "text-white/30"}`}>
                       <span className={`mb-3 flex h-8 w-8 items-center justify-center rounded-full border font-mono text-[11px] ${isActive ? "border-[#BBFF00] bg-[#BBFF00] text-[#0A0A0A]" : "border-white/20"}`}>
-                        {step.number}
+                        {isComplete ? <Check className="brief-step-check" size={14} strokeWidth={3} aria-hidden="true" /> : step.number}
                       </span>
                       <span className="block font-mono text-[10px] tracking-[0.12em]">{label(step.ar, step.en)}</span>
                     </div>
@@ -651,7 +652,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 </div>
                 <div className="sm:col-span-2 flex justify-end border-t border-black/15 pt-5">
                   <button type="button" onClick={handleNextStep} className="zoomix-button bg-[#BBFF00] text-[#0A0A0A]">
-                    {label("التالي: تفاصيل المشروع", "Next: project details")} <ActionArrow size={18} />
+                    {label("التالي: تفاصيل المشروع", "Next: project details")} <ActionArrow className="brief-next-arrow" size={18} />
                   </button>
                 </div>
               </>
@@ -702,7 +703,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                     {label("رجوع", "Back")}
                   </button>
                   <button type="button" onClick={handleNextStep} className="zoomix-button bg-[#BBFF00] text-[#0A0A0A]">
-                    {label("التالي: وسيلة التواصل", "Next: contact method")} <ActionArrow size={18} />
+                    {label("التالي: وسيلة التواصل", "Next: contact method")} <ActionArrow className="brief-next-arrow" size={18} />
                   </button>
                 </div>
               </>
@@ -761,7 +762,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                     {label("رجوع", "Back")}
                   </button>
                   <button type="submit" className="zoomix-button bg-[#BBFF00] text-[#0A0A0A] shadow-[0_8px_24px_rgba(187,255,0,0.15)]">
-                    {label("إرسال على واتساب", "Send to WhatsApp")} <ActionArrow size={18} />
+                    {label("إرسال على واتساب", "Send to WhatsApp")} <ActionArrow className="brief-next-arrow" size={18} />
                   </button>
                 </div>
               </>
@@ -797,7 +798,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 aria-live="polite"
               >
                 <p className="flex items-center gap-2">
-                  <Check size={16} />
+                  <Check className="brief-success-icon" size={16} aria-hidden="true" />
                   {form.contactPreference === "whatsapp"
                     ? label("تم حفظ البريف وفتح واتساب.", "Brief saved and WhatsApp opened.")
                     : label("تم حفظ البريف. هنتواصل معاك بالطريقة اللي اخترتها.", "Brief saved. We will follow up using your preferred contact method.")}

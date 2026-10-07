@@ -1,4 +1,5 @@
 import { useLanguage } from "../i18n";
+import { ArrowUpLeft, ArrowUpRight } from "lucide-react";
 
 const stages = [
   { code: "START", ar: "البداية", en: "START" },
@@ -10,6 +11,7 @@ const stages = [
 export default function RouteFinderEntry() {
   const { language } = useLanguage();
   const isArabic = language === "ar";
+  const ActionArrow = isArabic ? ArrowUpLeft : ArrowUpRight;
 
   return (
     <section id="route-finder-entry" className="route-finder-entry border-y border-black/15 bg-[#F5F4EF] text-[#0A0A0A]" dir={isArabic ? "rtl" : "ltr"}>
@@ -29,10 +31,14 @@ export default function RouteFinderEntry() {
                 : "Let Zoomix organize your next move. Answer a few simple questions and see the route that fits your project before getting into the details."}
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <a href="/route-finder" className="zoomix-button bg-[#0A0A0A] text-white hover:bg-[#BBFF00] hover:text-black">
-                {isArabic ? "ساعدني أختار" : "Help me choose"}
-                <span aria-hidden="true">↗</span>
-              </a>
+              <div className="flex flex-col items-start gap-2">
+                <span className="quick-match-badge">{isArabic ? "الأسرع" : "FASTEST"}</span>
+                <a href="/route-finder" className="zoomix-button quick-match-primary gap-3 bg-[#BBFF00] text-black shadow-[0_10px_24px_rgba(187,255,0,0.16)] hover:bg-[#0A0A0A] hover:text-white">
+                  <span className="quick-match-pulse-dot" aria-hidden="true" />
+                  <span>{isArabic ? "اختيار سريع — 3 أسئلة" : "Quick match — 3 questions"}</span>
+                  <ActionArrow className="quick-match-arrow" size={18} aria-hidden="true" />
+                </a>
+              </div>
               <a href="/#packages-section" className="zoomix-button border-black/25 text-black hover:border-black hover:bg-white">
                 {isArabic ? "عارف هتبدأ بإيه؟ شوف الباقات" : "Know what you need? See packages"}
               </a>

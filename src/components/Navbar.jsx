@@ -373,8 +373,8 @@ const Navbar = memo(function Navbar() {
             <Crosshair size={12} strokeWidth={1.8} />
           </span>
           <span className="route-finder-fixed-entry__copy">
-            <span className="route-finder-fixed-entry__eyebrow">ZOOMIX / NEXT MOVE</span>
-            <span>{language === "ar" ? "مش عارف تبدأ؟ نحددها سوا" : "Not sure where to start? Find your route"}</span>
+            <span className="route-finder-fixed-entry__eyebrow">ZOOMIX / QUICK MATCH</span>
+            <span>{language === "ar" ? "اختيار سريع — 3 أسئلة" : "Quick match — 3 questions"}</span>
           </span>
         </button>
       )}

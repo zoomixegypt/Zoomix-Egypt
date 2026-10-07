@@ -1,5 +1,5 @@
 import { memo, useRef } from "react";
-import { ArrowDownLeft, ArrowDownRight } from "lucide-react";
+import { ArrowDownLeft, ArrowDownRight, Compass } from "lucide-react";
 import { Gsap, useGsapScroll, useGsapTransform } from "../utils/gsapAnimate";
 import { useLanguage } from "../i18n";
 import ZoomixLogo from "./ZoomixLogo";
@@ -51,6 +51,7 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
           </p>
           <div className="zoomix-reveal zoomix-reveal-delay-3 relative z-10 -mx-2 mt-9 flex w-fit flex-wrap items-center gap-3 rounded-full bg-[#0A0A0A]/85 px-2 py-2">
             <a href="#contact-section" className="zoomix-button bg-[#BBFF00] text-black">
+              <Compass className="hero-start-icon" size={18} aria-hidden="true" />
               {t("nav", "start")} <ActionArrow size={20} />
             </a>
             <a
