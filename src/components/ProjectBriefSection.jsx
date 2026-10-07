@@ -172,11 +172,13 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
   const [messageCopied, setMessageCopied] = useState(false);
   const [referenceCode, setReferenceCode] = useState("");
   const [submitError, setSubmitError] = useState("");
+  const [selectionOrigin, setSelectionOrigin] = useState("");
   const sectionRef = useRef(null);
   const briefStartedRef = useRef(false);
 
   useEffect(() => {
-    const applyPackage = (id) =>
+    const applyPackage = (id) => {
+      if (id) setSelectionOrigin("package");
       setForm((current) => ({
         ...current,
         packageId: id || current.packageId,
@@ -185,6 +187,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
         showType: id ? "" : current.showType,
         service: id ? "" : current.service,
       }));
+    };
     const normalizeRoute = (route) => {
       if (route === "content" || route === "events") return "show";
       if (route === "partner") return "continue";
@@ -195,6 +198,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       if (!selection) return;
       const route = normalizeRoute(selection.route);
       const isStartRoute = route === "start";
+      setSelectionOrigin(selection.source === "packages" ? "package" : "route-finder");
       setForm((current) => ({
         ...current,
         route,
@@ -277,6 +281,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
     },
   ], [language, isArabic]);
   const selectedOfferId = form.offerId || form.packageId;
+  const guidedSelection = selectionOrigin === "route-finder" && Boolean(selectedOfferId || form.route);
   const activeShowType = form.showType || inferShowType(form.offerId);
   const serviceOptions =
     form.route === "start"
@@ -317,6 +322,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       eventLocation: "",
       coverageType: "",
     }));
+    setSelectionOrigin("");
     setSubmitted(false);
   };
   const updateField = (key, value) => {
@@ -338,6 +344,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
   };
 
   const handleRouteChange = (value) => {
+    setSelectionOrigin("manual");
     setForm((current) => ({
       ...current,
       route: value,
@@ -667,55 +674,79 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
               <span className="mb-2 block font-mono text-xs font-bold uppercase tracking-[0.08em] text-black/75">
                 {label("العرض المختار", "Selected offer")}
               </span>
-              <select
-                value={selectedOfferId}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  const group = offerCatalog.find((item) => item.offers.some((offer) => offer.id === value));
-                  setForm((current) => ({
-                    ...current,
-                    packageId: group?.route === "start" ? value : "",
-                    offerId: value,
-                    route: group?.route || current.route,
-                    showType: group?.route === "show" ? inferShowType(value) || current.showType : "",
-                    service: "",
-                  }));
-                  if (errors.packageId) {
-                    setErrors((current) => {
-                      const next = { ...current };
-                      delete next.packageId;
-                      return next;
-                    });
-                  }
-                }}
-                className="min-w-0 w-full border border-black/25 bg-white px-4 py-3.5 outline-none transition-colors focus:border-[#6b8d00] focus:ring-2 focus:ring-[#BBFF00]/35"
-              >
-                <option value="">{label("اختار الباقة أو الخدمة", "Choose a package or service")}</option>
-                {offerCatalog.map((group) => (
-                  <optgroup key={group.label} label={group.label}>
-                    {group.offers.map((offer) => (
-                      <option key={offer.id} value={offer.id}>
-                        {offer.displayName} — {offer.priceLabel}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-              {(form.route || form.offerId || form.packageId) && (
-                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-xs text-black/55">
-                    {selectedOfferName
-                      ? `${label("الاختيار من المسار: ", "Selected from your path: ")}${selectedOfferName}`
-                      : pathLabel[form.route] || label("اختيار محفوظ", "Saved selection")}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={clearSavedSelection}
-                    className="text-xs font-bold text-black/55 underline decoration-black/25 underline-offset-4 transition-colors hover:text-black"
-                  >
-                    {label("مسح الاختيار", "Clear selection")}
-                  </button>
+              {guidedSelection ? (
+                <div className="border border-[#6b8d00] bg-[#BBFF00]/15 p-4 shadow-[4px_4px_0_#0A0A0A]">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <p className="font-mono text-[10px] font-bold tracking-[0.16em] text-[#5e7c00]">ZOOMIX / NEXT MOVE</p>
+                      <p className="mt-2 text-xl font-black leading-tight">{selectedOfferName || pathLabel[form.route]}</p>
+                      <p className="mt-2 text-xs leading-5 text-black/60">
+                        {label("اتنقل تلقائيًا من خطوتك الجاية — مش محتاج تختار نفس الحاجة تاني.", "Carried over from your next move — you do not need to choose it again.")}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectionOrigin("manual")}
+                      className="shrink-0 text-xs font-bold underline decoration-black/30 underline-offset-4 transition-colors hover:text-[#5e7c00]"
+                    >
+                      {label("تغيير الاختيار", "Change selection")}
+                    </button>
+                  </div>
                 </div>
+              ) : (
+                <>
+                  <select
+                    value={selectedOfferId}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      const group = offerCatalog.find((item) => item.offers.some((offer) => offer.id === value));
+                      setSelectionOrigin("manual");
+                      setForm((current) => ({
+                        ...current,
+                        packageId: group?.route === "start" ? value : "",
+                        offerId: value,
+                        route: group?.route || current.route,
+                        showType: group?.route === "show" ? inferShowType(value) || current.showType : "",
+                        service: "",
+                      }));
+                      if (errors.packageId) {
+                        setErrors((current) => {
+                          const next = { ...current };
+                          delete next.packageId;
+                          return next;
+                        });
+                      }
+                    }}
+                    className="min-w-0 w-full border border-black/25 bg-white px-4 py-3.5 outline-none transition-colors focus:border-[#6b8d00] focus:ring-2 focus:ring-[#BBFF00]/35"
+                  >
+                    <option value="">{label("اختار الباقة أو الخدمة", "Choose a package or service")}</option>
+                    {offerCatalog.map((group) => (
+                      <optgroup key={group.label} label={group.label}>
+                        {group.offers.map((offer) => (
+                          <option key={offer.id} value={offer.id}>
+                            {offer.displayName} — {offer.priceLabel}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                  {(form.route || form.offerId || form.packageId) && (
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs text-black/55">
+                        {selectedOfferName
+                          ? `${label("الاختيار من المسار: ", "Selected from your path: ")}${selectedOfferName}`
+                          : pathLabel[form.route] || label("اختيار محفوظ", "Saved selection")}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={clearSavedSelection}
+                        className="text-xs font-bold text-black/55 underline decoration-black/25 underline-offset-4 transition-colors hover:text-black"
+                      >
+                        {label("مسح الاختيار", "Clear selection")}
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </label>
             {form.route === "show" && selectField("showType", label("نوع الطلب *", "Request type *"), SHOW_TYPE_OPTIONS, true, label("اختار نوع الطلب", "Choose a request type"))}

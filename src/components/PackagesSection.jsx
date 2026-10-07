@@ -14,7 +14,7 @@ import {
 const labelFor = (value, language) => value?.[language] || value || "";
 
 function saveSelection(route, offerId, isStart = false, language = "ar") {
-  const selection = { route, packageId: offerId, savedAt: new Date().toISOString() };
+  const selection = { route, packageId: offerId, source: "packages", savedAt: new Date().toISOString() };
   if (isStart) {
     window.localStorage.setItem("zoomix-selected-package", offerId);
   } else {

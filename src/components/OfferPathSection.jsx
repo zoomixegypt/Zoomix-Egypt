@@ -205,7 +205,7 @@ function scrollToSection(id) {
 }
 
 function saveRoute(route, packageId = "", language = "ar") {
-  const selection = { route, packageId, savedAt: new Date().toISOString() };
+  const selection = { route, packageId, source: "route-finder", savedAt: new Date().toISOString() };
   window.localStorage.setItem("zoomix-project-route", JSON.stringify(selection));
   window.dispatchEvent(new CustomEvent("zoomix:route-select", { detail: selection }));
   trackEvent("route_finder_recommendation", { route, package_id: packageId, language });
