@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BarChart3, Check, Download, FileJson, LogOut, Mail, MessageCircle, Phone, RefreshCw, Save, Search, X } from "lucide-react";
 import { useLanguage } from "../i18n";
 
@@ -21,6 +21,12 @@ function text(value, language) {
   return typeof value === "object" ? value[language] || value.en || value.ar || "—" : String(value);
 }
 
+function requestSignature(requests) {
+  return requests
+    .map((request) => [request.id, request.reference_code, request.status, request.updated_at || request.updatedAt, request.created_at || request.createdAt].join(":"))
+    .join("|");
+}
+
 export default function Studio() {
   const { language } = useLanguage();
   const isArabic = language === "ar";
@@ -36,14 +42,17 @@ export default function Studio() {
   const [saving, setSaving] = useState(false);
   const [notesDraft, setNotesDraft] = useState("");
   const [insights, setInsights] = useState(null);
+  const [liveNotice, setLiveNotice] = useState("");
+  const liveSignatureRef = useRef(null);
+  const liveNoticeTimeoutRef = useRef(null);
 
   const label = (ar, en) => (isArabic ? ar : en);
 
-  const loadRequests = async () => {
-    setLoading(true);
+  const loadRequests = async ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
     setError("");
     try {
-      const response = await fetch("/api/studio/requests");
+      const response = await fetch("/api/studio/requests", { cache: "no-store" });
       if (response.status === 401) {
         setNeedsLogin(true);
         setRequests([]);
@@ -53,20 +62,53 @@ export default function Studio() {
       if (response.status === 503) setNeedsLogin(true);
       if (!response.ok) throw new Error(result.error || label("تعذر تحميل الطلبات.", "Could not load requests."));
       setNeedsLogin(false);
-      setRequests(result.requests || []);
-      setSelected((current) => (current ? result.requests?.find((item) => item.id === current.id) || current : result.requests?.[0] || null));
+      const nextRequests = result.requests || [];
+      liveSignatureRef.current = requestSignature(nextRequests);
+      setRequests(nextRequests);
+      setSelected((current) => (current ? nextRequests.find((item) => item.id === current.id) || current : nextRequests[0] || null));
       const insightsResponse = await fetch("/api/studio/insights");
       if (insightsResponse.ok) setInsights(await insightsResponse.json());
     } catch (loadError) {
-      setError(loadError.message || label("تعذر الاتصال بالاستوديو.", "Could not connect to Studio."));
+      if (!silent) setError(loadError.message || label("تعذر الاتصال بالاستوديو.", "Could not connect to Studio."));
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     loadRequests();
   }, []);
+
+  useEffect(() => {
+    const pollForUpdates = async () => {
+      if (document.visibilityState === "hidden") return;
+      try {
+        const response = await fetch("/api/studio/requests", { cache: "no-store" });
+        if (!response.ok) return;
+        const result = await response.json().catch(() => ({}));
+        const nextRequests = Array.isArray(result.requests) ? result.requests : [];
+        const nextSignature = requestSignature(nextRequests);
+        if (liveSignatureRef.current === null) {
+          liveSignatureRef.current = nextSignature;
+          return;
+        }
+        if (nextSignature !== liveSignatureRef.current) {
+          await loadRequests({ silent: true });
+          setLiveNotice(label("طلب جديد أو تحديث وصل — تم تحديث الاستوديو.", "A new request or update arrived — Studio was refreshed."));
+          window.clearTimeout(liveNoticeTimeoutRef.current);
+          liveNoticeTimeoutRef.current = window.setTimeout(() => setLiveNotice(""), 5000);
+        }
+      } catch {
+        // Background refresh is best-effort; the manual refresh button remains available.
+      }
+    };
+
+    const interval = window.setInterval(pollForUpdates, 30000);
+    return () => {
+      window.clearInterval(interval);
+      window.clearTimeout(liveNoticeTimeoutRef.current);
+    };
+  }, [language]);
 
   useEffect(() => {
     setNotesDraft(selected?.notes || "");
@@ -243,6 +285,15 @@ export default function Studio() {
           </div>
         </div>
       </header>
+
+      {liveNotice && (
+        <div className="mx-auto max-w-[1400px] px-6 pt-4 md:px-12" aria-live="polite" role="status">
+          <div className="inline-flex items-center gap-2 border border-[#BBFF00]/50 bg-[#BBFF00]/10 px-4 py-2 text-xs font-bold text-[#0A0A0A]">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-[#BBFF00]" />
+            {liveNotice}
+          </div>
+        </div>
+      )}
 
       <div className="mx-auto max-w-[1400px] px-6 py-8 md:px-12 md:py-12">
         <div className="flex flex-col justify-between gap-6 border-b border-black/15 pb-8 md:flex-row md:items-end">
