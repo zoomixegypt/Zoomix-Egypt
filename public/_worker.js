@@ -372,14 +372,26 @@ async function findEditableBrief(env, token) {
 
 async function getBriefForEdit(request, env, token) {
   if (!env.DB) return json({ error: "Brief storage is not configured yet." }, 503);
-  const brief = await findEditableBrief(env, token);
+  let brief;
+  try {
+    brief = await findEditableBrief(env, token);
+  } catch (error) {
+    console.error("Zoomix brief edit schema is not ready", error);
+    return json({ error: "Brief edit links are not enabled yet." }, 503);
+  }
   if (!brief) return json({ error: "This edit link is invalid or has expired." }, 404);
   return json({ brief: editableBrief(brief) });
 }
 
 async function updateBriefFromEdit(request, env, ctx, token) {
   if (!env.DB) return json({ error: "Brief storage is not configured yet." }, 503);
-  const current = await findEditableBrief(env, token);
+  let current;
+  try {
+    current = await findEditableBrief(env, token);
+  } catch (error) {
+    console.error("Zoomix brief edit schema is not ready", error);
+    return json({ error: "Brief edit links are not enabled yet." }, 503);
+  }
   if (!current) return json({ error: "This edit link is invalid or has expired." }, 404);
 
   let payload;
