@@ -89,9 +89,20 @@ function ScrollToTop() {
       // Biarkan Home.jsx yang handle scroll ke project card
       if (hash) {
         const targetId = decodeURIComponent(hash.slice(1));
-        requestAnimationFrame(() => {
-          document.getElementById(targetId)?.scrollIntoView({ behavior: "auto", block: "start" });
-        });
+        let attempts = 0;
+        const scrollToHashTarget = () => {
+          if (cancelled) return;
+          const target = document.getElementById(targetId);
+          if (target) {
+            target.scrollIntoView({ behavior: "auto", block: "start" });
+            return;
+          }
+          if (attempts < 90) {
+            attempts += 1;
+            requestAnimationFrame(scrollToHashTarget);
+          }
+        };
+        requestAnimationFrame(scrollToHashTarget);
       } else if (!hasScrollTo) {
         // Scroll to top only when there is no scrollTo query param
         window.scrollTo(0, 0);

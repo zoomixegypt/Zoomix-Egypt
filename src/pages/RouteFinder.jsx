@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Cursor from "../components/Cursor";
 import Navbar from "../components/Navbar";
 import OfferPathSection from "../components/OfferPathSection";
@@ -10,6 +10,7 @@ import { useLanguage } from "../i18n";
 export default function RouteFinder() {
   const { language } = useLanguage();
   const isArabic = language === "ar";
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editToken = searchParams.get("edit");
   const returnTo = editToken ? `/brief/edit/${encodeURIComponent(editToken)}` : "";
@@ -44,6 +45,14 @@ export default function RouteFinder() {
             <span><b className="text-[#789900]">02</b> {isArabic ? "سمّي الاحتياج" : "Name the need"}</span>
             <span><b className="text-[#789900]">03</b> {isArabic ? "خد خطوتك" : "Take the next move"}</span>
           </div>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <a href="#route-mode-chooser" className="zoomix-button bg-[#BBFF00] text-black">
+              {isArabic ? "اختيار سريع — 3 أسئلة" : "Quick match — 3 questions"}<span aria-hidden="true">↘</span>
+            </a>
+            <a href="/#packages-section" className="zoomix-button border-black/25 text-black hover:border-black hover:bg-white">
+              {isArabic ? "عارف احتياجك؟ شوف الباقات" : "Know what you need? See packages"}
+            </a>
+          </div>
         </div>
         <Suspense fallback={<SectionSkeleton className="min-h-screen" />}>
           <OfferPathSection standalone returnTo={returnTo} />
@@ -59,7 +68,14 @@ export default function RouteFinder() {
               {isArabic ? "ابعت لنا تفاصيل مشروعك، وخلي الترشيح يتحول لخطة تنفيذ واضحة." : "Send us the project details and turn the route into a clear execution plan."}
             </p>
           </div>
-            <a href={returnTo || "/#contact-section"} className="zoomix-button shrink-0 bg-[#BBFF00] text-black">
+            <a
+              href={returnTo || "/#contact-section"}
+              onClick={(event) => {
+                event.preventDefault();
+                navigate(returnTo || "/#contact-section");
+              }}
+              className="zoomix-button shrink-0 bg-[#BBFF00] text-black"
+            >
               {returnTo ? (isArabic ? "ارجع للبريف" : "Back to the brief") : (isArabic ? "ابعت تفاصيل مشروعك" : "Send your project brief")}
               <span aria-hidden="true">↗</span>
             </a>

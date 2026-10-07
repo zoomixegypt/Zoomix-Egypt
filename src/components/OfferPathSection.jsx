@@ -1,4 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n";
 import {
   ZOOMIX_CONTENT_PACKAGES,
@@ -39,18 +40,24 @@ const copy = {
     routeMapIntro: "اختار بين 4 طرق. كل محطة بتوضح إمتى تناسبك وإيه اللي هتخرج بيه.",
     routeMapSystemNote: "المسارات دي طريقة اختيار العميل؛ أما تنفيذ المشروع فبيتحرك من Build إلى Show إلى Launch.",
     routeMapSwitch: "ساعدني أختار",
+    decisionTitle: "اختار طريقتك.",
+    decisionIntro: "ممكن نرشح لك بسرعة، أو تستكشف المسارات بنفسك.",
+    quickStart: "اختيار سريع — 3 أسئلة",
+    exploreRoutes: "استكشف المسارات",
     quickPrompt: "مش عارف تبدأ منين؟",
     quickDescription: "جاوب على 3 أسئلة، وZoomix ترشح لك المسار والباقة الأنسب.",
     routeMapBack: "ارجع لاستكشاف الطرق",
     routeMapReason: "المسار ده مناسب لو",
     routeMapOutputs: "هتخرج منه بـ",
+    routeDetailsLabel: "الطريق ده هيمشي إزاي",
+    hideRouteDetails: "اقفل التفاصيل",
     routeMapChoose: "اعرف الاختيار الأنسب",
     routeMapBrowse: "شوف كل باقات المسار",
     routeMap: [
-      { value: "start", code: "START", title: "البداية", description: "لما تكون لسه بتبدأ أو محتاج ترتب أساس البراند.", reason: "محتاج هوية واتجاه واضح قبل ما تبدأ الظهور.", outputs: ["هوية مرتبة", "حضور بداية", "مخرجات جاهزة للاستخدام"] },
-      { value: "show", code: "SHOW", title: "الظهور", description: "لما البراند يكون جاهز ويحتاج مادة تخليه يظهر بشكل أقوى.", reason: "الأساس موجود، لكن محتاج محتوى أو تغطية تحكي الشغل.", outputs: ["محتوى مخطط", "صور وفيديو أفقي", "مادة جاهزة للنشر"] },
-      { value: "continue", code: "CONTINUE", title: "الاستمرار", description: "لما تحتاج شريكًا يحافظ على الاتجاه ويطوره كل شهر.", reason: "عاوز حضور ثابت وحد يكمّل معاك بدل حلول متقطعة.", outputs: ["اتجاه مستمر", "إنتاج شهري", "تطوير تدريجي للبراند"] },
-      { value: "one-thing", code: "ONE THING", title: "خدمة واحدة", description: "لما تكون عارف الجزء المحدد اللي محتاج يتحل من غير باقة كاملة.", reason: "محتاج مخرج واضح ومحدد، مش رحلة كاملة.", outputs: ["خدمة محددة", "نطاق واضح", "تسعير مباشر"] },
+      { value: "start", code: "START", title: "البداية", description: "لما تكون لسه بتبدأ أو محتاج ترتب أساس البراند.", reason: "محتاج هوية واتجاه واضح قبل ما تبدأ الظهور.", outputs: ["هوية مرتبة", "حضور بداية", "مخرجات جاهزة للاستخدام"], details: ["نرتب الأساس والاتجاه", "نبني حضورًا قابلًا للاستخدام", "نجهزك للانطلاقة"] },
+      { value: "show", code: "SHOW", title: "الظهور", description: "لما البراند يكون جاهز ويحتاج مادة تخليه يظهر بشكل أقوى.", reason: "الأساس موجود، لكن محتاج محتوى أو تغطية تحكي الشغل.", outputs: ["محتوى مخطط", "صور وفيديو أفقي", "مادة جاهزة للنشر"], details: ["نحدد نوع المادة المطلوبة", "ننتج المحتوى أو التغطية", "نسلم مخرجات جاهزة للنشر"] },
+      { value: "continue", code: "CONTINUE", title: "الاستمرار", description: "لما تحتاج شريكًا يحافظ على الاتجاه ويطوره كل شهر.", reason: "عاوز حضور ثابت وحد يكمّل معاك بدل حلول متقطعة.", outputs: ["اتجاه مستمر", "إنتاج شهري", "تطوير تدريجي للبراند"], details: ["نثبت الاتجاه والأولويات", "نخطط الإنتاج الشهري", "نراجع ونطور مع كل دورة"] },
+      { value: "one-thing", code: "ONE THING", title: "خدمة واحدة", description: "لما تكون عارف الجزء المحدد اللي محتاج يتحل من غير باقة كاملة.", reason: "محتاج مخرج واضح ومحدد، مش رحلة كاملة.", outputs: ["خدمة محددة", "نطاق واضح", "تسعير مباشر"], details: ["نحدد الطلب والمخرج المطلوب", "نثبت النطاق والتسليم", "ننفذ الجزء المحدد مباشرة"] },
     ],
     stages: [
       { value: "start", label: "لسه ببدأ", description: "محتاج أرتب الأساس قبل ما أظهر." },
@@ -133,18 +140,24 @@ const copy = {
     routeMapIntro: "Choose between four routes. Each stop shows when it fits and what you will leave with.",
     routeMapSystemNote: "These are client routes; the work itself moves from Build to Show to Launch.",
     routeMapSwitch: "Help me choose",
+    decisionTitle: "Choose your way in.",
+    decisionIntro: "Get a quick recommendation or explore the routes yourself.",
+    quickStart: "Quick match — 3 questions",
+    exploreRoutes: "Explore the routes",
     quickPrompt: "Not sure where to start?",
     quickDescription: "Answer three questions and Zoomix will match you with the right route, service or package.",
     routeMapBack: "Back to route map",
     routeMapReason: "This route fits when",
     routeMapOutputs: "You leave with",
+    routeDetailsLabel: "How this route moves",
+    hideRouteDetails: "Hide details",
     routeMapChoose: "Find my best fit",
     routeMapBrowse: "See all route packages",
     routeMap: [
-      { value: "start", code: "START", title: "START", description: "For a business starting out or organizing its foundation.", reason: "You need a clear identity and direction before showing up.", outputs: ["Organized identity", "A starting presence", "Ready-to-use foundations"] },
-      { value: "show", code: "SHOW", title: "SHOW", description: "For a ready brand that needs work that makes it show up stronger.", reason: "The foundation is there, but the work needs content or coverage.", outputs: ["Planned content", "Landscape photo and video", "Publish-ready material"] },
-      { value: "continue", code: "CONTINUE", title: "CONTINUE", description: "For a brand that needs a partner to maintain and develop the direction monthly.", reason: "You need consistent presence instead of disconnected one-off fixes.", outputs: ["Ongoing direction", "Monthly production", "Steady brand development"] },
-      { value: "one-thing", code: "ONE THING", title: "ONE THING", description: "For when you know the specific piece you need without a full package.", reason: "You need one clear output, not a complete route.", outputs: ["One defined service", "Clear scope", "Direct pricing"] },
+      { value: "start", code: "START", title: "START", description: "For a business starting out or organizing its foundation.", reason: "You need a clear identity and direction before showing up.", outputs: ["Organized identity", "A starting presence", "Ready-to-use foundations"], details: ["Organize the foundation and direction", "Build a usable starting presence", "Prepare the project for launch"] },
+      { value: "show", code: "SHOW", title: "SHOW", description: "For a ready brand that needs work that makes it show up stronger.", reason: "The foundation is there, but the work needs content or coverage.", outputs: ["Planned content", "Landscape photo and video", "Publish-ready material"], details: ["Define the material you need", "Produce the content or coverage", "Deliver publish-ready outputs"] },
+      { value: "continue", code: "CONTINUE", title: "CONTINUE", description: "For a brand that needs a partner to maintain and develop the direction monthly.", reason: "You need consistent presence instead of disconnected one-off fixes.", outputs: ["Ongoing direction", "Monthly production", "Steady brand development"], details: ["Set the direction and priorities", "Plan the monthly production", "Review and develop each cycle"] },
+      { value: "one-thing", code: "ONE THING", title: "ONE THING", description: "For when you know the specific piece you need without a full package.", reason: "You need one clear output, not a complete route.", outputs: ["One defined service", "Clear scope", "Direct pricing"], details: ["Define the request and output", "Lock the scope and handoff", "Deliver the specific piece directly"] },
     ],
     stages: [
       { value: "start", label: "I am starting", description: "I need to organize the foundation before showing up." },
@@ -252,12 +265,14 @@ const ROUTE_DRAFT_KEY = "zoomix-route-finder-draft";
 
 const OfferPathSection = memo(function OfferPathSection({ standalone = false, returnTo = "" } = {}) {
   const { language } = useLanguage();
+  const navigate = useNavigate();
   const isArabic = language === "ar";
   const text = copy[language];
   const [step, setStep] = useState(1);
   const [answers, setAnswers] = useState({ stage: "", need: "", goal: "" });
   const [mode, setMode] = useState("explore");
   const [selectedRoute, setSelectedRoute] = useState("start");
+  const [expandedRoute, setExpandedRoute] = useState("");
   const routeRefs = useRef({});
   const quickMatchRef = useRef(null);
   const [quickMatchVisible, setQuickMatchVisible] = useState(false);
@@ -340,7 +355,11 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
       window.location.assign(`${returnTo}?route=${encodeURIComponent(route)}&offerId=${encodeURIComponent(id)}`);
       return;
     }
-    scrollToSection(standalone ? "route-finder-contact" : "contact-section");
+    if (standalone) {
+      navigate("/#contact-section");
+      return;
+    }
+    scrollToSection("contact-section");
   };
 
   const primaryOffer = recommendation.kind === "one-off"
@@ -359,13 +378,36 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
       : recommendation.route === "one-off"
         ? "one-thing"
         : "show";
-  const routeTarget = standalone ? `route-story-${routeStoryTarget}` : getRouteTarget(recommendation.route);
   const currentQuestion = step === 1 ? text.questions.stage : step === 2 ? text.questions.need : text.questions.goal;
   const selectedRouteData = text.routeMap.find((route) => route.value === selectedRoute) || text.routeMap[0];
 
   const scrollToRouteStory = (route) => {
     setSelectedRoute(route);
     document.getElementById(`route-story-${route}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const revealRouteDetails = (route) => {
+    setSelectedRoute(route);
+    setExpandedRoute((current) => current === route ? "" : route);
+    window.requestAnimationFrame(() => {
+      const node = document.getElementById(`route-story-${route}`);
+      node?.scrollIntoView({ behavior: "smooth", block: "center" });
+      node?.focus({ preventScroll: true });
+    });
+  };
+
+  const showRecommendedRoute = () => {
+    if (standalone) {
+      setMode("explore");
+      revealRouteDetails(routeStoryTarget);
+      return;
+    }
+    scrollToSection(getRouteTarget(recommendation.route));
+  };
+
+  const startQuickMatch = () => {
+    setMode("quiz");
+    window.requestAnimationFrame(() => scrollToSection("next-move-quick-match"));
   };
 
   const startMatch = (route) => {
@@ -391,7 +433,24 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
           <p className="max-w-xl text-lg leading-8 text-black/65 md:text-xl">{text.intro}</p>
         </div>
 
-        <div className="route-map-experience mb-14 border-y border-black/15 py-8 md:py-12">
+        <div id="route-mode-chooser" className="mb-8 flex flex-col justify-between gap-5 border-y border-black/15 bg-white/35 px-5 py-5 md:flex-row md:items-center md:px-7">
+          <div>
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-black/45">{text.finderName} / ENTRY</span>
+            <p className={`${isArabic ? "font-arabic" : "font-display tracking-[-0.02em]"} mt-2 text-2xl font-black`}>{text.decisionTitle}</p>
+            <p className="mt-1 text-sm text-black/55">{text.decisionIntro}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={startQuickMatch} className="zoomix-button bg-[#BBFF00] text-black">
+              {text.quickStart}<span aria-hidden="true">↗</span>
+            </button>
+            <button type="button" onClick={() => { setMode("explore"); scrollToSection("route-map-experience"); }} className="zoomix-button border-black/25 text-black">
+              {text.exploreRoutes}
+            </button>
+          </div>
+        </div>
+
+        <div className={standalone ? "flex flex-col" : ""}>
+        <div id="route-map-experience" className={`route-map-experience mb-14 border-y border-black/15 py-8 md:py-12 ${standalone ? "order-3" : ""}`}>
           <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
             <div>
               <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-black/45">{text.routeMapEyebrow}</span>
@@ -437,7 +496,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
               {text.routeMap.map((route, index) => {
                 const active = route.value === selectedRoute;
                 return (
-                  <article key={route.value} id={`route-story-${route.value}`} ref={(node) => { routeRefs.current[route.value] = node; }} data-route={route.value} role="tabpanel" aria-labelledby={`route-tab-${route.value}`} className={`route-map-story relative min-h-[28rem] overflow-hidden border p-6 transition-all duration-500 md:min-h-[34rem] md:p-10 ${active ? "border-[#0A0A0A] bg-white" : "border-black/15 bg-white/40"}`}>
+                  <article key={route.value} id={`route-story-${route.value}`} ref={(node) => { routeRefs.current[route.value] = node; }} data-route={route.value} role="tabpanel" aria-labelledby={`route-tab-${route.value}`} tabIndex="-1" className={`route-map-story relative min-h-[28rem] overflow-hidden border p-6 transition-all duration-500 md:min-h-[34rem] md:p-10 ${active ? "border-[#0A0A0A] bg-white" : "border-black/15 bg-white/40"}`}>
                     <div className="route-map-story-number absolute -end-5 -top-7 font-mono text-[11rem] font-bold leading-none text-black/[0.04]">0{index + 1}</div>
                     <div className="relative z-10 flex h-full flex-col justify-between gap-12">
                       <div className="flex items-start justify-between gap-5">
@@ -452,7 +511,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
                           <p className="max-w-lg text-2xl font-black leading-tight md:text-4xl">{route.description}</p>
                           <div className="mt-7 flex flex-wrap items-center gap-4">
                             <button type="button" onClick={() => startMatch(route.value)} className="zoomix-button border-[#0A0A0A] bg-[#0A0A0A] text-white hover:bg-[#BBFF00] hover:text-black">{text.routeMapChoose}<span aria-hidden="true">↗</span></button>
-                            <button type="button" onClick={() => standalone ? scrollToRouteStory(route.value) : scrollToSection(`offer-${route.value}`)} className="border-b border-black/30 pb-1 text-sm font-bold text-black/55 hover:border-black hover:text-black">{standalone ? (isArabic ? "شوف تفاصيل الطريق" : "See route details") : route.value === "one-thing" ? (isArabic ? "شوف الخدمات المنفصلة" : "See one-off services") : text.routeMapBrowse}</button>
+                            <button type="button" onClick={() => standalone ? revealRouteDetails(route.value) : scrollToSection(`offer-${route.value}`)} aria-expanded={standalone ? expandedRoute === route.value : undefined} className="border-b border-black/30 pb-1 text-sm font-bold text-black/55 hover:border-black hover:text-black">{standalone ? (expandedRoute === route.value ? text.hideRouteDetails : (isArabic ? "شوف تفاصيل الطريق" : "See route details")) : route.value === "one-thing" ? (isArabic ? "شوف الخدمات المنفصلة" : "See one-off services") : text.routeMapBrowse}</button>
                           </div>
                         </div>
                         <div className="border-s-2 border-[#BBFF00] ps-5">
@@ -462,6 +521,19 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
                           </ul>
                         </div>
                       </div>
+                      {standalone && expandedRoute === route.value && (
+                        <div className="mt-8 border-t border-black/15 pt-6">
+                          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-black/40">{text.routeDetailsLabel}</span>
+                          <ol className="mt-4 grid gap-3 sm:grid-cols-3">
+                            {route.details.map((detail, detailIndex) => (
+                              <li key={detail} className="border border-black/15 bg-[#F5F4EF] p-4">
+                                <span className="font-mono text-xs text-[#789900]">0{detailIndex + 1}</span>
+                                <span className="mt-3 block text-sm font-bold leading-6 text-black/75">{detail}</span>
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      )}
                     </div>
                   </article>
                 );
@@ -470,7 +542,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
           </div>
         </div>
 
-        <div id="next-move-quick-match" ref={quickMatchRef} data-active={mode === "quiz" ? "true" : "false"} className={`next-move-cta mb-6 scroll-mt-28 ${quickMatchVisible ? "is-visible" : ""}`}>
+        <div id="next-move-quick-match" ref={quickMatchRef} data-active={mode === "quiz" ? "true" : "false"} className={`next-move-cta mb-6 scroll-mt-28 ${quickMatchVisible ? "is-visible" : ""} ${standalone ? "order-1" : ""}`}>
           <div className="next-move-cta-line" aria-hidden="true" />
           <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div>
@@ -485,7 +557,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
           </div>
         </div>
 
-        {mode === "quiz" && <>
+        {mode === "quiz" && <div className={standalone ? "order-2" : ""}>
         <div className="route-progress mb-8 grid grid-cols-3 gap-2 md:gap-5" aria-label={isArabic ? "خطوات اختيار المسار" : "Route selection steps"}>
           {text.steps.map((label, index) => {
             const number = index + 1;
@@ -587,7 +659,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
             )}
 
             <button type="button" onClick={() => chooseOffer(recommendation.route, primaryOffer.id)} className="zoomix-button mt-7 w-full bg-[#BBFF00] text-black transition-transform hover:-translate-y-0.5 md:w-auto">{text.choose}</button>
-            <button type="button" onClick={() => scrollToSection(routeTarget)} className="mt-7 ms-3 inline-flex items-center border-b border-[#BBFF00] pb-1 text-sm font-bold text-white/75 transition-colors hover:text-[#BBFF00]">{text.viewRoute} <span className="ms-2" aria-hidden="true">↗</span></button>
+            <button type="button" onClick={showRecommendedRoute} className="mt-7 ms-3 inline-flex items-center border-b border-[#BBFF00] pb-1 text-sm font-bold text-white/75 transition-colors hover:text-[#BBFF00]">{text.viewRoute} <span className="ms-2" aria-hidden="true">↗</span></button>
 
             {recommendation.kind !== "one-off" && alternatives.length > 0 && (
               <div className="mt-8 border-t border-white/15 pt-5">
@@ -618,7 +690,8 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
             )}
           </div>
         )}
-        </>}
+        </div>}
+        </div>
       </div>
     </section>
   );

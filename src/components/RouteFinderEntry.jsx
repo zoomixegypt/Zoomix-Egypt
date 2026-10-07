@@ -28,10 +28,15 @@ export default function RouteFinderEntry() {
                 ? "خلّي Zoomix ترتب لك الخطوة الجاية. جاوب على كام سؤال بسيط، وشوف الطريق اللي يناسب مشروعك قبل ما تدخل في أي تفاصيل."
                 : "Let Zoomix organize your next move. Answer a few simple questions and see the route that fits your project before getting into the details."}
             </p>
-            <a href="/route-finder" className="zoomix-button mt-8 bg-[#0A0A0A] text-white hover:bg-[#BBFF00] hover:text-black">
-              {isArabic ? "ساعدني أختار" : "Help me choose"}
-              <span aria-hidden="true">↗</span>
-            </a>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <a href="/route-finder" className="zoomix-button bg-[#0A0A0A] text-white hover:bg-[#BBFF00] hover:text-black">
+                {isArabic ? "ساعدني أختار" : "Help me choose"}
+                <span aria-hidden="true">↗</span>
+              </a>
+              <a href="/#packages-section" className="zoomix-button border-black/25 text-black hover:border-black hover:bg-white">
+                {isArabic ? "عارف هتبدأ بإيه؟ شوف الباقات" : "Know what you need? See packages"}
+              </a>
+            </div>
           </div>
 
           <div className="route-finder-entry-map border-y border-black/15 py-8 md:py-10">

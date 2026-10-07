@@ -626,7 +626,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                           <p className="font-mono text-[10px] font-bold tracking-[0.16em] text-[#5e7c00]">ZOOMIX / NEXT MOVE</p>
                           <p className="mt-2 text-xl font-black leading-tight">{selectedOfferName || pathLabel[form.route]}</p>
                           <p className="mt-2 text-xs leading-5 text-black/60">
-                            {label("الاختيار اتنقل تلقائيًا — مش محتاج تختاره تاني.", "This choice was carried over automatically — no need to choose it again.")}
+                            {label("اختيارك محفوظ واتنقل تلقائيًا — مش محتاج تختاره تاني.", "Your choice is saved and carried over automatically — no need to choose it again.")}
                           </p>
                         </div>
                         <button
