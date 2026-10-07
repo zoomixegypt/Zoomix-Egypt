@@ -3,7 +3,7 @@
 > This file is the operational reference for the live ZOOMIX website and Studio. Update it whenever production architecture, hosting, data, secrets, or deployment behavior changes.
 
 Last verified: 2026-10-07  
-Latest verified commit: `5b84b4f`
+Latest verified commit: `85580e0`
 
 ## 1. Canonical architecture
 
@@ -206,3 +206,4 @@ Relevant commits:
 - `e998f18` — preserve client routes in Pages fallback
 - `3ce2f78` — initial D1 binding attempt (wrong account ID; superseded)
 - `5b84b4f` — bind Studio to the Zoomix D1 database
+- `85580e0` — turn the project brief into a guided Wizard
