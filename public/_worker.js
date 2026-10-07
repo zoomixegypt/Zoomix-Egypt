@@ -541,7 +541,9 @@ export default {
     const url = new URL(request.url);
     if (url.pathname.startsWith("/api/")) return api(request, env, ctx);
     const asset = await env.ASSETS.fetch(request);
-    if (asset.status !== 404 || request.method !== "GET" || url.pathname.includes(".")) return asset;
+    const isHtmlRoute = request.method === "GET" && !url.pathname.includes(".");
+    const needsSpaFallback = asset.status === 404 || (asset.status >= 300 && asset.status < 400);
+    if (!isHtmlRoute || !needsSpaFallback) return asset;
     return env.ASSETS.fetch(new Request(new URL("/index.html", request.url), request));
   },
 };
