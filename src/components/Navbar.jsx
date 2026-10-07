@@ -1,4 +1,5 @@
 import { useState, memo, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Gsap, GsapPresence } from "../utils/gsapAnimate";
 import { Menu, X, ArrowUpRight, Crosshair } from "lucide-react";
 import Magnetic from "./Magnetic";
@@ -30,6 +31,7 @@ const Navbar = memo(function Navbar() {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const previousBodyOverflowRef = useRef("");
   const menuStoppedLenisRef = useRef(false);
+  const menuRef = useRef(null);
   const isRouteFinderPage = location.pathname === "/route-finder";
   const logoOnDark = isOnDarkSection || (!scrolled && !isRouteFinderPage);
 
@@ -95,6 +97,46 @@ const Navbar = memo(function Navbar() {
     },
     [],
   );
+
+  useEffect(() => {
+    if (!isMenuOpen) return undefined;
+
+    const previousFocus = document.activeElement;
+    const focusableSelector =
+      'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+    const focusTimer = window.setTimeout(() => {
+      menuRef.current?.querySelector(focusableSelector)?.focus();
+    }, 0);
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setIsMenuOpen(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const focusable = menuRef.current?.querySelectorAll(focusableSelector);
+      if (!focusable?.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.clearTimeout(focusTimer);
+      window.removeEventListener("keydown", handleKeyDown);
+      if (previousFocus instanceof HTMLElement) previousFocus.focus();
+    };
+  }, [isMenuOpen]);
 
   const scrollTo = (sectionId) => {
     setIsMenuOpen(false);
@@ -178,8 +220,10 @@ const Navbar = memo(function Navbar() {
       </div>
 
       {/* ── Mobile Menu Overlay ── */}
-      <GsapPresence>
-        {isMenuOpen && (
+      {typeof document !== "undefined" &&
+        createPortal(
+          <GsapPresence>
+            {isMenuOpen && (
           <Gsap.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -187,6 +231,7 @@ const Navbar = memo(function Navbar() {
             transition={{ duration: 0.28 }}
             className={`fixed inset-0 z-40 pointer-events-auto lg:hidden backdrop-blur-md overflow-hidden ${isOnDarkSection ? "bg-black/72" : "bg-[#F5F4EF]/96"}`}
             id="zoomix-mobile-menu"
+            ref={menuRef}
             role="dialog"
             aria-modal="true"
             aria-label={language === "ar" ? "قائمة الموقع" : "Site menu"}
@@ -303,8 +348,10 @@ const Navbar = memo(function Navbar() {
               </div>
             </Gsap.div>
           </Gsap.div>
+            )}
+          </GsapPresence>,
+          document.body,
         )}
-      </GsapPresence>
 
       {/* ── Desktop Menu (Floating Capsule with Gliding Pill) ── */}
       <div

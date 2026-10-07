@@ -355,7 +355,7 @@ export default function ProjectGallery({ onOpenProject }) {
         <div className="px-6 mb-10">
           <div className="flex items-center gap-4 mb-10">
             <div className="w-2 h-2 bg-[#BBFF00] rounded-full shadow-[0_0_8px_rgba(187,255,0,0.8)]" />
-            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-white/65">
               {t("gallery", "label")}
             </span>
             <div className="flex-1 h-[1px] bg-white/5" />
@@ -371,11 +371,16 @@ export default function ProjectGallery({ onOpenProject }) {
           <p className="mt-4 text-neutral-400 text-sm leading-6 max-w-sm">
             {t("gallery", "description")}
           </p>
+          <p className="mt-4 border-s-2 border-[#BBFF00] ps-3 text-xs leading-6 text-white/70">
+            {language === "ar"
+              ? "المعروض هنا مختبر مفاهيم ومشاريع ذاتية من Zoomix — مش أعمال عملاء أو نتائج مدفوعة."
+              : "This gallery is a Zoomix concept lab and self-initiated work — not client work or paid results."}
+          </p>
         </div>
 
         {/* Project Counter */}
         <div className="px-6 mb-6 flex items-center justify-between">
-          <span className="font-mono text-xs text-white/30 uppercase tracking-[0.16em]" dir="ltr" style={{ unicodeBidi: "isolate" }}>
+          <span className="font-mono text-xs text-white/65 uppercase tracking-[0.16em]" dir="ltr" style={{ unicodeBidi: "isolate" }}>
             {String(activeProjectIndex + 1).padStart(2, "0")} /{" "}
             {String(projectCount).padStart(2, "0")}
           </span>
@@ -400,7 +405,7 @@ export default function ProjectGallery({ onOpenProject }) {
               onClick={() => scrollToMobileProject(activeProjectIndex - 1)}
               disabled={activeProjectIndex === 0}
               aria-label={t("gallery", "previous")}
-              className="flex h-9 w-9 items-center justify-center border border-white/20 text-white transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00] disabled:cursor-not-allowed disabled:opacity-30"
+              className="flex h-11 w-11 items-center justify-center border border-white/20 text-white transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00] disabled:cursor-not-allowed disabled:opacity-30"
             >
               <ArrowLeft
                 size={16}
@@ -413,7 +418,7 @@ export default function ProjectGallery({ onOpenProject }) {
               onClick={() => scrollToMobileProject(activeProjectIndex + 1)}
               disabled={activeProjectIndex === projectCount - 1}
               aria-label={t("gallery", "next")}
-              className="flex h-9 w-9 items-center justify-center border border-white/20 text-white transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00] disabled:cursor-not-allowed disabled:opacity-30"
+              className="flex h-11 w-11 items-center justify-center border border-white/20 text-white transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00] disabled:cursor-not-allowed disabled:opacity-30"
             >
               <ArrowRight
                 size={16}
@@ -448,7 +453,6 @@ export default function ProjectGallery({ onOpenProject }) {
                   onOpenProject?.(project);
                 }
               }}
-              aria-label={`${project.title} — ${t("gallery", "view")}`}
               aria-haspopup="dialog"
               data-cursor-label={t("gallery", "view")}
               className="project-card group relative w-[80vw] shrink-0 snap-center overflow-hidden rounded-lg border border-white/10 bg-neutral-950 cursor-pointer active:scale-[0.98] transition-transform focus-visible:outline-2 focus-visible:outline-[#BBFF00] focus-visible:outline-offset-4"
@@ -544,7 +548,7 @@ export default function ProjectGallery({ onOpenProject }) {
         className="absolute top-16 left-24 right-24 flex items-center gap-4 z-20 pointer-events-none"
       >
         <div className="w-2 h-2 bg-[#BBFF00] rounded-full shadow-[0_0_8px_rgba(187,255,0,0.8)]" />
-        <span className="font-mono text-xs font-bold uppercase tracking-[0.26em] text-white/40">
+        <span className="font-mono text-xs font-bold uppercase tracking-[0.26em] text-white/65">
           {t("gallery", "label")}
         </span>
         <div className="flex-1 h-[1px] bg-white/5" />
@@ -576,6 +580,11 @@ export default function ProjectGallery({ onOpenProject }) {
             <p className="mt-8 text-neutral-300 max-w-md text-lg leading-7">
               {t("gallery", "description")}
             </p>
+            <p className="mt-5 max-w-md border-s-2 border-[#BBFF00] ps-4 text-sm leading-6 text-white/65">
+              {language === "ar"
+                ? "مختبر مفاهيم ومشاريع ذاتية من Zoomix — وليست أعمال عملاء أو نتائج مدفوعة."
+                : "A Zoomix concept lab and self-initiated work — not client work or paid results."}
+            </p>
             <ArrowUpRight className="text-[#BBFF00] w-24 h-24 mt-8" />
           </Gsap.div>
 
@@ -593,7 +602,6 @@ export default function ProjectGallery({ onOpenProject }) {
                   onOpenProject?.(project);
                 }
               }}
-              aria-label={`${project.title} — ${t("gallery", "view")}`}
               aria-haspopup="dialog"
               data-cursor-label={t("gallery", "view")}
               className="project-card group relative h-[70vh] w-[45vw] shrink-0 overflow-hidden rounded-[4px] border border-white/10 bg-neutral-900 transition-all duration-500 hover:border-[#BBFF00]/50 hover:shadow-[0_0_40px_rgba(187,255,0,0.1)] active:scale-[0.98] cursor-pointer focus-visible:outline-2 focus-visible:outline-[#BBFF00] focus-visible:outline-offset-4"
@@ -699,7 +707,7 @@ export default function ProjectGallery({ onOpenProject }) {
             onClick={() => goToDesktopProject(activeProjectIndex - 1)}
             disabled={activeProjectIndex === 0}
             aria-label={t("gallery", "previous")}
-            className="flex h-9 w-9 items-center justify-center border border-white/25 text-white transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00] disabled:cursor-not-allowed disabled:opacity-30"
+            className="flex h-11 w-11 items-center justify-center border border-white/25 text-white transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00] disabled:cursor-not-allowed disabled:opacity-30"
           >
             <ArrowLeft size={16} aria-hidden="true" />
           </button>
@@ -708,7 +716,7 @@ export default function ProjectGallery({ onOpenProject }) {
             onClick={() => goToDesktopProject(activeProjectIndex + 1)}
             disabled={activeProjectIndex === projectCount - 1}
             aria-label={t("gallery", "next")}
-            className="flex h-9 w-9 items-center justify-center border border-white/25 text-white transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00] disabled:cursor-not-allowed disabled:opacity-30"
+            className="flex h-11 w-11 items-center justify-center border border-white/25 text-white transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00] disabled:cursor-not-allowed disabled:opacity-30"
           >
             <ArrowRight size={16} aria-hidden="true" />
           </button>

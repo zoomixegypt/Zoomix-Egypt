@@ -575,7 +575,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                   const isActive = briefStep >= index + 1;
                   const isComplete = briefStep > index + 1;
                   return (
-                    <div key={step.number} className={`transition-colors duration-300 ${isActive ? "text-white" : "text-white/30"}`}>
+                    <div key={step.number} className={`transition-colors duration-300 ${isActive ? "text-white" : "text-white/60"}`}>
                       <span className={`mb-3 flex h-8 w-8 items-center justify-center rounded-full border font-mono text-[11px] ${isActive ? "border-[#BBFF00] bg-[#BBFF00] text-[#0A0A0A]" : "border-white/20"}`}>
                         {isComplete ? <Check className="brief-step-check" size={14} strokeWidth={3} aria-hidden="true" /> : step.number}
                       </span>
@@ -608,11 +608,11 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
             <div className="sm:col-span-2 -mx-4 -mt-4 border-b border-black/15 bg-white px-4 pb-5 pt-6 sm:-mx-5 sm:-mt-5 sm:px-5 md:-mx-10 md:-mt-10 md:px-10">
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
-                  <p className="font-mono text-[11px] font-bold tracking-[0.18em] text-black/45">ZOOMIX / PROJECT BRIEF</p>
+                  <p className="font-mono text-[11px] font-bold tracking-[0.18em] text-black/65">ZOOMIX / PROJECT BRIEF</p>
                   <p className={`${isArabic ? "font-arabic tracking-normal" : "font-display tracking-[-0.03em]"} mt-2 text-xl font-black`}>{label("خلّي الخطوة واضحة.", "MAKE THE NEXT MOVE CLEAR.")}</p>
-                  <p className="mt-2 text-xs text-black/45">{label("3 خطوات قصيرة · أقل من دقيقتين", "3 short steps · under two minutes")}</p>
+                  <p className="mt-2 text-xs text-black/65">{label("3 خطوات قصيرة · أقل من دقيقتين", "3 short steps · under two minutes")}</p>
                 </div>
-                <span className="font-mono text-xs font-bold tracking-[0.16em] text-black/50" dir="ltr" style={{ unicodeBidi: "isolate" }}>
+                <span className="font-mono text-xs font-bold tracking-[0.16em] text-black/65" dir="ltr" style={{ unicodeBidi: "isolate" }}>
                   {String(briefStep).padStart(2, "0")} / 03
                 </span>
               </div>
@@ -643,7 +643,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 <div className="sm:col-span-2 mt-2 border-t border-black/15 pt-5">
                   <div className="flex flex-wrap items-end justify-between gap-3">
                     <div>
-                      <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-black/45">01 / {label("الاختيار", "THE CHOICE")}</p>
+                      <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-black/65">01 / {label("الاختيار", "THE CHOICE")}</p>
                       <p className="mt-2 text-sm text-black/55">{label("اختيارك من خطوتك الجاية يدخل هنا تلقائيًا.", "Your next-move choice comes through here automatically.")}</p>
                     </div>
                     {form.route && <span className="font-mono text-[11px] font-bold tracking-[0.12em] text-[#5e7c00]">{pathLabel[form.route]}</span>}

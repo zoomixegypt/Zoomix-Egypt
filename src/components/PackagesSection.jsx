@@ -180,7 +180,7 @@ function OfferTierCard({ offer, language, route, isStart, index, mobileCard = fa
         )}
         </>
       )}
-      {note && <p className="mt-5 text-xs leading-5 text-white/45">{note}</p>}
+      {note && <p className="mt-5 text-xs leading-5 text-white/65">{note}</p>}
       <button
         type="button"
         onClick={() => saveSelection(route, offer.id, isStart, language)}
@@ -300,10 +300,10 @@ const PackagesSection = memo(function PackagesSection() {
         <div className="mobile-packages-explorer mb-20 md:hidden">
           <div className="mb-5 flex items-end justify-between gap-4 border-t border-white/15 pt-6">
             <div>
-              <span className="font-mono text-[10px] tracking-[0.18em] text-white/45">MOBILE / ROUTES</span>
+              <span className="font-mono text-[10px] tracking-[0.18em] text-white/65">MOBILE / ROUTES</span>
               <h3 className="mt-2 text-2xl font-black">{isArabic ? "اختار مسار واحد" : "Choose one route"}</h3>
             </div>
-            <span className="font-mono text-[10px] text-white/45">{isArabic ? "اسحب للكروت" : "SWIPE CARDS"} ↔</span>
+            <span className="font-mono text-[10px] text-white/65">{isArabic ? "اسحب للكروت" : "SWIPE CARDS"} ↔</span>
           </div>
 
           <div className="mobile-package-tabs" role="tablist" aria-label={isArabic ? "مسارات الباقات" : "Package routes"}>

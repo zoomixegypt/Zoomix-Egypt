@@ -1187,7 +1187,27 @@
   }
 
   main > .route-finder-page-intro {
-    padding-top: 7rem;
+    padding-top: 5.75rem;
+  }
+
+  main > .route-finder-page-intro .route-finder-page-kicker {
+    gap: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  main > .route-finder-page-intro h1 {
+    font-size: clamp(2.35rem, 11vw, 3.2rem);
+    line-height: 1.02;
+    margin-top: 0.65rem;
+  }
+
+  main > .route-finder-page-intro h1 + p {
+    line-height: 1.6;
+    margin-top: 1rem;
+  }
+
+  main > .route-finder-page-intro .route-finder-page-kicker + div {
+    margin-top: 1rem;
   }
 
   .route-finder-page-intro--standalone {
@@ -1195,7 +1215,16 @@
   }
 
   .route-finder-page-intro > .route-finder-page-cta {
+    display: flex;
+    margin-top: 1rem;
+  }
+
+  .route-finder-page-intro > .route-finder-page-cta > :not(:first-child) {
     display: none;
+  }
+
+  .route-finder-page-section {
+    padding-top: 1.5rem;
   }
 
   .route-finder-page-section .route-mode-chooser--standalone {

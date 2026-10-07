@@ -73,7 +73,7 @@ export default function Home() {
           ? "Skip to content"
           : "تخطي إلى المحتوى"}
       </a>
-      <div
+      <main
         id="main-content"
         className="bg-[#F5F4EF] text-black selection:bg-[#BBFF00] selection:text-black relative"
       >
@@ -122,7 +122,7 @@ export default function Home() {
         <Suspense fallback={<SectionSkeleton tone="dark" className="min-h-[40vh]" />}>
           <Footer />
         </Suspense>
-      </div>
+      </main>
     </>
   );
 }

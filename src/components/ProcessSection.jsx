@@ -97,7 +97,7 @@ const ProcessSection = memo(function ProcessSection() {
 
         <div className="faq-route-cta mt-10 flex flex-col justify-between gap-5 border border-black/15 bg-white/60 p-5 md:flex-row md:items-center md:p-7">
           <div>
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-black/45">ZOOMIX / QUICK MATCH</span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-black/65">ZOOMIX / QUICK MATCH</span>
             <p className="mt-2 text-lg font-black">
               {isArabic ? "لسه مش عارف تبدأ منين؟" : "Still not sure where to start?"}
             </p>

@@ -37,7 +37,7 @@ const ServicesSection = memo(function ServicesSection() {
             <p className="-mt-4 mb-8 max-w-2xl text-base leading-6 text-black/60 md:-mt-8 md:mb-10 md:text-lg md:leading-7">
               {t("services", "partnerIntro")}
             </p>
-            <div id="services-section" className="mb-6 flex items-center gap-3 border-s border-[#BBFF00] ps-3 font-mono text-[10px] tracking-[0.16em] text-black/45">
+            <div id="services-section" className="mb-6 flex items-center gap-3 border-s border-[#BBFF00] ps-3 font-mono text-[10px] tracking-[0.16em] text-black/65">
               <span>{t("services", "systemLabel")}</span>
             </div>
             <div className="connection-line services-connection-line mb-8 md:mb-12" aria-hidden="true" />

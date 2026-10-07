@@ -20,7 +20,7 @@ export default function RouteFinderEntry() {
           <div>
             <div className="mb-6 flex items-center gap-3">
               <span className="h-2 w-2 bg-[#BBFF00]" aria-hidden="true" />
-              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-black/45">ZOOMIX / {isArabic ? "خطوتك الجاية" : "NEXT MOVE"}</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-black/65">ZOOMIX / {isArabic ? "خطوتك الجاية" : "NEXT MOVE"}</span>
             </div>
             <h2 className={`${isArabic ? "font-arabic" : "font-display tracking-[-0.05em]"} max-w-xl text-5xl font-black leading-[0.92] md:text-7xl`}>
               {isArabic ? "مش عارف تبدأ منين؟" : "Not sure where to start?"}
@@ -53,9 +53,9 @@ export default function RouteFinderEntry() {
             <div className="route-finder-entry-stages grid grid-cols-4 gap-2 sm:gap-8">
               {stages.map((stage, index) => (
                 <div key={stage.code} className="relative">
-                  <span className="font-mono text-[10px] text-black/45 sm:text-xs">0{index + 1}</span>
+                  <span className="font-mono text-[10px] text-black/65 sm:text-xs">0{index + 1}</span>
                   <strong className="mt-2 block text-[clamp(0.72rem,3.1vw,1.25rem)] font-black leading-tight sm:mt-3 sm:text-xl">{isArabic ? stage.ar : stage.en}</strong>
-                  <span className="mt-1 block font-mono text-[8px] tracking-[0.08em] text-black/40 sm:mt-2 sm:text-[10px] sm:tracking-[0.16em]">{stage.code}</span>
+                  <span className="mt-1 block font-mono text-[10px] tracking-[0.08em] text-black/65 sm:mt-2 sm:tracking-[0.16em]">{stage.code}</span>
                   {index < stages.length - 1 && <span className="absolute -end-5 top-7 hidden text-black/25 sm:block" aria-hidden="true">→</span>}
                 </div>
               ))}

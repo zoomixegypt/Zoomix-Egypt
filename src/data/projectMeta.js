@@ -12,7 +12,7 @@ export const PROJECT_META = [
     badgeAr: "مشروع نظام محتوى",
     badgeEn: "Content system project",
     color: "bg-[#BBFF00]",
-    img: "/mawj-coffee.jpg",
+    img: "/mawj-coffee.webp",
   },
   {
     id: 2,
@@ -27,7 +27,7 @@ export const PROJECT_META = [
     badgeAr: "مشروع نظام قصص",
     badgeEn: "Story system project",
     color: "bg-[#A5A5A5]",
-    img: "/nawa-learning.jpg",
+    img: "/nawa-learning.webp",
   },
   {
     id: 3,
@@ -42,7 +42,7 @@ export const PROJECT_META = [
     badgeAr: "مشروع نظام فيديو قصير",
     badgeEn: "Short-form video project",
     color: "bg-[#A5A5A5]",
-    img: "/tawazon-studio.jpg",
+    img: "/tawazon-studio.webp",
   },
   {
     id: 4,
@@ -58,7 +58,7 @@ export const PROJECT_META = [
     badgeAr: "مشروع علامة غذائية",
     badgeEn: "Food brand project",
     color: "bg-[#F28A3D]",
-    img: "/mirsa-brand-world.jpg",
+    img: "/mirsa-brand-world.webp",
   },
   {
     id: 5,
@@ -74,7 +74,7 @@ export const PROJECT_META = [
     badgeAr: "مشروع عناية وتغليف",
     badgeEn: "Beauty & packaging project",
     color: "bg-[#C9795E]",
-    img: "/nodra-brand-world.jpg",
+    img: "/nodra-brand-world.webp",
   },
   {
     id: 6,
@@ -90,7 +90,7 @@ export const PROJECT_META = [
     badgeAr: "مشروع أزياء ومحتوى",
     badgeEn: "Fashion & content project",
     color: "bg-[#C6A24A]",
-    img: "/athar-brand-world.jpg",
+    img: "/athar-brand-world.webp",
   },
   {
     id: 7,
@@ -106,7 +106,7 @@ export const PROJECT_META = [
     badgeAr: "مشروع ضيافة وهوية مكانية",
     badgeEn: "Hospitality & spatial project",
     color: "bg-[#6B7350]",
-    img: "/riwaq-brand-world.jpg",
+    img: "/riwaq-brand-world.webp",
   },
   {
     id: 8,
@@ -122,7 +122,7 @@ export const PROJECT_META = [
     badgeAr: "مشروع منتج صحي رقمي",
     badgeEn: "Digital wellness product",
     color: "bg-[#7B8660]",
-    img: "/nabd-health-club.jpg",
+    img: "/nabd-health-club.webp",
   },
   {
     id: 9,
@@ -138,7 +138,7 @@ export const PROJECT_META = [
     badgeAr: "مشروع فعالية وحملة",
     badgeEn: "Event campaign project",
     color: "bg-[#B3D900]",
-    img: "/cairo-after-dark.jpg",
+    img: "/cairo-after-dark.webp",
   },
   {
     id: 10,
@@ -154,7 +154,7 @@ export const PROJECT_META = [
     badgeAr: "مشروع إنتاج وتصوير",
     badgeEn: "Production studio project",
     color: "bg-[#C19254]",
-    img: "/studio-27.jpg",
+    img: "/studio-27.webp",
   },
   {
     id: 11,
@@ -170,7 +170,7 @@ export const PROJECT_META = [
     badgeAr: "مشروع مساحة ومجتمع",
     badgeEn: "Workspace & community project",
     color: "bg-[#687351]",
-    img: "/common-ground.jpg",
+    img: "/common-ground.webp",
   },
   {
     id: 12,
@@ -186,7 +186,7 @@ export const PROJECT_META = [
     badgeAr: "مشروع تعليم وتجربة رقمية",
     badgeEn: "Learning experience project",
     color: "bg-[#C59A42]",
-    img: "/alif-learning-lab.jpg",
+    img: "/alif-learning-lab.webp",
   },
 ];
 

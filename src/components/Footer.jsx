@@ -85,7 +85,7 @@ const Footer = memo(function Footer() {
                 key={id}
                 type="button"
                 onClick={() => scrollToSection(id)}
-                className="flex items-center gap-3 text-start font-mono text-xs uppercase tracking-[0.14em] text-white/75 transition-colors hover:text-[#BBFF00] md:text-sm"
+                className="flex min-h-11 items-center gap-3 py-2 text-start font-mono text-xs uppercase tracking-[0.14em] text-white/75 transition-colors hover:text-[#BBFF00] md:text-sm"
               >
                 <span className="w-1.5 h-1.5 bg-white/25" aria-hidden="true" />
                 {label}
@@ -142,7 +142,7 @@ const Footer = memo(function Footer() {
               type="button"
               onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
               aria-label={t("footer", "top")}
-              className="inline-flex items-center gap-2 font-mono text-[10px] md:text-xs uppercase tracking-[0.16em] text-[#BBFF00] hover:text-white transition-colors"
+              className="inline-flex min-h-11 items-center gap-2 px-2 font-mono text-[10px] md:text-xs uppercase tracking-[0.16em] text-[#BBFF00] hover:text-white transition-colors"
           >
             {t("footer", "top")}{" "}
             <ArrowUpRight

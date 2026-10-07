@@ -36,8 +36,8 @@ export const ZOOMIX_PROJECTS = {
         "Four-week launch plan",
       ],
     },
-    image: "/mawj-coffee.jpg",
-    gallery: ["/mawj-coffee.jpg", "/mawj-coffee-system.jpg", "/mawj-coffee-space.jpg"],
+    image: "/mawj-coffee.webp",
+    gallery: ["/mawj-coffee.webp", "/mawj-coffee-system.webp", "/mawj-coffee-space.webp"],
   },
   "story-system": {
     slug: "story-system",
@@ -76,8 +76,8 @@ export const ZOOMIX_PROJECTS = {
         "Team usage guide",
       ],
     },
-    image: "/nawa-learning.jpg",
-    gallery: ["/nawa-learning.jpg", "/nawa-learning-interface.jpg", "/nawa-learning-kit.jpg"],
+    image: "/nawa-learning.webp",
+    gallery: ["/nawa-learning.webp", "/nawa-learning-interface.webp", "/nawa-learning-kit.webp"],
   },
   "reel-system": {
     slug: "reel-system",
@@ -116,8 +116,8 @@ export const ZOOMIX_PROJECTS = {
         "Publish-ready output pack",
       ],
     },
-    image: "/tawazon-studio.jpg",
-    gallery: ["/tawazon-studio.jpg", "/tawazon-studio-reel.jpg", "/tawazon-studio-frames.jpg"],
+    image: "/tawazon-studio.webp",
+    gallery: ["/tawazon-studio.webp", "/tawazon-studio-reel.webp", "/tawazon-studio-frames.webp"],
   },
   "mirsa-brand-world": {
     slug: "mirsa-brand-world",
@@ -162,7 +162,7 @@ export const ZOOMIX_PROJECTS = {
         "Launch landing-page concept",
       ],
     },
-    image: "/mirsa-brand-world.jpg",
+    image: "/mirsa-brand-world.webp",
   },
   "nodra-brand-world": {
     slug: "nodra-brand-world",
@@ -207,7 +207,7 @@ export const ZOOMIX_PROJECTS = {
         "Scalable launch outputs",
       ],
     },
-    image: "/nodra-brand-world.jpg",
+    image: "/nodra-brand-world.webp",
   },
   "athar-brand-world": {
     slug: "athar-brand-world",
@@ -247,7 +247,7 @@ export const ZOOMIX_PROJECTS = {
         "Collection launch assets",
       ],
     },
-    image: "/athar-brand-world.jpg",
+    image: "/athar-brand-world.webp",
   },
   "riwaq-brand-world": {
     slug: "riwaq-brand-world",
@@ -287,7 +287,7 @@ export const ZOOMIX_PROJECTS = {
         "An executable opening experience concept",
       ],
     },
-    image: "/riwaq-brand-world.jpg",
+    image: "/riwaq-brand-world.webp",
   },
   "nabd-health-club": {
     slug: "nabd-health-club",
@@ -320,7 +320,7 @@ export const ZOOMIX_PROJECTS = {
         "Digital launch assets",
       ],
     },
-    image: "/nabd-health-club.jpg",
+    image: "/nabd-health-club.webp",
   },
   "cairo-after-dark": {
     slug: "cairo-after-dark",
@@ -348,7 +348,7 @@ export const ZOOMIX_PROJECTS = {
       ar: ["نظام بصري للفعالية", "بوستر رئيسي", "تصور تذكرة", "قوالب Social وMotion"],
       en: ["Event visual system", "Key poster", "Ticket concept", "Social and motion templates"],
     },
-    image: "/cairo-after-dark.jpg",
+    image: "/cairo-after-dark.webp",
   },
   "studio-27": {
     slug: "studio-27",
@@ -381,7 +381,7 @@ export const ZOOMIX_PROJECTS = {
         "Studio launch kit",
       ],
     },
-    image: "/studio-27.jpg",
+    image: "/studio-27.webp",
   },
   "common-ground": {
     slug: "common-ground",
@@ -414,7 +414,7 @@ export const ZOOMIX_PROJECTS = {
         "Space launch templates",
       ],
     },
-    image: "/common-ground.jpg",
+    image: "/common-ground.webp",
   },
   "alif-learning-lab": {
     slug: "alif-learning-lab",
@@ -447,6 +447,6 @@ export const ZOOMIX_PROJECTS = {
         "Platform launch assets",
       ],
     },
-    image: "/alif-learning-lab.jpg",
+    image: "/alif-learning-lab.webp",
   },
 };
