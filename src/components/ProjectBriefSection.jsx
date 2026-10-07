@@ -3,6 +3,7 @@ import { ArrowUpLeft, ArrowUpRight, Check, MessageCircle } from "lucide-react";
 import { useLanguage } from "../i18n";
 import { trackEvent } from "../utils/analytics";
 import { ZOOMIX_PACKAGES } from "../data/zoomixPackages";
+import { SITE_CONTACT, PAYMENT_TERMS } from "../data/siteSettings";
 import {
   ZOOMIX_CONTENT_PACKAGES,
   ZOOMIX_EVENT_PACKAGES,
@@ -291,6 +292,8 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
     continue: label("الاستمرار", "Continue"),
     "one-thing": label("خدمة واحدة", "One thing — one specific service"),
   };
+  const selectedPathLabel = pathLabel[form.route] || label("لسه هنحدده", "To be confirmed");
+  const selectedChoiceLabel = selectedOfferName || selectedPathLabel;
 
   const buildMessage = (reference = referenceCode, link = editUrl) => {
     const lines = [
@@ -574,10 +577,10 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
             onSubmit={handleSubmit}
             onFocusCapture={handleBriefFocus}
             noValidate
-            className="relative grid min-w-0 gap-5 overflow-hidden border border-white/10 bg-[#F5F4EF] p-5 text-[#0A0A0A] shadow-[0_16px_60px_rgba(0,0,0,0.22)] sm:grid-cols-2 md:p-10"
+            className="project-brief-form relative grid min-w-0 gap-5 overflow-hidden border border-white/10 bg-[#F5F4EF] p-5 text-[#0A0A0A] shadow-[0_16px_60px_rgba(0,0,0,0.22)] sm:grid-cols-2 md:p-10"
           >
             <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-[#BBFF00]" />
-            <div className="sm:col-span-2 -mx-5 -mt-5 border-b border-black/15 bg-white px-5 pb-5 pt-6 md:-mx-10 md:-mt-10 md:px-10">
+            <div className="sm:col-span-2 -mx-4 -mt-4 border-b border-black/15 bg-white px-4 pb-5 pt-6 sm:-mx-5 sm:-mt-5 sm:px-5 md:-mx-10 md:-mt-10 md:px-10">
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
                   <p className="font-mono text-[11px] font-bold tracking-[0.18em] text-black/45">ZOOMIX / PROJECT BRIEF</p>
@@ -621,11 +624,20 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                     {form.route && <span className="font-mono text-[11px] font-bold tracking-[0.12em] text-[#5e7c00]">{pathLabel[form.route]}</span>}
                   </div>
                   {guidedSelection ? (
-                    <div className="mt-5 border border-[#6b8d00] bg-[#BBFF00]/15 p-4 shadow-[4px_4px_0_#0A0A0A]">
+                    <div className="mt-5 border border-[#6b8d00] bg-[#BBFF00]/15 p-4 shadow-[4px_4px_0_#0A0A0A]" aria-live="polite">
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div>
                           <p className="font-mono text-[10px] font-bold tracking-[0.16em] text-[#5e7c00]">ZOOMIX / NEXT MOVE</p>
-                          <p className="mt-2 text-xl font-black leading-tight">{selectedOfferName || pathLabel[form.route]}</p>
+                          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                            <div className="border border-[#6b8d00]/30 bg-white/55 p-3">
+                              <span className="block font-mono text-[10px] font-bold tracking-[0.12em] text-black/45">{label("المسار", "ROUTE")}</span>
+                              <strong className="mt-1 block text-base leading-tight">{selectedPathLabel}</strong>
+                            </div>
+                            <div className="border border-[#6b8d00]/30 bg-white/55 p-3">
+                              <span className="block font-mono text-[10px] font-bold tracking-[0.12em] text-black/45">{label("الباقة / الخدمة", "PACKAGE / SERVICE")}</span>
+                              <strong className="mt-1 block text-base leading-tight">{selectedChoiceLabel}</strong>
+                            </div>
+                          </div>
                           <p className="mt-2 text-xs leading-5 text-black/60">
                             {label("اختيارك محفوظ واتنقل تلقائيًا — مش محتاج تختاره تاني.", "Your choice is saved and carried over automatically — no need to choose it again.")}
                           </p>
@@ -651,7 +663,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                   )}
                 </div>
                 <div className="sm:col-span-2 flex justify-end border-t border-black/15 pt-5">
-                  <button type="button" onClick={handleNextStep} className="zoomix-button bg-[#BBFF00] text-[#0A0A0A]">
+                  <button type="button" onClick={handleNextStep} className="zoomix-button w-full bg-[#BBFF00] text-[#0A0A0A] sm:w-auto">
                     {label("التالي: تفاصيل المشروع", "Next: project details")} <ActionArrow className="brief-next-arrow" size={18} />
                   </button>
                 </div>
@@ -699,10 +711,10 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                   )}
                 </label>
                 <div className="sm:col-span-2 flex flex-col justify-between gap-4 border-t border-black/15 pt-5 sm:flex-row">
-                  <button type="button" onClick={() => goToStep(1)} className="zoomix-button border border-black/20 text-[#0A0A0A]">
+                  <button type="button" onClick={() => goToStep(1)} className="zoomix-button w-full border border-black/20 text-[#0A0A0A] sm:w-auto">
                     {label("رجوع", "Back")}
                   </button>
-                  <button type="button" onClick={handleNextStep} className="zoomix-button bg-[#BBFF00] text-[#0A0A0A]">
+                  <button type="button" onClick={handleNextStep} className="zoomix-button w-full bg-[#BBFF00] text-[#0A0A0A] sm:w-auto">
                     {label("التالي: وسيلة التواصل", "Next: contact method")} <ActionArrow className="brief-next-arrow" size={18} />
                   </button>
                 </div>
@@ -710,14 +722,26 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
             )}
             {wizardStep === 3 && (
               <>
-                <div className="sm:col-span-2 border border-black/15 bg-black/[0.03] p-4">
+                <div className="sm:col-span-2 border border-black/15 bg-black/[0.03] p-4" aria-live="polite">
                   <p className="font-mono text-[10px] font-bold tracking-[0.16em] text-black/45">ZOOMIX / READY TO SEND</p>
-                  <p className="mt-2 text-lg font-black">{selectedOfferName || pathLabel[form.route] || label("بريف مشروع جديد", "New project brief")}</p>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="border border-black/10 bg-white/70 p-3">
+                      <span className="block font-mono text-[10px] font-bold tracking-[0.12em] text-black/45">{label("المسار", "ROUTE")}</span>
+                      <strong className="mt-1 block text-base leading-tight">{selectedPathLabel}</strong>
+                    </div>
+                    <div className="border border-black/10 bg-white/70 p-3">
+                      <span className="block font-mono text-[10px] font-bold tracking-[0.12em] text-black/45">{label("الباقة / الخدمة", "PACKAGE / SERVICE")}</span>
+                      <strong className="mt-1 block text-base leading-tight">{selectedChoiceLabel || label("بريف مشروع جديد", "New project brief")}</strong>
+                    </div>
+                  </div>
                   <p className="mt-1 text-sm text-black/55">{label("راجعنا الاختيار والتفاصيل. فاضل طريقة التواصل فقط.", "The direction and details are set. Only the contact method is left.")}</p>
                 </div>
                 <div className="sm:col-span-2 border-t border-black/15 pt-5">
                   <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-black/45">CONTACT LINE / {label("وسيلة التواصل", "YOUR CONTACT LINE")}</p>
                   <p className="mt-2 text-sm text-black/55">{label("لو واتساب مش مناسب، اختار الطريقة اللي تريحك.", "WhatsApp is not required — choose the way that works for you.")}</p>
+                  <p className="mt-3 max-w-2xl text-xs leading-6 text-black/45">
+                    {label(`${SITE_CONTACT.responseTime.ar} ${PAYMENT_TERMS.ar}`, `${SITE_CONTACT.responseTime.en} ${PAYMENT_TERMS.en}`)}
+                  </p>
                 </div>
                 <div className="sm:col-span-2">
                   {selectField("contactPreference", label("تحب نكمل معاك إزاي؟ *", "How should we reach you? *"), CONTACT_OPTIONS, true, label("اختار وسيلة التواصل", "Choose a contact method"))}
@@ -758,10 +782,10 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                   </span>
                 )}
                 <div className="sm:col-span-2 flex flex-col items-stretch justify-between gap-4 border-t border-black/15 pt-5 sm:flex-row sm:items-center">
-                  <button type="button" onClick={() => goToStep(2)} className="zoomix-button border border-black/20 text-[#0A0A0A]">
+                  <button type="button" onClick={() => goToStep(2)} className="zoomix-button w-full border border-black/20 text-[#0A0A0A] sm:w-auto">
                     {label("رجوع", "Back")}
                   </button>
-                  <button type="submit" className="zoomix-button bg-[#BBFF00] text-[#0A0A0A] shadow-[0_8px_24px_rgba(187,255,0,0.15)]">
+                  <button type="submit" className="zoomix-button w-full bg-[#BBFF00] text-[#0A0A0A] shadow-[0_8px_24px_rgba(187,255,0,0.15)] sm:w-auto">
                     {label("إرسال على واتساب", "Send to WhatsApp")} <ActionArrow className="brief-next-arrow" size={18} />
                   </button>
                 </div>

@@ -40,9 +40,9 @@ export const FAQ_ITEMS = [
   },
   {
     qAr: "كيف يكون الدفع؟",
-    aAr: "60% مقدم عند الحجز و40% قبل التسليم النهائي. المقدم يحجز وقت التنفيذ.",
+    aAr: "60% مقدم عند الحجز و40% قبل التسليم النهائي. المقدم يحجز وقت التنفيذ. الأسعار لا تشمل ضريبة القيمة المضافة إذا كانت مطبقة قانونيًا، وتظهر المعالجة النهائية في عرض السعر أو الفاتورة حسب الحالة.",
     qEn: "How does payment work?",
-    aEn: "60% upfront at booking and 40% before final delivery. The deposit reserves the production time.",
+    aEn: "60% upfront at booking and 40% before final delivery. The deposit reserves production time. Prices exclude VAT where legally applicable; the final quote or invoice clarifies the treatment.",
   },
   {
     qAr: "هل الطباعة والمعدات والتنقل داخل السعر؟",

@@ -47,7 +47,7 @@ export default function RouteFinder() {
             <span><b className="text-[#789900]">02</b> {isArabic ? "سمّي الاحتياج" : "Name the need"}</span>
             <span><b className="text-[#789900]">03</b> {isArabic ? "خد خطوتك" : "Take the next move"}</span>
           </div>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="route-finder-page-cta mt-8 flex flex-wrap gap-3">
             <a href="/#packages-section" className="zoomix-button border-black/25 text-black hover:border-black hover:bg-white">
               {isArabic ? "عارف احتياجك؟ شوف الباقات" : "Know what you need? See packages"}
             </a>

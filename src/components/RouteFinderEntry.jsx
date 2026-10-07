@@ -30,7 +30,7 @@ export default function RouteFinderEntry() {
                 ? "خلّي Zoomix ترتب لك الخطوة الجاية. جاوب على كام سؤال بسيط، وشوف الطريق اللي يناسب مشروعك قبل ما تدخل في أي تفاصيل."
                 : "Let Zoomix organize your next move. Answer a few simple questions and see the route that fits your project before getting into the details."}
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <div className="route-finder-entry-actions mt-8 flex flex-wrap items-center gap-3">
               <div className="flex flex-col items-start gap-2">
                 <span className="quick-match-badge">{isArabic ? "الأسرع" : "FASTEST"}</span>
                 <a href="/route-finder" className="zoomix-button quick-match-primary gap-3 bg-[#BBFF00] text-black shadow-[0_10px_24px_rgba(187,255,0,0.16)] hover:bg-[#0A0A0A] hover:text-white">
@@ -50,12 +50,12 @@ export default function RouteFinderEntry() {
               <span className="absolute inset-y-0 start-0 w-full bg-[#BBFF00]" />
               <span className="absolute -top-1 end-0 h-2 w-2 rounded-full bg-[#BBFF00]" aria-hidden="true" />
             </div>
-            <div className="grid gap-8 sm:grid-cols-4">
+            <div className="route-finder-entry-stages grid grid-cols-4 gap-2 sm:gap-8">
               {stages.map((stage, index) => (
                 <div key={stage.code} className="relative">
-                  <span className="font-mono text-xs text-black/45">0{index + 1}</span>
-                  <strong className="mt-3 block text-xl font-black">{isArabic ? stage.ar : stage.en}</strong>
-                  <span className="mt-2 block font-mono text-[10px] tracking-[0.16em] text-black/40">{stage.code}</span>
+                  <span className="font-mono text-[10px] text-black/45 sm:text-xs">0{index + 1}</span>
+                  <strong className="mt-2 block text-[clamp(0.72rem,3.1vw,1.25rem)] font-black leading-tight sm:mt-3 sm:text-xl">{isArabic ? stage.ar : stage.en}</strong>
+                  <span className="mt-1 block font-mono text-[8px] tracking-[0.08em] text-black/40 sm:mt-2 sm:text-[10px] sm:tracking-[0.16em]">{stage.code}</span>
                   {index < stages.length - 1 && <span className="absolute -end-5 top-7 hidden text-black/25 sm:block" aria-hidden="true">→</span>}
                 </div>
               ))}

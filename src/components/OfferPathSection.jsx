@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeftRight, ArrowUpLeft, ArrowUpRight, Check } from "lucide-react";
+import { ArrowLeftRight, ArrowUpLeft, ArrowUpRight, Check, ChevronDown } from "lucide-react";
 import { useLanguage } from "../i18n";
 import {
   ZOOMIX_CONTENT_PACKAGES,
@@ -52,6 +52,8 @@ const copy = {
     routeDetailsLabel: "الطريق ده هيمشي إزاي",
     routePackagesLabel: "الباقات داخل المسار",
     routePackagesIntro: "بعد ما فهمت الطريق، دي تفاصيل كل اختيار فعليًا: المخرجات، المدة، والسعر.",
+    showMoreOutputs: "شوف باقي المخرجات",
+    hideMoreOutputs: "اقفل المخرجات",
     packageIncludes: "تشمل",
     packageTiming: "المدة / الجدول",
     scheduleAfterBrief: "الجدول يتحدد بعد مراجعة تفاصيل المشروع.",
@@ -65,6 +67,7 @@ const copy = {
     featuredPackage: "الاختيار الأشهر",
     hideRouteDetails: "اقفل التفاصيل",
     routeMapChoose: "شوف باقات المسار",
+    routeMapShowDetails: "اعرض تفاصيل المسار",
     routeMapBrowse: "شوف كل باقات المسار",
     routeMap: [
       { value: "start", code: "START", title: "البداية", description: "لما تكون لسه بتبدأ أو محتاج ترتب أساس البراند.", reason: "محتاج هوية واتجاه واضح قبل ما تبدأ الظهور.", outputs: ["هوية مرتبة", "حضور بداية", "مخرجات جاهزة للاستخدام"], details: ["نرتب الأساس والاتجاه", "نبني حضورًا قابلًا للاستخدام", "نجهزك للانطلاقة"] },
@@ -164,6 +167,8 @@ const copy = {
     routeDetailsLabel: "How this route moves",
     routePackagesLabel: "Packages inside this route",
     routePackagesIntro: "Once the route is clear, compare the real options: deliverables, timeline and price.",
+    showMoreOutputs: "See all deliverables",
+    hideMoreOutputs: "Hide extra deliverables",
     packageIncludes: "Includes",
     packageTiming: "Timeline / schedule",
     scheduleAfterBrief: "The schedule is confirmed after reviewing the project details.",
@@ -177,6 +182,7 @@ const copy = {
     featuredPackage: "Most popular fit",
     hideRouteDetails: "Hide details",
     routeMapChoose: "See route packages",
+    routeMapShowDetails: "View route details",
     routeMapBrowse: "See all route packages",
     routeMap: [
       { value: "start", code: "START", title: "START", description: "For a business starting out or organizing its foundation.", reason: "You need a clear identity and direction before showing up.", outputs: ["Organized identity", "A starting presence", "Ready-to-use foundations"], details: ["Organize the foundation and direction", "Build a usable starting presence", "Prepare the project for launch"] },
@@ -348,6 +354,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
   const [selectedRoute, setSelectedRoute] = useState("start");
   const [expandedRoute, setExpandedRoute] = useState("");
   const [expandedAlternativeId, setExpandedAlternativeId] = useState("");
+  const [expandedPackageId, setExpandedPackageId] = useState("");
   const alternativeTouchStartY = useRef(null);
   const routeRefs = useRef({});
   const quickMatchRef = useRef(null);
@@ -359,6 +366,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
       const draft = JSON.parse(window.sessionStorage.getItem(ROUTE_DRAFT_KEY) || "null");
       if (draft?.answers) setAnswers((current) => ({ ...current, ...draft.answers }));
       if (draft?.step >= 1 && draft.step <= 3) setStep(draft.step);
+      if (draft?.mode === "quiz" || draft?.mode === "explore") setMode(draft.mode);
     } catch {
       // Ignore malformed draft state and start clean.
     } finally {
@@ -376,6 +384,10 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
   }, [answers.stage, answers.need, answers.goal, language]);
 
   useEffect(() => {
+    setExpandedPackageId("");
+  }, [selectedRoute, language]);
+
+  useEffect(() => {
     if (!expandedAlternativeId) return undefined;
     const previousOverflow = document.body.style.overflow;
     const closeOnEscape = (event) => {
@@ -388,23 +400,6 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
       document.removeEventListener("keydown", closeOnEscape);
     };
   }, [expandedAlternativeId]);
-
-  useEffect(() => {
-    if (mode !== "explore") return undefined;
-    const nodes = Object.values(routeRefs.current).filter(Boolean);
-    if (!nodes.length) return undefined;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible?.target.dataset.route) setSelectedRoute(visible.target.dataset.route);
-      },
-      { rootMargin: "-22% 0px -54% 0px", threshold: [0.2, 0.45, 0.7] },
-    );
-    nodes.forEach((node) => observer.observe(node));
-    return () => observer.disconnect();
-  }, [mode, language]);
 
   useEffect(() => {
     const node = quickMatchRef.current;
@@ -473,27 +468,27 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
 
   const scrollToRouteStory = (route) => {
     setSelectedRoute(route);
-    document.getElementById(`route-story-${route}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setExpandedRoute(standalone ? route : "");
   };
 
   const revealRouteDetails = (route) => {
     setSelectedRoute(route);
     setExpandedRoute((current) => current === route ? "" : route);
-    window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
       const node = document.getElementById(`route-story-${route}`);
       node?.scrollIntoView({ behavior: "smooth", block: "center" });
       node?.focus({ preventScroll: true });
-    });
+    }));
   };
 
   const openRouteDetails = (route) => {
     setSelectedRoute(route);
     setExpandedRoute(route);
-    window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
       const node = document.getElementById(`route-story-${route}`);
       node?.scrollIntoView({ behavior: "smooth", block: "center" });
       node?.focus({ preventScroll: true });
-    });
+    }));
   };
 
   const toggleAlternativeDetails = (offerId) => {
@@ -545,12 +540,12 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
           <p className="max-w-xl text-lg leading-8 text-black/65 md:text-xl">{text.intro}</p>
         </div>
 
-        <div id="route-mode-chooser" className="mb-8 flex flex-col justify-between gap-5 border-y border-black/15 bg-white/35 px-5 py-5 md:flex-row md:items-center md:px-7">
+        <div id="route-mode-chooser" className="route-mode-chooser mb-8 flex flex-col justify-between gap-5 border-y border-black/15 bg-white/35 px-5 py-5 md:flex-row md:items-center md:px-7">
           <div>
             <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-black/45">{text.finderName} / MODE</span>
             <p className="mt-2 text-sm font-bold text-black/70">{text.modeLabel}</p>
           </div>
-          <div className="flex flex-wrap gap-2" role="tablist" aria-label={text.modeLabel}>
+          <div className="route-mode-controls flex flex-wrap gap-2" role="tablist" aria-label={text.modeLabel}>
             <button type="button" onClick={startQuickMatch} aria-pressed={mode === "quiz"} className={`zoomix-button quick-match-primary gap-3 ${mode === "quiz" ? "bg-[#BBFF00] text-black shadow-[0_10px_24px_rgba(187,255,0,0.16)]" : "border-black/25 text-black hover:border-black hover:bg-white"}`}>
               <span className="quick-match-badge">{isArabic ? "الأسرع" : "FASTEST"}</span>
               <span>{text.quickStart}</span>
@@ -575,29 +570,29 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
             </div>
           </div>
 
-          <div className="grid gap-8 lg:grid-cols-[0.7fr_1.3fr]">
+          <div className="route-map-layout grid gap-8 lg:grid-cols-[0.7fr_1.3fr]">
             <aside className="route-map-rail relative lg:sticky lg:top-28 lg:self-start">
               <div className="route-map-rail-card bg-[#0A0A0A] p-6 text-white md:p-8">
-                <div className="mb-10 flex items-center justify-between gap-4">
+                <div className="route-map-rail-header mb-10 flex items-center justify-between gap-4">
                   <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#BBFF00]">{text.finderName} / {selectedRouteData.code}</span>
                   <span className="route-map-live-dot h-2 w-2 rounded-full bg-[#BBFF00]" aria-hidden="true" />
                 </div>
-                <div className="relative space-y-2" role="tablist" aria-label={isArabic ? "استكشف مسارات العمل" : "Explore work routes"}>
+                <div className="route-map-rail-tabs relative" role="tablist" aria-label={isArabic ? "استكشف مسارات العمل" : "Explore work routes"}>
                   <span className="route-map-rail-line absolute bottom-5 start-[0.3rem] top-5 w-px bg-white/15" aria-hidden="true" />
                   {text.routeMap.map((route, index) => {
                     const active = route.value === selectedRoute;
                     return (
                       <button key={route.value} type="button" onClick={() => scrollToRouteStory(route.value)} className={`route-map-rail-item relative flex w-full items-center gap-4 p-3 text-start transition-colors ${active ? "text-white" : "text-white/40 hover:text-white/75"}`} role="tab" aria-selected={active} aria-controls={`route-story-${route.value}`} id={`route-tab-${route.value}`}>
                         <span className={`relative z-10 h-2 w-2 shrink-0 rounded-full border ${active ? "border-[#BBFF00] bg-[#BBFF00] shadow-[0_0_14px_rgba(187,255,0,0.8)]" : "border-white/35 bg-[#0A0A0A]"}`} />
-                        <span>
-                          <span className="block font-mono text-[10px] tracking-[0.16em]">0{index + 1} / {route.code}</span>
-                          <span className="mt-1 block text-lg font-black">{route.title}</span>
+                        <span className="route-map-rail-copy">
+                          <span className="route-map-rail-code block font-mono text-[10px] tracking-[0.16em]"><span>0{index + 1}</span><span className="route-map-rail-code-name"> / {route.code}</span></span>
+                          <span className="route-map-rail-title mt-1 block text-lg font-black">{route.title}</span>
                         </span>
                       </button>
                     );
                   })}
                 </div>
-                <div className="mt-10 border-t border-white/15 pt-5">
+                <div className="route-map-rail-summary mt-10 border-t border-white/15 pt-5">
                   <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/40">{text.routeMapReason}</span>
                   <p className="mt-3 text-lg font-bold leading-7 text-white/85">{selectedRouteData.reason}</p>
                   <button type="button" onClick={() => openRouteDetails(selectedRouteData.value)} className="zoomix-button mt-6 w-full bg-[#BBFF00] text-black">{text.routeMapChoose}<span aria-hidden="true">↗</span></button>
@@ -605,29 +600,33 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
               </div>
             </aside>
 
-            <div className="route-map-stories space-y-5">
-              {text.routeMap.map((route, index) => {
+            <div className="route-map-stories">
+              {[selectedRouteData].map((route) => {
+                const index = text.routeMap.findIndex((item) => item.value === route.value);
                 const active = route.value === selectedRoute;
                 const packageGroups = getRoutePackageGroups(route.value, language);
                 return (
-                  <article key={route.value} id={`route-story-${route.value}`} ref={(node) => { routeRefs.current[route.value] = node; }} data-route={route.value} role="tabpanel" aria-labelledby={`route-tab-${route.value}`} tabIndex="-1" className={`route-map-story relative min-h-[28rem] overflow-hidden border p-6 transition-all duration-500 md:min-h-[34rem] md:p-10 ${active ? "border-[#0A0A0A] bg-white" : "border-black/15 bg-white/40"}`}>
+                  <article key={route.value} id={`route-story-${route.value}`} ref={(node) => { routeRefs.current[route.value] = node; }} data-route={route.value} role="tabpanel" aria-labelledby={`route-tab-${route.value}`} tabIndex="-1" className={`route-map-story relative min-h-[28rem] overflow-hidden border p-6 transition-all duration-500 md:min-h-[34rem] md:p-10 ${active ? "route-map-story--active border-[#0A0A0A] bg-white" : "border-black/15 bg-white/40"}`}>
                     <div className="route-map-story-number absolute -end-5 -top-7 font-mono text-[11rem] font-bold leading-none text-black/[0.04]">0{index + 1}</div>
-                    <div className="relative z-10 flex h-full flex-col justify-between gap-12">
-                      <div className="flex items-start justify-between gap-5">
+                    <div className="route-map-story-content relative z-10 flex h-full flex-col justify-between gap-12">
+                      <div className="route-map-story-head flex items-start justify-between gap-5">
                         <div>
                           <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-black/45">0{index + 1} / {route.code}</span>
                           <h4 className={`${isArabic ? "font-arabic" : "font-display tracking-[-0.04em]"} mt-5 text-4xl font-black md:text-6xl`}>{route.title}</h4>
                         </div>
                         <span className={`route-map-story-dot mt-2 h-3 w-3 shrink-0 rounded-full ${active ? "bg-[#BBFF00] shadow-[0_0_22px_rgba(187,255,0,0.9)]" : "bg-black/15"}`} />
                       </div>
-                      <div className="grid gap-8 md:grid-cols-[1.1fr_0.9fr] md:items-end">
+                      <div className="route-map-story-details grid gap-8 md:grid-cols-[1.1fr_0.9fr] md:items-end">
                         <div>
-                          <p className="max-w-lg text-2xl font-black leading-tight md:text-4xl">{route.description}</p>
+                          <p className="route-map-story-description max-w-lg text-2xl font-black leading-tight md:text-4xl">{route.description}</p>
                           <div className="mt-7 flex flex-wrap items-center gap-4">
-                            <button type="button" onClick={() => standalone ? revealRouteDetails(route.value) : scrollToSection(`offer-${route.value}`)} aria-expanded={standalone ? expandedRoute === route.value : undefined} className="border-b border-black/30 pb-1 text-sm font-bold text-black/55 hover:border-black hover:text-black">{standalone ? (expandedRoute === route.value ? text.hideRouteDetails : (isArabic ? "شوف تفاصيل الطريق" : "See route details")) : route.value === "one-thing" ? (isArabic ? "شوف الخدمات المنفصلة" : "See one-off services") : text.routeMapBrowse}</button>
+                            <button type="button" onClick={() => standalone ? revealRouteDetails(route.value) : scrollToSection(`offer-${route.value}`)} aria-expanded={standalone ? expandedRoute === route.value : undefined} aria-controls={standalone ? `route-details-${route.value}` : undefined} className="route-map-details-trigger inline-flex items-center gap-2 border-b border-black/30 pb-1 text-sm font-bold text-black/55 hover:border-black hover:text-black">
+                              {standalone ? (expandedRoute === route.value ? text.hideRouteDetails : text.routeMapShowDetails) : route.value === "one-thing" ? (isArabic ? "شوف الخدمات المنفصلة" : "See one-off services") : text.routeMapBrowse}
+                              {standalone && <ChevronDown aria-hidden="true" className={`transition-transform ${expandedRoute === route.value ? "rotate-180" : ""}`} size={15} strokeWidth={2.5} />}
+                            </button>
                           </div>
                         </div>
-                        <div className="border-s-2 border-[#BBFF00] ps-5">
+                        <div className="route-map-story-outputs border-s-2 border-[#BBFF00] ps-5">
                           <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-black/40">{text.routeMapOutputs}</span>
                           <ul className="mt-4 space-y-2 text-sm font-bold leading-6 text-black/70">
                             {route.outputs.map((output) => <li key={output} className="flex gap-2"><span className="text-[#7aa600]">+</span>{output}</li>)}
@@ -635,7 +634,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
                         </div>
                       </div>
                       {standalone && expandedRoute === route.value && (
-                        <div className="mt-8 border-t border-black/15 pt-6">
+                        <div id={`route-details-${route.value}`} className="mt-8 border-t border-black/15 pt-6">
                           <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-black/40">{text.routeDetailsLabel}</span>
                           <ol className="mt-4 grid gap-3 sm:grid-cols-3">
                             {route.details.map((detail, detailIndex) => (
@@ -662,9 +661,12 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
                                   <div className="mt-3 grid gap-3 lg:grid-cols-3">
                                     {group.packages.map((offer) => {
                                       const outputs = offer.outputs?.[language] || [];
+                                      const packageKey = `${route.value}-${offer.id}`;
+                                      const showAllOutputs = expandedPackageId === packageKey;
+                                      const visibleOutputs = showAllOutputs ? outputs : outputs.slice(0, 3);
                                       const offerName = getOfferName(offer, language);
                                       return (
-                                        <article key={offer.id} className={`flex h-full flex-col border p-4 transition-colors ${offer.featured ? "border-[#789900] bg-[#F3F9DE]" : "border-black/15 bg-[#F5F4EF]"}`}>
+                                        <article key={offer.id} className={`route-package-card flex h-full flex-col border p-4 transition-colors ${offer.featured ? "route-package-card--featured border-[#789900] bg-[#F3F9DE]" : "border-black/15 bg-[#F5F4EF]"}`}>
                                           <div className="flex items-start justify-between gap-3">
                                             <h6 className="text-lg font-black leading-tight">{offerName}</h6>
                                             {offer.featured && <span className="shrink-0 bg-[#BBFF00] px-2 py-1 font-mono text-[9px] uppercase tracking-[0.08em] text-black">{text.featuredPackage}</span>}
@@ -679,9 +681,15 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
                                           {outputs.length > 0 && (
                                             <div className="mt-4">
                                               <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-black/40">{text.packageIncludes}</span>
-                                              <ul className="mt-2 space-y-1.5 text-xs leading-5 text-black/70">
-                                                {outputs.map((output) => <li key={output} className="flex gap-2"><span className="text-[#789900]">+</span><span>{output}</span></li>)}
+                                              <ul id={`package-outputs-${packageKey}`} className="mt-2 space-y-1.5 text-xs leading-5 text-black/70">
+                                                {visibleOutputs.map((output) => <li key={output} className="flex gap-2"><span className="text-[#789900]">+</span><span>{output}</span></li>)}
                                               </ul>
+                                              {outputs.length > 3 && (
+                                                <button type="button" onClick={() => setExpandedPackageId((current) => current === packageKey ? "" : packageKey)} aria-expanded={showAllOutputs} aria-controls={`package-outputs-${packageKey}`} className="route-output-toggle mt-3 inline-flex items-center gap-2 border-b border-black/25 pb-1 text-[11px] font-bold text-black/55 transition-colors hover:border-black hover:text-black">
+                                                  <ChevronDown aria-hidden="true" className={`transition-transform ${showAllOutputs ? "rotate-180" : ""}`} size={14} strokeWidth={2.5} />
+                                                  {showAllOutputs ? text.hideMoreOutputs : text.showMoreOutputs}
+                                                </button>
+                                              )}
                                             </div>
                                           )}
 
@@ -690,8 +698,8 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
                                             <p className="mt-2 text-xs leading-5 text-black/50"><span className="font-bold">{offer.exclusions?.[language] ? text.packageNotIncluded : text.packageNote}:</span> {offer.exclusions?.[language] || offer.priceNote?.[language]}</p>
                                           )}
 
-                                          <button type="button" onClick={() => chooseOffer(group.route, offer.id)} className="zoomix-button mt-5 w-full bg-[#0A0A0A] text-white transition-colors hover:bg-[#BBFF00] hover:text-black">
-                                            {text.choosePackage}<span aria-hidden="true">↗</span>
+                                          <button type="button" onClick={() => chooseOffer(group.route, offer.id)} className="zoomix-button route-package-cta mt-5 w-full bg-[#0A0A0A] text-white transition-colors hover:bg-[#BBFF00] hover:text-black">
+                                            {text.choosePackage}<ActionArrow className="route-package-action-arrow" aria-hidden="true" size={16} />
                                           </button>
                                         </article>
                                       );
@@ -746,7 +754,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
           <aside className="route-finder-aside relative overflow-hidden bg-[#0A0A0A] p-6 text-white md:p-8" data-step={step}>
             <div className="route-finder-orbit absolute -end-16 -top-20 h-64 w-64 rounded-full border-[28px] border-white/[0.06]" aria-hidden="true" />
             <div className="route-finder-orbit route-finder-orbit--inner absolute -end-2 top-10 h-36 w-36 rounded-full border border-[#BBFF00]/20" aria-hidden="true" />
-            <div className="relative z-10 flex h-full min-h-[310px] flex-col justify-between">
+            <div className="route-finder-aside__content relative z-10 flex h-full min-h-[310px] flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between gap-4">
                   <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#BBFF00]">{text.finderName}</span>
@@ -842,7 +850,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
 
             <div className="mt-7">
               <span className="primary-cta-badge">{isArabic ? "الخطوة الجاية" : "NEXT STEP"}</span>
-              <button type="button" onClick={() => chooseOffer(recommendation.route, primaryOffer.id)} className="zoomix-button group result-primary-cta bg-[#BBFF00] text-black transition-transform hover:-translate-y-0.5">
+              <button type="button" onClick={() => chooseOffer(recommendation.route, primaryOffer.id)} className="zoomix-button group result-primary-cta route-result-cta bg-[#BBFF00] text-black transition-transform hover:-translate-y-0.5">
                 {text.choose}<ActionArrow className="transition-transform duration-200 group-hover:-translate-y-0.5" size={18} aria-hidden="true" />
               </button>
             </div>
@@ -950,7 +958,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
                   </div>
 
                   <div className="shrink-0 border-t border-white/15 bg-[#0A0A0A] px-5 py-4 md:px-7">
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="alternative-dialog-actions flex flex-wrap items-center gap-3">
                       <button type="button" onClick={() => chooseOffer(recommendation.route, expandedAlternative.id)} className="zoomix-button bg-[#BBFF00] text-black transition-transform hover:-translate-y-0.5">
                         <ArrowLeftRight size={18} aria-hidden="true" />{text.chooseAlternative}
                       </button>

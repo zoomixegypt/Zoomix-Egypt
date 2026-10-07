@@ -1,4 +1,4 @@
-import { lazy, Suspense, useLayoutEffect } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect } from "react";
 import { Routes, Route, useLocation, useNavigationType } from "react-router-dom";
 import Home from "./pages/Home";
 import Studio from "./pages/Studio";
@@ -6,6 +6,7 @@ import BriefEdit from "./pages/BriefEdit";
 import ProjectDetailModal from "./components/projects/ProjectDetailModal";
 import SectionSkeleton from "./components/SectionSkeleton";
 import AnalyticsConsent from "./components/AnalyticsConsent";
+import { trackPageView } from "./utils/analytics";
 
 const RouteFinder = lazy(() => import("./pages/RouteFinder"));
 
@@ -120,6 +121,10 @@ function ScrollToTop() {
 export default function App() {
   const location = useLocation();
   const backgroundLocation = location.state?.backgroundLocation;
+
+  useEffect(() => {
+    trackPageView(`${location.pathname}${location.search}${location.hash}`);
+  }, [location.pathname, location.search, location.hash]);
 
   return (
     <>

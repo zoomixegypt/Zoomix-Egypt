@@ -5,7 +5,7 @@
   <path d="M72 500H440V360H760V500H1128" fill="none" stroke="#BBFF00" stroke-width="8"/>
   <circle cx="440" cy="360" r="14" fill="#BBFF00"/>
   <circle cx="760" cy="500" r="14" fill="#0A0A0A" stroke="#BBFF00" stroke-width="6"/>
-  <image href="/zoomix-logo.svg" x="72" y="68" width="270" height="100" preserveAspectRatio="xMinYMid meet"/>
+  <image href="zoomix-logo.svg" x="72" y="68" width="270" height="100" preserveAspectRatio="xMinYMid meet"/>
   <text x="72" y="330" fill="#F5F4EF" font-family="Space Grotesk,Arial,sans-serif" font-size="84" font-weight="700">MAKE IT</text>
   <text x="72" y="422" fill="#BBFF00" font-family="Space Grotesk,Arial,sans-serif" font-size="84" font-weight="700">SHOW UP.</text>
   <text x="72" y="570" fill="#A5A5A5" font-family="JetBrains Mono,monospace" font-size="17" letter-spacing="3">CAIRO, EGYPT — CREATIVE PARTNER</text>

@@ -250,12 +250,13 @@ async function enforceBriefRateLimit(request, env) {
 }
 
 async function sendBriefEmails(brief, env) {
-  if (!env.EMAIL || !env.EMAIL_FROM || !env.ADMIN_EMAIL) return false;
+  const adminEmail = env.ADMIN_EMAIL || "zoomix.eg@gmail.com";
+  if (!env.EMAIL || !env.EMAIL_FROM) return false;
   const body = briefText(brief);
   const html = `<pre style="font-family:Arial,sans-serif;white-space:pre-wrap">${escapeHtml(body)}</pre>`;
   const messages = [
     env.EMAIL.send({
-      to: env.ADMIN_EMAIL,
+      to: adminEmail,
       from: { email: env.EMAIL_FROM, name: "ZOOMIX Studio" },
       subject: `New Zoomix brief — ${brief.referenceCode}`,
       text: body,

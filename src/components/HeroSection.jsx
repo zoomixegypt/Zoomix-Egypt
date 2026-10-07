@@ -49,14 +49,14 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
           <p className="zoomix-reveal zoomix-reveal-delay-2 mt-3 max-w-xl text-sm leading-6 text-[#BBFF00]/80">
             {t("hero", "partnerLine")}
           </p>
-          <div className="zoomix-reveal zoomix-reveal-delay-3 relative z-10 -mx-2 mt-9 flex w-fit flex-wrap items-center gap-3 rounded-full bg-[#0A0A0A]/85 px-2 py-2">
-            <a href="#contact-section" className="zoomix-button bg-[#BBFF00] text-black">
+          <div className="hero-cta-group zoomix-reveal zoomix-reveal-delay-3 relative z-10 -mx-2 mt-9 flex w-fit flex-wrap items-center gap-3 rounded-full bg-[#0A0A0A]/85 px-2 py-2">
+            <a href="#contact-section" className="hero-cta-primary zoomix-button bg-[#BBFF00] text-black">
               <Compass className="hero-start-icon" size={18} aria-hidden="true" />
               {t("nav", "start")} <ActionArrow size={20} />
             </a>
             <a
               href="#project-section"
-              className="zoomix-button bg-[#0A0A0A]/90 border-white/50 text-white"
+              className="hero-cta-secondary zoomix-button bg-[#0A0A0A]/90 border-white/50 text-white"
             >
               {t("hero", "work")} <ActionArrow size={20} />
             </a>

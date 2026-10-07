@@ -13,7 +13,7 @@ const HOME_COPY = {
   },
 };
 
-const HOME_IMAGE = "https://zoomixegypt.com/og-image.svg";
+const HOME_IMAGE = "https://zoomixegypt.com/og-image.png";
 
 export default function HomeSeo() {
   const { language } = useLanguage();

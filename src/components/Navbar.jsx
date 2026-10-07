@@ -366,15 +366,14 @@ const Navbar = memo(function Navbar() {
           onClick={openRouteFinder}
           dir={language === "ar" ? "rtl" : "ltr"}
           className={`route-finder-fixed-entry pointer-events-auto group ${isOnDarkSection ? "route-finder-fixed-entry--dark" : "route-finder-fixed-entry--light"}`}
-          aria-label={language === "ar" ? "ساعدني أختار الطريق المناسب" : "Help me find the right route"}
+          aria-label={language === "ar" ? "افتح الاختيار السريع" : "Open Quick Match"}
         >
           <span className="route-finder-fixed-entry__line" aria-hidden="true" />
           <span className="route-finder-fixed-entry__node" aria-hidden="true">
             <Crosshair size={12} strokeWidth={1.8} />
           </span>
           <span className="route-finder-fixed-entry__copy">
-            <span className="route-finder-fixed-entry__eyebrow">ZOOMIX / QUICK MATCH</span>
-            <span>{language === "ar" ? "اختيار سريع — 3 أسئلة" : "Quick match — 3 questions"}</span>
+            <span className="route-finder-fixed-entry__label">Quick Match</span>
           </span>
         </button>
       )}

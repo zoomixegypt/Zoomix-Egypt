@@ -18,6 +18,7 @@ const ProcessSection = lazy(() => import("../components/ProcessSection"));
 const ProjectBriefSection = lazy(() => import("../components/ProjectBriefSection"));
 
 const ProjectGallery = lazy(() => import("../components/ProjectGallery"));
+const SelectedWorkReferences = lazy(() => import("../components/SelectedWorkReferences"));
 const NoiseOverlay = lazy(() => import("../components/NoiseOverlay"));
 
 export default function Home() {
@@ -103,6 +104,9 @@ export default function Home() {
         <div id="project-section" ref={galleryRef} className="overflow-anchor-none bg-neutral-900" style={{ overflowAnchor: "none" }}>
           <Suspense fallback={<SectionSkeleton tone="dark" className="min-h-screen" />}>
             <ProjectGallery onOpenProject={handleOpenProject} />
+          </Suspense>
+          <Suspense fallback={<SectionSkeleton tone="dark" className="min-h-[40vh]" />}>
+            <SelectedWorkReferences />
           </Suspense>
         </div>
 

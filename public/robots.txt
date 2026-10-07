@@ -1,5 +1,6 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Disallow: /studio
+Disallow: /brief/edit/
 
 Sitemap: https://zoomixegypt.com/sitemap.xml

@@ -1,10 +1,12 @@
 import { memo } from "react";
-import { ArrowUpRight, Instagram, MessageCircle } from "lucide-react";
+import { ArrowUpLeft, ArrowUpRight, Clock3, Instagram, Mail, MessageCircle } from "lucide-react";
 import { useLanguage } from "../i18n";
 import ZoomixLogo from "./ZoomixLogo";
+import { SITE_CONTACT } from "../data/siteSettings";
 
 const Footer = memo(function Footer() {
   const { language, t } = useLanguage();
+  const ActionArrow = language === "ar" ? ArrowUpLeft : ArrowUpRight;
   const scrollToSection = (sectionId) => {
     document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -58,6 +60,13 @@ const Footer = memo(function Footer() {
             <p className="mt-8 max-w-md text-sm md:text-base text-white/60 leading-7">
               {t("footer", "description")}
             </p>
+            <a
+              href="/route-finder"
+              className="footer-route-cta mt-8 inline-flex w-full items-center justify-between gap-4 border border-[#BBFF00]/60 bg-[#BBFF00] px-4 py-4 font-bold text-[#0A0A0A] transition-transform hover:-translate-y-0.5 sm:w-fit"
+            >
+              <span>{language === "ar" ? "اختيار سريع — 3 أسئلة" : "Quick match — 3 questions"}</span>
+              <ActionArrow size={18} aria-hidden="true" />
+            </a>
           </div>
 
           <div className="lg:w-1/3 flex flex-col gap-4">
@@ -101,15 +110,26 @@ const Footer = memo(function Footer() {
                 ))}
               </div>
               <a
-                href="https://wa.me/201555451535"
+                href={SITE_CONTACT.whatsappHref}
                 target="_blank"
                 rel="noreferrer"
                 className="mt-2 flex items-center gap-2 border border-[#BBFF00]/70 px-3 py-3 text-xs text-[#BBFF00] transition-colors hover:bg-[#BBFF00] hover:text-[#0A0A0A]"
               >
                 <MessageCircle size={14} aria-hidden="true" />
                 <span>{t("footer", "whatsapp")}</span>
-                <span dir="ltr">+20 15 5545 1535</span>
+                <span dir="ltr">{SITE_CONTACT.whatsapp}</span>
               </a>
+              <a
+                href={`mailto:${SITE_CONTACT.email}`}
+                className="mt-2 flex items-center gap-2 border border-white/15 px-3 py-3 text-xs text-white/75 transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00]"
+              >
+                <Mail size={14} aria-hidden="true" />
+                <span dir="ltr">{SITE_CONTACT.email}</span>
+              </a>
+              <div className="mt-2 flex items-start gap-2 border border-white/15 px-3 py-3 text-xs leading-5 text-white/60">
+                <Clock3 size={14} className="mt-0.5 shrink-0 text-[#BBFF00]" aria-hidden="true" />
+                <span>{SITE_CONTACT.hours[language]}</span>
+              </div>
             </div>
           </div>
         </div>

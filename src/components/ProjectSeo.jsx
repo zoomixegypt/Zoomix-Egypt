@@ -68,10 +68,10 @@ export default function ProjectSeo({ project }) {
       document.head.querySelector('link[rel="canonical"]')?.setAttribute("href", `${SITE_URL}/`);
       document
         .querySelector('meta[property="og:image"]')
-        ?.setAttribute("content", `${SITE_URL}/og-image.svg`);
+        ?.setAttribute("content", `${SITE_URL}/og-image.png`);
       document
         .querySelector('meta[name="twitter:image"]')
-        ?.setAttribute("content", `${SITE_URL}/og-image.svg`);
+        ?.setAttribute("content", `${SITE_URL}/og-image.png`);
       document.getElementById(schemaId)?.remove();
     };
   }, [language, project]);
