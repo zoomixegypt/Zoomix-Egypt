@@ -142,7 +142,17 @@ new → contacted → in-progress → won / archived
 
 Email notifications are intentionally disabled. Client handoff uses WhatsApp, phone, or the manually selected contact method inside Studio.
 
-## 6. Verification checklist after every production change
+## 6. Project brief experience
+
+The brief keeps the same ZOOMIX visual language and page layout, but the form is a real three-step Wizard:
+
+1. Basics: name, project, activity, and the carried-over Route Finder/package selection.
+2. Details: only the fields relevant to the selected route, including event or content fields when applicable.
+3. Send: preferred contact method, only the contact fields required for that method, consent, and submission.
+
+Route Finder and package choices are carried into the brief and are not requested a second time. The client can use **Change selection** to return to Route Finder. Optional and route-specific fields remain hidden until they are useful.
+
+## 7. Verification checklist after every production change
 
 Run locally:
 
@@ -168,7 +178,7 @@ Then verify that:
 - A test brief appears in Studio after submission.
 - No production secret appears in Git, logs, screenshots, or this file.
 
-## 7. Known operational rules
+## 8. Known operational rules
 
 - Keep Arabic and English experiences in the same application and maintain both when changing user-facing copy.
 - Keep Route Finder independent from the package display on the home page; it guides the user toward a suitable path and then carries the choice into the brief.
@@ -176,7 +186,7 @@ Then verify that:
 - Before any Cloudflare data operation, verify the active account is the Zoomix account, not another local Wrangler profile.
 - Use the D1 backup endpoint from Studio before any destructive database operation.
 
-## 8. Change log
+## 9. Change log
 
 ### 2026-10-07 — Studio deployment stabilized
 
@@ -187,6 +197,8 @@ Then verify that:
 - Removed invalid trailing-slash redirect rules that Cloudflare reported as infinite loops.
 - Confirmed `/studio` and `/route-finder` return `200`.
 - Confirmed the Studio API progressed from `503` to `401`, proving the D1 binding and production secret are active.
+- Converted the Project Brief into a three-step Wizard while preserving the existing page layout and visual identity.
+- Added conditional visibility for route-specific and contact-specific fields.
 
 Relevant commits:
 
@@ -194,4 +206,3 @@ Relevant commits:
 - `e998f18` — preserve client routes in Pages fallback
 - `3ce2f78` — initial D1 binding attempt (wrong account ID; superseded)
 - `5b84b4f` — bind Studio to the Zoomix D1 database
-
