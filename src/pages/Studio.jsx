@@ -80,6 +80,26 @@ export default function Studio() {
   }, []);
 
   useEffect(() => {
+    if (needsLogin) return undefined;
+
+    const events = new EventSource("/api/studio/events");
+    events.onmessage = async (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (payload.type !== "brief-created") return;
+        await loadRequests({ silent: true });
+        setLiveNotice(label("طلب جديد وصل — تم تحديث الاستوديو فورًا.", "A new request arrived — Studio was updated instantly."));
+        window.clearTimeout(liveNoticeTimeoutRef.current);
+        liveNoticeTimeoutRef.current = window.setTimeout(() => setLiveNotice(""), 5000);
+      } catch {
+        // The existing polling fallback will recover if an event cannot be processed.
+      }
+    };
+
+    return () => events.close();
+  }, [needsLogin, language]);
+
+  useEffect(() => {
     const pollForUpdates = async () => {
       if (document.visibilityState === "hidden") return;
       try {

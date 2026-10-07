@@ -1,3 +1,5 @@
+import { DurableObject } from "cloudflare:workers";
+
 const JSON_HEADERS = {
   "Content-Type": "application/json; charset=UTF-8",
   "Cache-Control": "no-store",
@@ -21,6 +23,7 @@ const ANALYTICS_EVENTS = new Set([
   "route_finder_answer",
   "route_finder_recommendation",
 ]);
+const STUDIO_EVENTS_ROOM = "studio-live";
 
 function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
@@ -196,6 +199,12 @@ async function sendBriefEmails(brief, env) {
   return true;
 }
 
+async function notifyStudio(env, event) {
+  if (!env.STUDIO_EVENTS) return;
+  const stub = env.STUDIO_EVENTS.getByName(STUDIO_EVENTS_ROOM);
+  await stub.broadcast(event);
+}
+
 async function createBrief(request, env, ctx) {
   if (!env.DB) return json({ error: "Brief storage is not configured yet." }, 503);
   const rateLimit = await enforceBriefRateLimit(request, env);
@@ -227,6 +236,14 @@ async function createBrief(request, env, ctx) {
     brief.launchTimeline, brief.source, brief.projectLink, brief.goal, brief.description, brief.consent, brief.status,
     brief.notes, brief.createdAt, brief.createdAt,
   ).run();
+
+  if (env.STUDIO_EVENTS) {
+    ctx.waitUntil(notifyStudio(env, {
+      type: "brief-created",
+      referenceCode: brief.referenceCode,
+      createdAt: brief.createdAt,
+    }).catch((error) => console.error("Zoomix Studio live update failed", error)));
+  }
 
   if (brief.contactPreference === "email") {
     ctx.waitUntil(sendBriefEmails(brief, env).catch((error) => console.error("Zoomix email notification failed", error)));
@@ -295,6 +312,17 @@ async function studioRequests(request, env) {
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
   const result = await env.DB.prepare(`SELECT * FROM brief_requests ${where} ORDER BY created_at DESC LIMIT 200`).bind(...params).all();
   return json({ requests: result.results || [] });
+}
+
+async function studioEvents(request, env) {
+  const auth = await authenticateStudio(request, env);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+  if (!env.STUDIO_EVENTS) return json({ error: "Studio live updates are not configured yet." }, 503);
+  const stub = env.STUDIO_EVENTS.getByName(STUDIO_EVENTS_ROOM);
+  return stub.fetch(new Request("https://zoomix-studio-live/events", {
+    method: "GET",
+    headers: { Accept: "text/event-stream" },
+  }));
 }
 
 async function studioInsights(request, env) {
@@ -425,6 +453,7 @@ async function api(request, env, ctx) {
   if (request.method === "POST" && url.pathname === "/api/studio/login") return studioLogin(request, env);
   if (request.method === "POST" && url.pathname === "/api/studio/logout") return studioLogout(request, env);
   if (request.method === "GET" && url.pathname === "/api/studio/requests") return studioRequests(request, env);
+  if (request.method === "GET" && url.pathname === "/api/studio/events") return studioEvents(request, env);
   if (request.method === "GET" && url.pathname === "/api/studio/insights") return studioInsights(request, env);
   if (request.method === "GET" && url.pathname === "/api/studio/export.csv") return studioExport(request, env);
   if (request.method === "GET" && url.pathname === "/api/studio/backup.json") return studioBackup(request, env);
@@ -432,6 +461,79 @@ async function api(request, env, ctx) {
   const updateMatch = url.pathname.match(/^\/api\/studio\/requests\/(\d+)$/);
   if (request.method === "PATCH" && updateMatch) return studioRequestUpdate(request, env, updateMatch[1]);
   return json({ error: "Not found." }, 404);
+}
+
+export class StudioLiveUpdates extends DurableObject {
+  constructor(ctx, env) {
+    super(ctx, env);
+    this.clients = new Set();
+  }
+
+  async fetch(request) {
+    const url = new URL(request.url);
+    if (request.method !== "GET" || url.pathname !== "/events") {
+      return new Response("Not found.", { status: 404 });
+    }
+
+    const { readable, writable } = new TransformStream();
+    const writer = writable.getWriter();
+    const client = { writer, heartbeat: null, closed: false };
+    this.clients.add(client);
+
+    const removeClient = () => {
+      if (client.closed) return;
+      client.closed = true;
+      if (client.heartbeat) clearInterval(client.heartbeat);
+      this.clients.delete(client);
+      void writer.close().catch(() => {});
+    };
+
+    const write = async (chunk) => {
+      if (client.closed) return false;
+      try {
+        await writer.write(chunk);
+        return true;
+      } catch {
+        removeClient();
+        return false;
+      }
+    };
+
+    await write(": connected\n\n");
+    client.heartbeat = setInterval(() => {
+      void write(": heartbeat\n\n");
+    }, 25000);
+
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "text/event-stream; charset=UTF-8",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Connection: "keep-alive",
+        "X-Accel-Buffering": "no",
+      },
+    });
+  }
+
+  async broadcast(event) {
+    const payload = `data: ${JSON.stringify(event)}\n\n`;
+    const clients = [...this.clients];
+    const results = await Promise.all(clients.map((client) => this.writeToClient(client, payload)));
+    return { delivered: results.filter(Boolean).length };
+  }
+
+  async writeToClient(client, payload) {
+    if (client.closed) return false;
+    try {
+      await client.writer.write(payload);
+      return true;
+    } catch {
+      client.closed = true;
+      if (client.heartbeat) clearInterval(client.heartbeat);
+      this.clients.delete(client);
+      void client.writer.close().catch(() => {});
+      return false;
+    }
+  }
 }
 
 export default {
