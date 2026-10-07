@@ -811,7 +811,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                     {label("رجوع", "Back")}
                   </button>
                   <button type="submit" className="zoomix-button w-full bg-[#BBFF00] text-[#0A0A0A] shadow-[0_8px_24px_rgba(187,255,0,0.15)] sm:w-auto">
-                    {label("إرسال على واتساب", "Send to WhatsApp")} <ActionArrow className="brief-next-arrow" size={18} />
+                    {label("ابعت البريف", "Send the brief")} <ActionArrow className="brief-next-arrow" size={18} />
                   </button>
                 </div>
               </>

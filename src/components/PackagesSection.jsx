@@ -277,7 +277,7 @@ const PackagesSection = memo(function PackagesSection() {
                 : "Every project still follows Build / Show / Launch. These four routes simply define the right way to work together."}
             </p>
             <a href="/route-finder" className="mt-5 inline-flex text-sm font-bold text-[#BBFF00] underline decoration-[#BBFF00]/40 underline-offset-4 hover:text-white">
-              {isArabic ? "لسه محتار؟ استخدم Route Finder" : "Still deciding? Use the Route Finder"}
+              {isArabic ? "شوف الترشيح المناسب" : "See your recommended fit"}
             </a>
           </div>
         </div>
