@@ -24,6 +24,7 @@ const ANALYTICS_EVENTS = new Set([
   "route_finder_recommendation",
 ]);
 const STUDIO_EVENTS_ROOM = "studio-live";
+const EDIT_LINK_TTL_DAYS = 30;
 
 function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
@@ -65,6 +66,81 @@ function referenceCode() {
   const year = new Date().getUTCFullYear();
   const suffix = crypto.randomUUID().replaceAll("-", "").slice(0, 6).toUpperCase();
   return `ZMX-${year}-${suffix}`;
+}
+
+function editToken() {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function editUrl(request, token) {
+  const url = new URL(request.url);
+  url.pathname = `/brief/edit/${token}`;
+  url.search = "";
+  url.hash = "";
+  return url.toString();
+}
+
+function editableBrief(row) {
+  return {
+    referenceCode: row.reference_code,
+    name: row.name || "",
+    project: row.project || "",
+    phone: row.phone || "",
+    email: row.email || "",
+    contactPreference: row.contact_preference || "",
+    preferredTime: row.preferred_time || "",
+    activity: row.activity || "",
+    service: row.service || "",
+    route: row.route || "",
+    offerId: row.offer_id || "",
+    offerName: row.offer_name || "",
+    showType: row.show_type || "",
+    contentSource: row.content_source || "",
+    eventType: row.event_type || "",
+    eventDate: row.event_date || "",
+    eventLocation: row.event_location || "",
+    coverageType: row.coverage_type || "",
+    stage: row.stage || "",
+    budget: row.budget || "",
+    launchDate: row.launch_timeline || "",
+    source: row.source || "",
+    projectLink: row.project_link || "",
+    goal: row.goal || "",
+    description: row.description || "",
+    updatedAt: row.updated_at || row.created_at || "",
+    editLinkExpiresAt: row.edit_token_expires_at || "",
+  };
+}
+
+function editableBriefValues(payload, current) {
+  return {
+    name: text(payload.name ?? current.name, 120),
+    project: text(payload.project ?? current.project, 160),
+    phone: text(payload.phone ?? current.phone, 40),
+    email: text(payload.email ?? current.email, 160).toLowerCase(),
+    contactPreference: text(payload.contactPreference ?? current.contact_preference, 30),
+    preferredTime: text(payload.preferredTime ?? current.preferred_time, 40),
+    activity: text(payload.activity ?? current.activity, 160),
+    service: text(payload.service ?? current.service, 80),
+    route: text(payload.route ?? current.route, 40),
+    offerId: text(payload.offerId ?? current.offer_id, 100),
+    offerName: text(payload.offerName ?? current.offer_name, 180),
+    showType: text(payload.showType ?? current.show_type, 40),
+    contentSource: text(payload.contentSource ?? current.content_source, 50),
+    eventType: text(payload.eventType ?? current.event_type, 50),
+    eventDate: text(payload.eventDate ?? current.event_date, 40),
+    eventLocation: text(payload.eventLocation ?? current.event_location, 180),
+    coverageType: text(payload.coverageType ?? current.coverage_type, 50),
+    stage: text(payload.stage ?? current.stage, 50),
+    budget: text(payload.budget ?? current.budget, 50),
+    launchTimeline: text(payload.launchDate ?? current.launch_timeline, 50),
+    source: text(payload.source ?? current.source, 50),
+    projectLink: text(payload.projectLink ?? current.project_link, 500),
+    goal: text(payload.goal ?? payload.description ?? current.goal, 500),
+    description: text(payload.description ?? current.description, 5000),
+  };
 }
 
 function briefFromPayload(payload, reference) {
@@ -220,22 +296,56 @@ async function createBrief(request, env, ctx) {
   const brief = briefFromPayload(payload, referenceCode());
   const validationError = validateBrief(brief, payload);
   if (validationError) return json({ error: validationError }, 400);
+  const rawEditToken = editToken();
+  const editTokenHash = await sha256(rawEditToken);
+  const editTokenExpiresAt = new Date(Date.now() + EDIT_LINK_TTL_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  let editLinksReady = true;
 
-  await env.DB.prepare(`
-    INSERT INTO brief_requests (
-      reference_code, name, project, phone, email, contact_preference, preferred_time,
-      activity, service, route, offer_id, offer_name, show_type, content_source,
-      event_type, event_date, event_location, coverage_type, stage, budget,
-      launch_timeline, source, project_link, goal, description, consent, status,
-      notes, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).bind(
-    brief.referenceCode, brief.name, brief.project, brief.phone, brief.email, brief.contactPreference, brief.preferredTime,
-    brief.activity, brief.service, brief.route, brief.offerId, brief.offerName, brief.showType, brief.contentSource,
-    brief.eventType, brief.eventDate, brief.eventLocation, brief.coverageType, brief.stage, brief.budget,
-    brief.launchTimeline, brief.source, brief.projectLink, brief.goal, brief.description, brief.consent, brief.status,
-    brief.notes, brief.createdAt, brief.createdAt,
-  ).run();
+  try {
+    await env.DB.prepare(`
+      INSERT INTO brief_requests (
+        reference_code, name, project, phone, email, contact_preference, preferred_time,
+        activity, service, route, offer_id, offer_name, show_type, content_source,
+        event_type, event_date, event_location, coverage_type, stage, budget,
+        launch_timeline, source, project_link, goal, description, consent, status,
+        notes, created_at, updated_at, edit_token_hash, edit_token_expires_at
+      ) VALUES (
+        ?, ?, ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?, ?, ?
+      )
+    `).bind(
+      brief.referenceCode, brief.name, brief.project, brief.phone, brief.email, brief.contactPreference, brief.preferredTime,
+      brief.activity, brief.service, brief.route, brief.offerId, brief.offerName, brief.showType, brief.contentSource,
+      brief.eventType, brief.eventDate, brief.eventLocation, brief.coverageType, brief.stage, brief.budget,
+      brief.launchTimeline, brief.source, brief.projectLink, brief.goal, brief.description, brief.consent, brief.status,
+      brief.notes, brief.createdAt, brief.createdAt, editTokenHash, editTokenExpiresAt,
+    ).run();
+  } catch (error) {
+    const message = String(error?.message || error);
+    if (!/edit_token_hash|edit_token_expires_at|no such column/i.test(message)) throw error;
+    // Keep submissions working during the short window before migration 0004 is applied.
+    editLinksReady = false;
+    await env.DB.prepare(`
+      INSERT INTO brief_requests (
+        reference_code, name, project, phone, email, contact_preference, preferred_time,
+        activity, service, route, offer_id, offer_name, show_type, content_source,
+        event_type, event_date, event_location, coverage_type, stage, budget,
+        launch_timeline, source, project_link, goal, description, consent, status,
+        notes, created_at, updated_at
+      ) VALUES (
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+      )
+    `).bind(
+      brief.referenceCode, brief.name, brief.project, brief.phone, brief.email, brief.contactPreference, brief.preferredTime,
+      brief.activity, brief.service, brief.route, brief.offerId, brief.offerName, brief.showType, brief.contentSource,
+      brief.eventType, brief.eventDate, brief.eventLocation, brief.coverageType, brief.stage, brief.budget,
+      brief.launchTimeline, brief.source, brief.projectLink, brief.goal, brief.description, brief.consent, brief.status,
+      brief.notes, brief.createdAt, brief.createdAt,
+    ).run();
+  }
 
   if (env.STUDIO_EVENTS) {
     ctx.waitUntil(notifyStudio(env, {
@@ -251,7 +361,70 @@ async function createBrief(request, env, ctx) {
     ctx.waitUntil(sendBriefEmails(brief, env).catch((error) => console.error("Zoomix email notification failed", error)));
   }
 
-  return json({ ok: true, referenceCode: brief.referenceCode }, 201);
+  return json({ ok: true, referenceCode: brief.referenceCode, editUrl: editLinksReady ? editUrl(request, rawEditToken) : "" }, 201);
+}
+
+async function findEditableBrief(env, token) {
+  if (!env.DB) return null;
+  const tokenHash = await sha256(token);
+  return env.DB.prepare("SELECT * FROM brief_requests WHERE edit_token_hash = ? AND edit_token_expires_at > ? LIMIT 1").bind(tokenHash, now()).first();
+}
+
+async function getBriefForEdit(request, env, token) {
+  if (!env.DB) return json({ error: "Brief storage is not configured yet." }, 503);
+  const brief = await findEditableBrief(env, token);
+  if (!brief) return json({ error: "This edit link is invalid or has expired." }, 404);
+  return json({ brief: editableBrief(brief) });
+}
+
+async function updateBriefFromEdit(request, env, ctx, token) {
+  if (!env.DB) return json({ error: "Brief storage is not configured yet." }, 503);
+  const current = await findEditableBrief(env, token);
+  if (!current) return json({ error: "This edit link is invalid or has expired." }, 404);
+
+  let payload;
+  try {
+    payload = await request.json();
+  } catch {
+    return json({ error: "Invalid request body." }, 400);
+  }
+
+  const values = editableBriefValues(payload, current);
+  const brief = {
+    ...values,
+    referenceCode: current.reference_code,
+    consent: 1,
+  };
+  const validationError = validateBrief(brief, { ...payload, consent: true, website: "" });
+  if (validationError) return json({ error: validationError }, 400);
+
+  const updatedAt = now();
+  await env.DB.prepare(`
+    UPDATE brief_requests SET
+      name = ?, project = ?, phone = ?, email = ?, contact_preference = ?, preferred_time = ?,
+      activity = ?, service = ?, route = ?, offer_id = ?, offer_name = ?, show_type = ?, content_source = ?,
+      event_type = ?, event_date = ?, event_location = ?, coverage_type = ?, stage = ?, budget = ?,
+      launch_timeline = ?, source = ?, project_link = ?, goal = ?, description = ?, updated_at = ?
+    WHERE id = ?
+  `).bind(
+    values.name, values.project, values.phone, values.email, values.contactPreference, values.preferredTime,
+    values.activity, values.service, values.route, values.offerId, values.offerName, values.showType, values.contentSource,
+    values.eventType, values.eventDate, values.eventLocation, values.coverageType, values.stage, values.budget,
+    values.launchTimeline, values.source, values.projectLink, values.goal, values.description, updatedAt, current.id,
+  ).run();
+
+  const updated = await env.DB.prepare("SELECT * FROM brief_requests WHERE id = ? LIMIT 1").bind(current.id).first();
+  if (!updated) return json({ error: "Request not found." }, 404);
+
+  if (env.STUDIO_EVENTS) {
+    ctx.waitUntil(notifyStudio(env, {
+      type: "brief-updated",
+      referenceCode: updated.reference_code,
+      updatedAt,
+    }).catch((error) => console.error("Zoomix Studio live update failed", error)));
+  }
+
+  return json({ ok: true, brief: editableBrief(updated) });
 }
 
 async function authenticateStudio(request, env) {
@@ -450,6 +623,9 @@ async function api(request, env, ctx) {
   const url = new URL(request.url);
   if (request.method === "OPTIONS") return new Response(null, { status: 204 });
   if (request.method === "POST" && url.pathname === "/api/briefs") return createBrief(request, env, ctx);
+  const editMatch = url.pathname.match(/^\/api\/briefs\/edit\/([a-f0-9]{64})$/i);
+  if (editMatch && request.method === "GET") return getBriefForEdit(request, env, editMatch[1]);
+  if (editMatch && request.method === "PATCH") return updateBriefFromEdit(request, env, ctx, editMatch[1]);
   if (request.method === "POST" && url.pathname === "/api/studio/login") return studioLogin(request, env);
   if (request.method === "POST" && url.pathname === "/api/studio/logout") return studioLogout(request, env);
   if (request.method === "GET" && url.pathname === "/api/studio/requests") return studioRequests(request, env);

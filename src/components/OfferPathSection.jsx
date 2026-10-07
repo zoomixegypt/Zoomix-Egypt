@@ -250,7 +250,7 @@ function getRouteTarget(route) {
 
 const ROUTE_DRAFT_KEY = "zoomix-route-finder-draft";
 
-const OfferPathSection = memo(function OfferPathSection({ standalone = false } = {}) {
+const OfferPathSection = memo(function OfferPathSection({ standalone = false, returnTo = "" } = {}) {
   const { language } = useLanguage();
   const isArabic = language === "ar";
   const text = copy[language];
@@ -336,6 +336,10 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false } =
 
   const chooseOffer = (route, id) => {
     saveRoute(route, id, language);
+    if (returnTo) {
+      window.location.assign(`${returnTo}?route=${encodeURIComponent(route)}&offerId=${encodeURIComponent(id)}`);
+      return;
+    }
     scrollToSection(standalone ? "route-finder-contact" : "contact-section");
   };
 

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { useSearchParams } from "react-router-dom";
 import Cursor from "../components/Cursor";
 import Navbar from "../components/Navbar";
 import OfferPathSection from "../components/OfferPathSection";
@@ -9,6 +10,9 @@ import { useLanguage } from "../i18n";
 export default function RouteFinder() {
   const { language } = useLanguage();
   const isArabic = language === "ar";
+  const [searchParams] = useSearchParams();
+  const editToken = searchParams.get("edit");
+  const returnTo = editToken ? `/brief/edit/${encodeURIComponent(editToken)}` : "";
 
   return (
     <div className="min-h-screen bg-[#F5F4EF] text-[#0A0A0A] selection:bg-[#BBFF00] selection:text-black">
@@ -42,7 +46,7 @@ export default function RouteFinder() {
           </div>
         </div>
         <Suspense fallback={<SectionSkeleton className="min-h-screen" />}>
-          <OfferPathSection standalone />
+          <OfferPathSection standalone returnTo={returnTo} />
         </Suspense>
         <section id="route-finder-contact" className="route-finder-conclusion bg-[#0A0A0A] px-6 py-24 text-white md:px-12 md:py-32" dir={isArabic ? "rtl" : "ltr"}>
           <div className="mx-auto flex max-w-[1400px] flex-col justify-between gap-10 border-t border-white/15 pt-8 md:flex-row md:items-end">
@@ -55,8 +59,8 @@ export default function RouteFinder() {
               {isArabic ? "ابعت لنا تفاصيل مشروعك، وخلي الترشيح يتحول لخطة تنفيذ واضحة." : "Send us the project details and turn the route into a clear execution plan."}
             </p>
           </div>
-            <a href="/#contact-section" className="zoomix-button shrink-0 bg-[#BBFF00] text-black">
-              {isArabic ? "ابعت تفاصيل مشروعك" : "Send your project brief"}
+            <a href={returnTo || "/#contact-section"} className="zoomix-button shrink-0 bg-[#BBFF00] text-black">
+              {returnTo ? (isArabic ? "ارجع للبريف" : "Back to the brief") : (isArabic ? "ابعت تفاصيل مشروعك" : "Send your project brief")}
               <span aria-hidden="true">↗</span>
             </a>
           </div>

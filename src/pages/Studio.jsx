@@ -86,9 +86,13 @@ export default function Studio() {
     events.onmessage = async (event) => {
       try {
         const payload = JSON.parse(event.data);
-        if (payload.type !== "brief-created") return;
+        if (!["brief-created", "brief-updated"].includes(payload.type)) return;
         await loadRequests({ silent: true });
-        setLiveNotice(label("طلب جديد وصل — تم تحديث الاستوديو فورًا.", "A new request arrived — Studio was updated instantly."));
+        setLiveNotice(
+          payload.type === "brief-updated"
+            ? label("تم تعديل بريف — الاستوديو اتحدث فورًا.", "A brief was edited — Studio was updated instantly.")
+            : label("طلب جديد وصل — تم تحديث الاستوديو فورًا.", "A new request arrived — Studio was updated instantly."),
+        );
         window.clearTimeout(liveNoticeTimeoutRef.current);
         liveNoticeTimeoutRef.current = window.setTimeout(() => setLiveNotice(""), 5000);
       } catch {

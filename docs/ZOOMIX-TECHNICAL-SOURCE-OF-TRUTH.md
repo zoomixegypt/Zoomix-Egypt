@@ -3,7 +3,7 @@
 > This file is the operational reference for the live ZOOMIX website and Studio. Update it whenever production architecture, hosting, data, secrets, or deployment behavior changes.
 
 Last verified: 2026-10-07  
-Latest verified commit: `85580e0`
+Latest verified commit: the latest `main` commit for this release
 
 ## 1. Canonical architecture
 
@@ -100,6 +100,7 @@ Schema files, in order:
 1. [`migrations/0001_create_zoomix_studio.sql`](../migrations/0001_create_zoomix_studio.sql)
 2. [`migrations/0002_studio_operations.sql`](../migrations/0002_studio_operations.sql)
 3. [`migrations/0003_create_zoomix_analytics.sql`](../migrations/0003_create_zoomix_analytics.sql)
+4. [`migrations/0004_brief_edit_links.sql`](../migrations/0004_brief_edit_links.sql)
 
 Expected tables:
 
@@ -107,6 +108,8 @@ Expected tables:
 - `studio_sessions`
 - `brief_rate_limits`
 - `analytics_events`
+
+`brief_requests` also contains the nullable `edit_token_hash` and `edit_token_expires_at` columns added by migration 0004. Existing requests remain readable; only new requests receive an edit link.
 
 The expected table count is 4.
 
@@ -132,7 +135,11 @@ GET  /api/studio/insights
 GET  /api/studio/export.csv
 GET  /api/studio/backup.json
 POST /api/analytics/events
+GET  /api/briefs/edit/:token
+PATCH /api/briefs/edit/:token
 ```
+
+The public edit link is created when a brief is submitted. The raw token is returned only to the client, while D1 stores its SHA-256 hash. Links expire after 30 days and expose only client-editable fields; Studio status and internal notes are never editable through the link. Before releasing this feature, paste `migrations/0004_brief_edit_links.sql` into the production `zoomix-studio` D1 Console because this project intentionally applies D1 schema changes from the correct Cloudflare account manually.
 
 Current status values:
 
@@ -151,6 +158,8 @@ The brief keeps the same ZOOMIX visual language and page layout, but the form is
 3. Send: preferred contact method, only the contact fields required for that method, consent, and submission.
 
 Route Finder and package choices are carried into the brief and are not requested a second time. The client can use **Change selection** to return to Route Finder. Optional and route-specific fields remain hidden until they are useful.
+
+The details step keeps one combined “goal and details” field instead of asking for a separate goal and description. The form saves a non-sensitive local draft so a client does not lose their work when changing the Route Finder selection. After submission, the client receives a private edit link; the edit page updates the same Studio request and can send the client back through Route Finder to replace the selected route or offer.
 
 ## 7. Verification checklist after every production change
 
@@ -207,3 +216,13 @@ Relevant commits:
 - `3ce2f78` — initial D1 binding attempt (wrong account ID; superseded)
 - `5b84b4f` — bind Studio to the Zoomix D1 database
 - `85580e0` — turn the project brief into a guided Wizard
+- latest `main` commit — add secure client brief editing
+
+### 2026-10-07 — Add secure client brief editing
+
+- Added a 30-day, high-entropy edit token for every new brief; only its SHA-256 hash is stored in D1.
+- Added a branded `/brief/edit/:token` page with bilingual client-editable fields.
+- Added `GET` and `PATCH /api/briefs/edit/:token` without exposing Studio authentication or internal notes/status.
+- Added a Route Finder return path so clients can change the route or offer and continue editing the same brief.
+- Added local brief draft persistence, a combined goal/details field, estimated form time, and a short step transition.
+- Added Studio live-update handling for client edits.

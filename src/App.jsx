@@ -2,6 +2,7 @@ import { lazy, Suspense, useLayoutEffect } from "react";
 import { Routes, Route, useLocation, useNavigationType } from "react-router-dom";
 import Home from "./pages/Home";
 import Studio from "./pages/Studio";
+import BriefEdit from "./pages/BriefEdit";
 import ProjectDetailModal from "./components/projects/ProjectDetailModal";
 import SectionSkeleton from "./components/SectionSkeleton";
 import AnalyticsConsent from "./components/AnalyticsConsent";
@@ -115,6 +116,7 @@ export default function App() {
       <Routes location={backgroundLocation || location}>
         <Route path="/" element={<Home />} />
         <Route path="/studio" element={<Studio />} />
+        <Route path="/brief/edit/:token" element={<BriefEdit />} />
         <Route path="/route-finder" element={<Suspense fallback={<SectionSkeleton className="min-h-screen" />}><RouteFinder /></Suspense>} />
         <Route path="/projects/:slug" element={<ProjectDetailModal />} />
       </Routes>

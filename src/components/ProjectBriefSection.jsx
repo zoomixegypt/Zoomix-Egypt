@@ -147,12 +147,23 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
   const [whatsappBlocked, setWhatsappBlocked] = useState(false);
   const [messageCopied, setMessageCopied] = useState(false);
   const [referenceCode, setReferenceCode] = useState("");
+  const [editUrl, setEditUrl] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [wizardStep, setWizardStep] = useState(1);
+  const [draftLoaded, setDraftLoaded] = useState(false);
   const sectionRef = useRef(null);
   const briefStartedRef = useRef(false);
 
   useEffect(() => {
+    try {
+      const draft = JSON.parse(window.localStorage.getItem("zoomix-brief-draft") || "null");
+      if (draft && typeof draft === "object" && !Array.isArray(draft)) {
+        setForm((current) => ({ ...current, ...draft, website: "", consent: false }));
+      }
+    } catch {
+      // Ignore malformed local draft data and start with a clean form.
+    }
+
     const applyPackage = (id) => {
       setForm((current) => ({
         ...current,
@@ -188,6 +199,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
     } catch {
       // Ignore malformed local selection and keep the form empty.
     }
+    setDraftLoaded(true);
     const onPackageSelect = (event) => applyPackage(event.detail);
     const onRouteSelect = (event) => applyRoute(event.detail);
     window.addEventListener("zoomix:package-select", onPackageSelect);
@@ -197,6 +209,16 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       window.removeEventListener("zoomix:route-select", onRouteSelect);
     };
   }, []);
+
+  useEffect(() => {
+    if (!draftLoaded || submitted) return;
+    try {
+      const { website, consent, ...draft } = form;
+      window.localStorage.setItem("zoomix-brief-draft", JSON.stringify(draft));
+    } catch {
+      // Draft persistence is best-effort and should never block the brief.
+    }
+  }, [draftLoaded, form, submitted]);
 
   useEffect(() => {
     const node = sectionRef.current;
@@ -270,7 +292,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
     "one-thing": label("خدمة واحدة", "One thing — one specific service"),
   };
 
-  const buildMessage = (reference = referenceCode) => {
+  const buildMessage = (reference = referenceCode, link = editUrl) => {
     const lines = [
       [label("الاسم", "Name"), form.name],
       [label("اسم المشروع", "Project"), form.project],
@@ -288,12 +310,12 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       [label("الميزانية التقريبية", "Approx. budget"), optionLabel(BUDGET_OPTIONS, form.budget)],
       [label("التوقيت المطلوب", "Timeline"), optionLabel(TIMELINE_OPTIONS, form.launchDate)],
       [label("رابط المشروع", "Project link"), form.projectLink],
-      [label("الهدف الأساسي", "Main goal"), form.goal],
+      [label("الهدف والتفاصيل", "Goal and details"), form.description],
       [label("وسيلة التواصل", "Preferred contact"), optionLabel(CONTACT_OPTIONS, form.contactPreference)],
       [label("الإيميل", "Email"), form.email],
       [label("الوقت المفضل للمكالمة", "Preferred call time"), optionLabel(CALL_TIME_OPTIONS, form.preferredTime)],
       [label("رقم الطلب", "Reference"), reference],
-      [label("الوصف", "Description"), form.description],
+      [label("رابط تعديل البريف", "Brief edit link"), link],
     ].filter(([, value]) => String(value ?? "").trim());
 
     return ["ZOOMIX PROJECT BRIEF", ...lines.map(([key, value]) => `${key}: ${value}`)].join("\n");
@@ -387,17 +409,19 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       const response = await fetch("/api/briefs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, service: resolvedService, offerName: selectedOfferName }),
+        body: JSON.stringify({ ...form, goal: form.goal || form.description, service: resolvedService, offerName: selectedOfferName }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || label("حصلت مشكلة أثناء حفظ الطلب.", "We could not save the brief."));
       setReferenceCode(result.referenceCode || "");
+      setEditUrl(result.editUrl || "");
       setSubmitted(true);
+      window.localStorage.removeItem("zoomix-brief-draft");
       trackEvent("brief_submitted", { route: form.route || "unknown", package_id: form.offerId || form.packageId || "none" });
       if (form.contactPreference === "whatsapp") {
         trackEvent("send_to_whatsapp", { route: form.route || "unknown", package_id: form.offerId || form.packageId || "none" });
         const whatsappWindow = window.open(
-          `https://wa.me/201555451535?text=${encodeURIComponent(buildMessage(result.referenceCode))}`,
+          `https://wa.me/201555451535?text=${encodeURIComponent(buildMessage(result.referenceCode, result.editUrl))}`,
           "_blank",
           "noopener,noreferrer",
         );
@@ -557,6 +581,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 <div>
                   <p className="font-mono text-[11px] font-bold tracking-[0.18em] text-black/45">ZOOMIX / PROJECT BRIEF</p>
                   <p className="mt-2 text-xl font-black tracking-[-0.03em]">{label("خلّي الخطوة واضحة.", "MAKE THE NEXT MOVE CLEAR.")}</p>
+                  <p className="mt-2 text-xs text-black/45">{label("3 خطوات قصيرة · أقل من دقيقتين", "3 short steps · under two minutes")}</p>
                 </div>
                 <span className="font-mono text-xs font-bold tracking-[0.16em] text-black/50">
                   {String(briefStep).padStart(2, "0")} / 03
@@ -580,6 +605,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 )}
               </div>
             )}
+            <div key={wizardStep} className="sm:col-span-2 grid grid-cols-1 gap-5 sm:grid-cols-2 brief-step-content">
             {wizardStep === 1 && (
               <>
                 {field("name", label("الاسم *", "Name *"), "text", true)}
@@ -648,17 +674,17 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 </div>
                 {selectField("budget", label("الميزانية التقريبية", "Approx. budget"), BUDGET_OPTIONS)}
                 {selectField("launchDate", label("التوقيت المطلوب", "When do you want to start?"), TIMELINE_OPTIONS)}
-                {field("projectLink", label("رابط المشروع أو الملفات (اختياري)", "Project or files link (optional)"), "url")}
-                {field("goal", label("الهدف الأساسي", "Main goal"))}
+                {field("projectLink", label("عندك حاجة نراجعها؟ (اختياري)", "Anything we should review? (optional)"), "url")}
                 <label className="block sm:col-span-2">
                   <span className="mb-2 block font-mono text-xs font-bold uppercase tracking-[0.08em] text-black/75">
-                    {label("وصف مختصر *", "Short description *")}
+                    {label("إيه اللي عاوز توصله؟ واحكيلنا عنه باختصار *", "What should this move achieve? *")}
                   </span>
                   <textarea
                     id="brief-description"
                     rows="5"
                     value={form.description}
                     onChange={(event) => updateField("description", event.target.value)}
+                    placeholder={label("مثال: عاوز نطلع بهوية أو محتوى يخلي المشروع جاهز للظهور.", "Example: I want a clear identity or content system that makes the project ready to show up.")}
                     className={`min-h-36 min-w-0 w-full resize-y border bg-white px-4 py-3.5 outline-none transition-colors focus:border-[#6b8d00] focus:ring-2 focus:ring-[#BBFF00]/35 ${errors.description ? "border-red-500" : "border-black/25"}`}
                     aria-invalid={Boolean(errors.description)}
                     aria-describedby={errors.description ? "brief-description-error" : undefined}
@@ -740,6 +766,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 </div>
               </>
             )}
+            </div>
             {submitError && (
               <div className="sm:col-span-2 border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
                 <p>{submitError}</p>
@@ -764,17 +791,29 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
               </div>
             )}
             {submitted && (
-              <p
-                className="sm:col-span-2 flex items-center gap-2 text-sm text-[#4d6900]"
+              <div
+                className="sm:col-span-2 flex flex-col gap-3 border border-[#6b8d00]/30 bg-[#BBFF00]/10 p-4 text-sm text-[#4d6900]"
                 role="status"
                 aria-live="polite"
               >
-                <Check size={16} />
-                {form.contactPreference === "whatsapp"
-                  ? label("تم حفظ البريف وفتح واتساب.", "Brief saved and WhatsApp opened.")
-                  : label("تم حفظ البريف. هنتواصل معاك بالطريقة اللي اخترتها.", "Brief saved. We will follow up using your preferred contact method.")}
-                {referenceCode && <span className="font-mono font-bold">{referenceCode}</span>}
-              </p>
+                <p className="flex items-center gap-2">
+                  <Check size={16} />
+                  {form.contactPreference === "whatsapp"
+                    ? label("تم حفظ البريف وفتح واتساب.", "Brief saved and WhatsApp opened.")
+                    : label("تم حفظ البريف. هنتواصل معاك بالطريقة اللي اخترتها.", "Brief saved. We will follow up using your preferred contact method.")}
+                  {referenceCode && <span className="font-mono font-bold">{referenceCode}</span>}
+                </p>
+                {editUrl && (
+                  <a
+                    href={editUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex w-fit items-center gap-2 font-bold underline decoration-[#6b8d00]/40 underline-offset-4 transition-colors hover:text-black"
+                  >
+                    {label("احتفظ برابط تعديل البريف", "Keep your brief edit link")} <span aria-hidden="true">↗</span>
+                  </a>
+                )}
+              </div>
             )}
           </form>
         </div>
