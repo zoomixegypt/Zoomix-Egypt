@@ -40,7 +40,7 @@
   "scripts": {
     "start": "vite --host 0.0.0.0",
     "dev": "vite --host 0.0.0.0",
-    "build": "vite build",
+    "build": "vite build && node scripts/prepare-pages-routes.mjs",
     "preview": "vite preview --host 0.0.0.0",
     "check": "npm run build && npm audit --omit=dev",
     "format": "prettier --write .",
