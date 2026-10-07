@@ -3,26 +3,13 @@
   "name": "zoomix-egypt",
   "pages_build_output_dir": "./build",
   "compatibility_date": "2026-10-06",
+  "compatibility_flags": ["nodejs_compat"],
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "zoomix-studio",
       "database_id": "0c32feb5-4941-403f-960d-0b3af18651b3",
       "migrations_dir": "./migrations"
-    }
-  ],
-  "durable_objects": {
-    "bindings": [
-      {
-        "name": "STUDIO_EVENTS",
-        "class_name": "StudioLiveUpdates"
-      }
-    ]
-  },
-  "migrations": [
-    {
-      "tag": "v1",
-      "new_classes": ["StudioLiveUpdates"]
     }
   ]
 }
