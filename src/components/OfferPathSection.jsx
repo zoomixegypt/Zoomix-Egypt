@@ -600,7 +600,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
   ].filter(Boolean).join("\n");
 
   const resumeCopy = restoredDraft?.step === 3
-    ? text.resumeResult
+    ? `${text.resumeResult}${resultOfferName ? ` ${isArabic ? "ترشيحك:" : "Recommendation:"} ${resultOfferName}.` : ""}`
     : text.resumeDraft.replace("{step}", String(restoredDraft?.step || 1));
 
   const scrollToRouteStory = (route) => {
@@ -715,11 +715,6 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
     trackEvent("route_finder_share_result", { method: "whatsapp", route: recommendation.route, package_id: primaryOffer?.id || "" });
   };
 
-  const openPackagePreview = (offer, kind, route = recommendation.route) => {
-    setPreviewPackage({ offer, kind, route });
-    trackEvent("route_finder_package_preview", { package_id: offer.id, route });
-  };
-
   const startQuickMatch = () => {
     setMode("quiz");
     window.requestAnimationFrame(() => scrollToSection("next-move-quick-match"));
@@ -749,10 +744,10 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
         </div>
 
         {standalone && restoredDraft && (
-          <div className="route-finder-resume mb-8 flex flex-col gap-4 border border-[#789900]/40 bg-[#BBFF00]/10 p-4 md:flex-row md:items-center md:justify-between md:p-5" role="status">
+          <div className="route-finder-resume mb-8 flex flex-col gap-4 border-2 border-[#789900] bg-[#BBFF00]/15 p-5 shadow-[5px_5px_0_#0A0A0A] md:flex-row md:items-center md:justify-between" role="status">
             <div>
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#5e7c00]">ZOOMIX / SAVED PROGRESS</span>
-              <p className="mt-2 text-sm font-bold leading-6 text-black/75">{resumeCopy}</p>
+              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#4d6500]">ZOOMIX / {isArabic ? "ترشيح محفوظ" : "SAVED RECOMMENDATION"}</span>
+              <p className="mt-2 max-w-2xl text-base font-black leading-7 text-black/85">{resumeCopy}</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <button type="button" onClick={() => { setRestoredDraft(null); setMode("quiz"); window.requestAnimationFrame(() => scrollToSection("next-move-quick-match")); }} className="zoomix-button min-h-11 bg-[#BBFF00] text-black">{text.resumeDraftAction}</button>
@@ -883,7 +878,6 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
                                     {group.packages.map((offer) => {
                                       const outputs = offer.outputs?.[language] || [];
                                       const packageKey = `${route.value}-${offer.id}`;
-                                      const visibleOutputs = outputs.slice(0, 3);
                                       const offerName = getOfferName(offer, language);
                                       return (
                                         <article key={offer.id} className={`route-package-card flex h-full flex-col border p-4 transition-colors ${offer.featured ? "route-package-card--featured border-[#789900] bg-[#F3F9DE]" : "border-black/15 bg-[#F5F4EF]"}`}>
@@ -902,14 +896,8 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
                                             <div className="mt-4">
                                               <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-black/40">{text.packageIncludes}</span>
                                               <ul id={`package-outputs-${packageKey}`} className="mt-2 space-y-1.5 text-xs leading-5 text-black/70">
-                                                {visibleOutputs.map((output) => <li key={output} className="flex gap-2"><span className="text-[#789900]">+</span><span>{output}</span></li>)}
+                                                {outputs.map((output) => <li key={output} className="flex gap-2"><span className="text-[#789900]">+</span><span>{output}</span></li>)}
                                               </ul>
-                                              {outputs.length > 3 && (
-                                                <button type="button" onClick={() => openPackagePreview(offer, group.kind, group.route)} aria-haspopup="dialog" className="route-output-toggle mt-3 inline-flex items-center gap-2 border-b border-black/25 pb-1 text-[11px] font-bold text-black/55 transition-colors hover:border-black hover:text-black">
-                                                  <ChevronDown aria-hidden="true" size={14} strokeWidth={2.5} />
-                                                  {text.previewOutputs}
-                                                </button>
-                                              )}
                                             </div>
                                           )}
 

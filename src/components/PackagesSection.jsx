@@ -54,9 +54,6 @@ function OfferTierCard({ offer, language, route, isStart, index, mobileCard = fa
   const name = labelFor(offer.name, language);
   const description = labelFor(offer.description || offer.tagline, language);
   const outputs = offer.outputs?.[language] || [];
-  const visibleOutputs = outputs.slice(0, 4);
-  const hiddenOutputs = outputs.slice(4);
-  const [detailsOpen, setDetailsOpen] = useState(false);
   const priceSuffix = route === "continue" ? (isArabic ? "جنيه / شهريًا" : "EGP / month") : isArabic ? "جنيه" : "EGP";
   const note = offer.duration
     ? `${isArabic ? "المدة:" : "Duration:"} ${labelFor(offer.duration, language)}`
@@ -87,99 +84,13 @@ function OfferTierCard({ offer, language, route, isStart, index, mobileCard = fa
 
       <div className="my-5 h-px bg-white/15" />
       <ul className="space-y-2 text-sm leading-6 text-white/75">
-        {visibleOutputs.map((output) => (
+        {outputs.map((output) => (
           <li key={output} className="flex items-start gap-2">
             <Check size={15} className="mt-1 shrink-0 text-[#BBFF00]" aria-hidden="true" />
             <span>{output}</span>
           </li>
         ))}
       </ul>
-      {hiddenOutputs.length > 0 && (
-        <>
-        <details className="package-inline-details mt-4 hidden border-t border-white/10 pt-3 md:block">
-          <summary className="cursor-pointer text-xs font-bold text-white/60 hover:text-white">
-            {isArabic ? "شوف باقي المخرجات" : "See remaining outputs"}
-          </summary>
-          <ul className="mt-3 space-y-2 text-sm leading-6 text-white/65">
-            {hiddenOutputs.map((output) => (
-              <li key={output} className="flex items-start gap-2">
-                <Check size={15} className="mt-1 shrink-0 text-[#BBFF00]" aria-hidden="true" />
-                <span>{output}</span>
-              </li>
-            ))}
-          </ul>
-        </details>
-        <button
-          type="button"
-          onClick={() => setDetailsOpen(true)}
-          className="package-mobile-details mt-4 inline-flex min-h-11 items-center gap-2 border-t border-white/10 pt-3 text-xs font-bold text-white/60 md:hidden"
-          aria-haspopup="dialog"
-          aria-expanded={detailsOpen}
-        >
-          {isArabic ? "شوف باقي المخرجات" : "See remaining outputs"}
-          <span aria-hidden="true">↗</span>
-        </button>
-        {detailsOpen && (
-          <div
-            className="package-details-sheet fixed inset-0 z-[80] flex items-end bg-black/70 backdrop-blur-[2px] md:hidden"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={`package-details-title-${offer.id}`}
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) setDetailsOpen(false);
-            }}
-          >
-            <div className="w-full max-h-[82vh] overflow-y-auto rounded-t-[22px] border border-white/15 bg-[#0A0A0A] p-5 text-white shadow-[0_-20px_80px_rgba(0,0,0,0.4)]">
-              <div className="mb-5 flex items-start justify-between gap-4 border-b border-white/15 pb-4">
-                <div>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#BBFF00]">
-                    {isArabic ? "مخرجات الباقة" : "PACKAGE OUTPUTS"}
-                  </span>
-                  <h5 id={`package-details-title-${offer.id}`} className={`${isArabic ? "font-arabic" : "font-display"} mt-2 text-2xl font-black`}>
-                    {name}
-                  </h5>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setDetailsOpen(false)}
-                  aria-label={isArabic ? "إغلاق التفاصيل" : "Close details"}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center border border-white/20 text-2xl text-white/75"
-                >
-                  ×
-                </button>
-              </div>
-              <ul className="space-y-3 text-sm leading-6 text-white/75">
-                {hiddenOutputs.map((output) => (
-                  <li key={output} className="flex items-start gap-2">
-                    <Check size={15} className="mt-1 shrink-0 text-[#BBFF00]" aria-hidden="true" />
-                    <span>{output}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-6 flex gap-3 border-t border-white/15 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDetailsOpen(false);
-                    saveSelection(route, offer.id, isStart, language);
-                  }}
-                  className="zoomix-button min-h-11 flex-1 bg-[#BBFF00] text-[#0A0A0A]"
-                >
-                  {isArabic ? "اختار المسار" : "Choose this route"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDetailsOpen(false)}
-                  className="zoomix-button min-h-11 border-white/25 text-white/80"
-                >
-                  {isArabic ? "رجوع" : "Back"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        </>
-      )}
       {note && <p className="mt-5 text-xs leading-5 text-white/65">{note}</p>}
       <button
         type="button"

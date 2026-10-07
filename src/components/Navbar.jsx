@@ -72,6 +72,7 @@ const Navbar = memo(function Navbar() {
     const lenis = window.lenisInstance;
 
     if (isMenuOpen) {
+      document.body.classList.add("mobile-menu-open");
       previousBodyOverflowRef.current = document.body.style.overflow;
       document.body.style.overflow = "hidden";
 
@@ -83,6 +84,7 @@ const Navbar = memo(function Navbar() {
       return;
     }
 
+    document.body.classList.remove("mobile-menu-open");
     document.body.style.overflow = previousBodyOverflowRef.current;
 
     if (menuStoppedLenisRef.current && lenis && typeof lenis.start === "function") {
@@ -93,6 +95,7 @@ const Navbar = memo(function Navbar() {
 
   useEffect(
     () => () => {
+      document.body.classList.remove("mobile-menu-open");
       document.body.style.overflow = previousBodyOverflowRef.current;
     },
     [],

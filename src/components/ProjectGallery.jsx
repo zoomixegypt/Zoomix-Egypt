@@ -487,7 +487,7 @@ export default function ProjectGallery({ onOpenProject }) {
               {/* Number badge */}
               <div className="absolute top-4 right-4 z-10">
                 <span className="font-mono text-3xl font-light text-white/15 tracking-wider">
-                  0{project.id}
+                  {String(project.id).padStart(2, "0")}
                 </span>
               </div>
 
@@ -500,9 +500,9 @@ export default function ProjectGallery({ onOpenProject }) {
                   </span>
                 </div>
                 {project.isConcept && (
-                  <span className="mb-2 inline-flex border border-[#BBFF00] bg-[#BBFF00]/90 px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-black shadow-[0_0_12px_rgba(187,255,0,0.2)]">
+                  <span className="mb-3 inline-flex border-2 border-[#BBFF00] bg-[#BBFF00] px-2.5 py-1.5 font-mono text-[10px] font-black uppercase tracking-[0.14em] text-black shadow-[0_0_18px_rgba(187,255,0,0.28)]">
                     {project.isSelfInitiated
-                      ? project.badge
+                      ? `${language === "ar" ? "Concept" : "Self-initiated"} · ${project.badge}`
                       : language === "ar"
                         ? "مشروع Concept"
                         : "Concept project"}
@@ -647,9 +647,9 @@ export default function ProjectGallery({ onOpenProject }) {
                       </span>
                     </div>
                     {project.isConcept && (
-                      <span className="mb-3 inline-flex border border-[#BBFF00] bg-[#BBFF00]/90 px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-black shadow-[0_0_14px_rgba(187,255,0,0.2)]">
+                      <span className="mb-3 inline-flex border-2 border-[#BBFF00] bg-[#BBFF00] px-2.5 py-1.5 font-mono text-[10px] font-black uppercase tracking-[0.14em] text-black shadow-[0_0_18px_rgba(187,255,0,0.28)]">
                         {project.isSelfInitiated
-                          ? project.badge
+                          ? `${language === "ar" ? "Concept" : "Self-initiated"} · ${project.badge}`
                           : language === "ar"
                             ? "مشروع Concept"
                             : "Concept project"}
@@ -685,7 +685,7 @@ export default function ProjectGallery({ onOpenProject }) {
                     NO.
                   </span>
                   <span className="font-mono text-5xl font-light text-white/20 tracking-[0.18em] group-hover:text-white/40 transition-colors duration-500">
-                    0{project.id}
+                    {String(project.id).padStart(2, "0")}
                   </span>
                 </div>
               </Gsap.div>

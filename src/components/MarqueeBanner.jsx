@@ -23,9 +23,6 @@ const MarqueeBanner = memo(function MarqueeBanner() {
         ];
   const marqueeFont =
     language === "ar" ? "font-arabic tracking-normal" : "font-display tracking-[-0.03em]";
-  const scrollToSkill = (target) => {
-    document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
   return (
     <div
       dir={language === "ar" ? "rtl" : "ltr"}
@@ -44,18 +41,18 @@ const MarqueeBanner = memo(function MarqueeBanner() {
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
+                aria-hidden={i > 0 ? "true" : undefined}
                 className={`flex items-center gap-5 text-base font-extrabold uppercase sm:gap-8 sm:text-2xl md:gap-14 md:text-4xl ${marqueeFont}`}
               >
                 {skills.map((skill, j) => (
                   <span key={j} className="flex items-center gap-5 sm:gap-8 md:gap-14">
-                    <button
-                      type="button"
-                      onClick={() => scrollToSkill(skill.target)}
-                      className="marquee-skill-button text-[#BBFF00] hover:text-white transition-all duration-300 hover:drop-shadow-[0_0_12px_rgba(187,255,0,0.6)]"
+                    <span
+                      aria-hidden={i > 0 ? "true" : undefined}
+                      className="text-[#BBFF00]"
                     >
                       {skill.label}
-                    </button>
-                    <span className="text-[#BBFF00]/30 text-xs">✦</span>
+                    </span>
+                    <span className="text-[#BBFF00]/30 text-xs" aria-hidden="true">✦</span>
                   </span>
                 ))}
               </div>
@@ -68,7 +65,7 @@ const MarqueeBanner = memo(function MarqueeBanner() {
         </div>
 
         {/* ── Row 2: Green background, scrolling right ── */}
-        <div className="relative overflow-hidden bg-[#BBFF00] py-2 sm:py-3 md:py-4">
+        <div className="relative overflow-hidden bg-[#BBFF00] py-2 sm:py-3 md:py-4" aria-hidden="true">
           <div
             className="group flex w-max whitespace-nowrap gap-5 will-change-transform hover:[animation-play-state:paused] sm:gap-8 md:gap-12"
             dir="ltr"
@@ -83,14 +80,13 @@ const MarqueeBanner = memo(function MarqueeBanner() {
               >
                 {skills.map((skill, j) => (
                   <span key={j} className="flex items-center gap-5 sm:gap-8 md:gap-12">
-                    <button
-                      type="button"
-                      onClick={() => scrollToSkill(skill.target)}
-                      className="marquee-skill-button text-black hover:text-white transition-colors duration-300"
+                    <span
+                      aria-hidden={i > 0 ? "true" : undefined}
+                      className="text-black"
                     >
                       {skill.label}
-                    </button>
-                    <span className="text-black/25 text-xs">◆</span>
+                    </span>
+                    <span className="text-black/25 text-xs" aria-hidden="true">◆</span>
                   </span>
                 ))}
               </div>

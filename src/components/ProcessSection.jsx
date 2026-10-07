@@ -106,7 +106,7 @@ const ProcessSection = memo(function ProcessSection() {
             </p>
           </div>
           <a href="/route-finder" className="zoomix-button w-full shrink-0 justify-center bg-[#BBFF00] text-black sm:w-auto">
-            {isArabic ? "اختيار سريع — 3 أسئلة" : "Quick match — 3 questions"}
+            {isArabic ? "حدد خطوتك — 3 أسئلة" : "Find your next move — 3 questions"}
             <ActionArrow size={18} aria-hidden="true" />
           </a>
         </div>

@@ -10,7 +10,7 @@
   --zoomix-gray: #a5a5a5;
   --zoomix-border: rgba(165, 165, 165, 0.28);
   --zoomix-radius: 0;
-  --zoomix-space-section: clamp(5rem, 10vw, 10rem);
+  --zoomix-space-section: clamp(4.5rem, 8vw, 8rem);
   --zoomix-ease: cubic-bezier(0.16, 1, 0.3, 1);
   --font-sans: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-display: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -1055,13 +1055,6 @@
   display: none;
 }
 
-.marquee-skill-button {
-  align-items: center;
-  display: inline-flex;
-  min-height: 2.75rem;
-  padding-inline: 0.25rem;
-}
-
 .project-brief-form {
   font-family: var(--font-sans);
 }
@@ -1151,6 +1144,13 @@
     position: fixed;
     right: 0;
     z-index: 55;
+  }
+
+  body.mobile-menu-open .mobile-bottom-bar {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(100%);
+    transition: opacity 180ms ease, transform 220ms ease;
   }
 
   .mobile-bottom-bar__inner {
@@ -1374,6 +1374,12 @@
   .project-brief-form,
   .project-brief-form .brief-step-content {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .project-brief-form .brief-progress-header {
+    position: sticky;
+    top: 4.75rem;
+    z-index: 4;
   }
 
   .project-brief-form > .sm\:col-span-2,

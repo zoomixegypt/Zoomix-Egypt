@@ -38,7 +38,7 @@ export default function RouteFinder() {
                 {isArabic ? "3 أسئلة قصيرة توصلك للمسار والخدمة أو الباقة الأقرب لمشروعك." : "Three short questions take you to the route, service or package closest to your project."}
               </p>
             </div>
-            <a href="/" className="shrink-0 font-mono text-[10px] uppercase tracking-[0.18em] text-black/45 transition-colors hover:text-black">
+            <a href="/" className="inline-flex min-h-11 shrink-0 items-center py-2 font-mono text-[10px] uppercase tracking-[0.18em] text-black/55 transition-colors hover:text-black">
               ← {isArabic ? "ارجع للموقع" : "Back to Zoomix"}
             </a>
           </div>
@@ -49,7 +49,7 @@ export default function RouteFinder() {
           </div>
           <div className="route-finder-page-cta mt-8 flex flex-wrap gap-3">
             <a href="#route-mode-chooser" className="zoomix-button bg-[#0A0A0A] text-white hover:bg-[#BBFF00] hover:text-black">
-              {isArabic ? "ابدأ الأسئلة" : "Start the questions"}
+              {isArabic ? "حدد خطوتك" : "Find your next move"}
               <ActionArrow size={18} aria-hidden="true" />
             </a>
             <a href="/#packages-section" className="zoomix-button border-black/25 text-black hover:border-black hover:bg-white">

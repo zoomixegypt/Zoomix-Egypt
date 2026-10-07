@@ -605,7 +605,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
             className="project-brief-form relative grid min-w-0 gap-5 overflow-hidden border border-white/10 bg-[#F5F4EF] p-5 text-[#0A0A0A] shadow-[0_16px_60px_rgba(0,0,0,0.22)] sm:grid-cols-2 md:p-10"
           >
             <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-[#BBFF00]" />
-            <div className="sm:col-span-2 -mx-4 -mt-4 border-b border-black/15 bg-white px-4 pb-5 pt-6 sm:-mx-5 sm:-mt-5 sm:px-5 md:-mx-10 md:-mt-10 md:px-10">
+            <div className="brief-progress-header sm:col-span-2 -mx-4 -mt-4 border-b border-black/15 bg-white px-4 pb-5 pt-6 sm:-mx-5 sm:-mt-5 sm:px-5 md:-mx-10 md:-mt-10 md:px-10">
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
                   <p className="font-mono text-[11px] font-bold tracking-[0.18em] text-black/65">ZOOMIX / PROJECT BRIEF</p>
@@ -613,7 +613,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                   <p className="mt-2 text-xs text-black/65">{label("3 خطوات قصيرة · أقل من دقيقتين", "3 short steps · under two minutes")}</p>
                 </div>
                 <span className="font-mono text-xs font-bold tracking-[0.16em] text-black/65" dir="ltr" style={{ unicodeBidi: "isolate" }}>
-                  {String(briefStep).padStart(2, "0")} / 03
+                  {label("الخطوة", "STEP")} {String(briefStep).padStart(2, "0")} / 03 · {label(briefSteps[briefStep - 1].ar, briefSteps[briefStep - 1].en)}
                 </span>
               </div>
               <div className="mt-5 h-1 bg-black/10">
