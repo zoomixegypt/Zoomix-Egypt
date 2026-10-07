@@ -69,6 +69,14 @@ const copy = {
     saveResult: "احفظ الترشيح",
     shareResult: "شارك النتيجة",
     whatsappResult: "ابعت الترشيح على واتساب",
+    resultMoreActions: "احفظ أو شارك الترشيح",
+    whyRecommendation: "ليه الترشيح ده مناسب؟",
+    recommendationReasonAnswers: "اختياراتك كانت",
+    recommendationReasonRoute: "المسار ده مناسب لأن",
+    recommendationReasonOutputs: "هتخرج منه بـ",
+    resumeDraft: "كنت وقفت عند السؤال {step} من 3 — كمّل من حيث توقفت.",
+    resumeResult: "الترشيح محفوظ — تقدر تراجعه وتكمّل تفاصيل مشروعك.",
+    resumeDraftAction: "كمّل من هنا",
     savedResult: "الترشيح محفوظ عندك",
     copiedResult: "اتنسخ ملخص الترشيح",
     sharedResult: "النتيجة جاهزة للمشاركة",
@@ -213,6 +221,14 @@ const copy = {
     saveResult: "Save recommendation",
     shareResult: "Share result",
     whatsappResult: "Send recommendation on WhatsApp",
+    resultMoreActions: "Save or share this recommendation",
+    whyRecommendation: "Why this recommendation fits",
+    recommendationReasonAnswers: "Your choices",
+    recommendationReasonRoute: "This route fits because",
+    recommendationReasonOutputs: "You will leave with",
+    resumeDraft: "You stopped at question {step} of 3 — continue where you left off.",
+    resumeResult: "Your recommendation is saved — review it and continue with your project details.",
+    resumeDraftAction: "Continue from here",
     savedResult: "Recommendation saved",
     copiedResult: "Recommendation summary copied",
     sharedResult: "Result ready to share",
@@ -444,6 +460,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
   const [expandedAlternativeId, setExpandedAlternativeId] = useState("");
   const [previewPackage, setPreviewPackage] = useState(null);
   const [shareStatus, setShareStatus] = useState("");
+  const [restoredDraft, setRestoredDraft] = useState(null);
   const alternativeTouchStartY = useRef(null);
   const previewTouchStartY = useRef(null);
   const routeRefs = useRef({});
@@ -454,6 +471,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
   useEffect(() => {
     try {
       const draft = JSON.parse(window.sessionStorage.getItem(ROUTE_DRAFT_KEY) || "null");
+      const hasDraftAnswers = Boolean(draft?.answers && Object.values(draft.answers).some(Boolean));
       if (draft?.answers) setAnswers((current) => ({ ...current, ...draft.answers }));
       if (draft?.step >= 1 && draft.step <= 3) setStep(draft.step);
       if (draft?.mode === "quiz" || draft?.mode === "explore") setMode(draft.mode);
@@ -461,8 +479,12 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
       const params = new URLSearchParams(window.location.search);
       const sharedAnswers = getAnswersFromSharedResult(params.get("route"), params.get("offerId"));
       if (sharedAnswers) {
+        setRestoredDraft(null);
         setAnswers(sharedAnswers);
         setStep(3);
+        setMode("quiz");
+      } else if (standalone && hasDraftAnswers) {
+        setRestoredDraft({ step: Math.min(Math.max(Number(draft.step) || 1, 1), 3) });
         setMode("quiz");
       }
     } catch {
@@ -562,6 +584,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
   ].filter(Boolean);
   const currentQuestion = step === 1 ? text.questions.stage : step === 2 ? text.questions.need : text.questions.goal;
   const selectedRouteData = text.routeMap.find((route) => route.value === selectedRoute) || text.routeMap[0];
+  const recommendedRouteData = text.routeMap.find((route) => route.value === recommendation.route) || text.routeMap[0];
   const conversationReply = getConversationReply(text, answers);
   const resultOfferName = primaryOffer ? getOfferName(primaryOffer, language) : "";
   const resultOfferPrice = primaryOffer ? getOfferPrice(primaryOffer, language, text, recommendation.kind) : "";
@@ -575,6 +598,10 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
     `${text.packageTiming}: ${primaryTiming}`,
     resultUrl,
   ].filter(Boolean).join("\n");
+
+  const resumeCopy = restoredDraft?.step === 3
+    ? text.resumeResult
+    : text.resumeDraft.replace("{step}", String(restoredDraft?.step || 1));
 
   const scrollToRouteStory = (route) => {
     setSelectedRoute(route);
@@ -720,6 +747,19 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
           <h2 className={`${isArabic ? "font-arabic tracking-normal" : "font-display tracking-[-0.05em]"} text-5xl font-black leading-[0.95] md:text-7xl`}>{text.title}</h2>
           <p className="max-w-xl text-lg leading-8 text-black/65 md:text-xl">{text.intro}</p>
         </div>
+
+        {standalone && restoredDraft && (
+          <div className="route-finder-resume mb-8 flex flex-col gap-4 border border-[#789900]/40 bg-[#BBFF00]/10 p-4 md:flex-row md:items-center md:justify-between md:p-5" role="status">
+            <div>
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#5e7c00]">ZOOMIX / SAVED PROGRESS</span>
+              <p className="mt-2 text-sm font-bold leading-6 text-black/75">{resumeCopy}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => { setRestoredDraft(null); setMode("quiz"); window.requestAnimationFrame(() => scrollToSection("next-move-quick-match")); }} className="zoomix-button min-h-11 bg-[#BBFF00] text-black">{text.resumeDraftAction}</button>
+              <button type="button" onClick={() => { reset(); setRestoredDraft(null); }} className="zoomix-button min-h-11 border-black/20 text-black/70">{text.reset}</button>
+            </div>
+          </div>
+        )}
 
         <div id="route-mode-chooser" className={`route-mode-chooser mb-8 flex flex-col justify-between gap-5 border-y border-black/15 bg-white/35 px-5 py-5 md:flex-row md:items-center md:px-7 ${standalone ? "route-mode-chooser--standalone" : ""}`}>
           <div>
@@ -938,7 +978,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
               <div>
                 <div className="flex items-center justify-between gap-4">
                   <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#BBFF00]">{text.finderName}</span>
-                  <span className="font-mono text-[10px] text-white/35">FIT 0{step}/03</span>
+                  <span className="font-mono text-[10px] text-white/35" dir="ltr" style={{ unicodeBidi: "isolate" }}>FIT 0{step}/03</span>
                 </div>
                 <div key={`question-${step}`} className="route-question-change">
                   <p className="mt-6 max-w-sm text-3xl font-black leading-tight md:text-4xl">{currentQuestion}</p>
@@ -965,7 +1005,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
             <div className="route-mobile-question" aria-live="polite">
               <div className="flex items-center justify-between gap-3">
                 <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-black/45">{text.finderName}</span>
-                <span className="font-mono text-[10px] text-black/45">FIT 0{step}/03</span>
+                <span className="font-mono text-[10px] text-black/45" dir="ltr" style={{ unicodeBidi: "isolate" }}>FIT 0{step}/03</span>
               </div>
               <p className="mt-4 text-2xl font-black leading-tight">{currentQuestion}</p>
               <p className="mt-3 text-sm leading-6 text-black/55">{text.routeHint}</p>
@@ -1046,7 +1086,20 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
               <button type="button" onClick={() => chooseOffer(recommendation.route, primaryOffer.id)} className="zoomix-button group result-primary-cta route-result-cta bg-[#BBFF00] text-black transition-transform hover:-translate-y-0.5">
                 {text.choose}<ActionArrow className="transition-transform duration-200 group-hover:-translate-y-0.5" size={18} aria-hidden="true" />
               </button>
-              <div className="route-result-actions mt-4 flex flex-wrap gap-2">
+              <details className="route-result-reasons mt-4 border-t border-white/15 pt-4">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 text-sm font-bold text-white/75 [&::-webkit-details-marker]:hidden">
+                  <span>{text.whyRecommendation}</span>
+                  <ChevronDown size={17} aria-hidden="true" />
+                </summary>
+                <div className="mt-4 grid gap-3 text-sm leading-6 text-white/65 md:grid-cols-3">
+                  <p><span className="block text-[10px] font-bold uppercase tracking-[0.12em] text-[#BBFF00]">{text.recommendationReasonAnswers}</span><span className="mt-1 block">{answerSummary.join(" / ")}</span></p>
+                  <p><span className="block text-[10px] font-bold uppercase tracking-[0.12em] text-[#BBFF00]">{text.recommendationReasonRoute}</span><span className="mt-1 block">{recommendedRouteData.reason}</span></p>
+                  <p><span className="block text-[10px] font-bold uppercase tracking-[0.12em] text-[#BBFF00]">{text.recommendationReasonOutputs}</span><span className="mt-1 block">{recommendedRouteData.outputs.join(" / ")}</span></p>
+                </div>
+              </details>
+              <details className="route-result-share mt-3">
+                <summary className="inline-flex min-h-11 cursor-pointer list-none items-center border border-white/25 px-3 py-2 text-xs font-bold text-white/75 transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00] [&::-webkit-details-marker]:hidden">{text.resultMoreActions}<ChevronDown size={15} className="ms-2" aria-hidden="true" /></summary>
+                <div className="route-result-actions mt-3 flex flex-wrap gap-2">
                 <button type="button" onClick={handleWhatsAppResult} className="route-result-secondary-button inline-flex min-h-11 items-center border border-white/25 px-3 py-2 text-xs font-bold text-white/75 transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00]">
                   {text.whatsappResult}
                 </button>
@@ -1057,7 +1110,8 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
                   {text.saveResult}
                 </button>
                 {shareStatus && <span className="route-result-feedback basis-full text-xs font-bold text-[#BBFF00]" role="status">{shareStatus}</span>}
-              </div>
+                </div>
+              </details>
             </div>
           </div>
 

@@ -273,12 +273,19 @@ const Navbar = memo(function Navbar() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.28 }}
-                onClick={() => scrollTo("contact-section")}
+                onClick={openRouteFinder}
                 className={`w-full max-w-md mx-auto mt-6 h-12 rounded-full text-xs font-bold uppercase tracking-[0.16em] flex items-center justify-center gap-2 shadow-[0_10px_24px_rgba(0,0,0,0.16)] ${isOnDarkSection ? "bg-white text-black" : "bg-black text-white"}`}
               >
-                {t("nav", "start")}
+                {language === "ar" ? "اختيار سريع" : "QUICK MATCH"}
                 <ArrowUpRight size={14} className={language === "ar" ? "rotate-180" : ""} />
               </Gsap.button>
+              <button
+                type="button"
+                onClick={() => scrollTo("contact-section")}
+                className={`mx-auto mt-3 block text-xs font-bold underline decoration-current/30 underline-offset-4 ${isOnDarkSection ? "text-white/65" : "text-black/55"}`}
+              >
+                {language === "ar" ? "أو ابدأ بالبريف مباشرة" : "Or start with a direct brief"}
+              </button>
 
               <div
                 className={`w-full max-w-md mx-auto mt-5 pt-4 border-t flex items-center justify-between ${isOnDarkSection ? "border-white/15" : "border-black/10"}`}

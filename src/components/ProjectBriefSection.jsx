@@ -612,7 +612,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                   <p className={`${isArabic ? "font-arabic tracking-normal" : "font-display tracking-[-0.03em]"} mt-2 text-xl font-black`}>{label("خلّي الخطوة واضحة.", "MAKE THE NEXT MOVE CLEAR.")}</p>
                   <p className="mt-2 text-xs text-black/45">{label("3 خطوات قصيرة · أقل من دقيقتين", "3 short steps · under two minutes")}</p>
                 </div>
-                <span className="font-mono text-xs font-bold tracking-[0.16em] text-black/50">
+                <span className="font-mono text-xs font-bold tracking-[0.16em] text-black/50" dir="ltr" style={{ unicodeBidi: "isolate" }}>
                   {String(briefStep).padStart(2, "0")} / 03
                 </span>
               </div>

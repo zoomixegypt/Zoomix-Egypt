@@ -375,7 +375,7 @@ export default function ProjectGallery({ onOpenProject }) {
 
         {/* Project Counter */}
         <div className="px-6 mb-6 flex items-center justify-between">
-          <span className="font-mono text-xs text-white/30 uppercase tracking-[0.16em]">
+          <span className="font-mono text-xs text-white/30 uppercase tracking-[0.16em]" dir="ltr" style={{ unicodeBidi: "isolate" }}>
             {String(activeProjectIndex + 1).padStart(2, "0")} /{" "}
             {String(projectCount).padStart(2, "0")}
           </span>

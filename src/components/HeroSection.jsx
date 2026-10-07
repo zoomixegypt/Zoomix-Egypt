@@ -50,9 +50,9 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
             {t("hero", "partnerLine")}
           </p>
           <div className="hero-cta-group zoomix-reveal zoomix-reveal-delay-3 relative z-10 -mx-2 mt-9 flex w-fit flex-wrap items-center gap-3 rounded-full bg-[#0A0A0A]/85 px-2 py-2">
-            <a href="#contact-section" className="hero-cta-primary zoomix-button bg-[#BBFF00] text-black">
+            <a href="/route-finder" className="hero-cta-primary zoomix-button bg-[#BBFF00] text-black">
               <Compass className="hero-start-icon" size={18} aria-hidden="true" />
-              {t("nav", "start")} <ActionArrow size={20} />
+              {language === "ar" ? "اختيار سريع" : "QUICK MATCH"} <ActionArrow size={20} />
             </a>
             <a
               href="#project-section"

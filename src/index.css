@@ -362,7 +362,7 @@
     width: 100%;
   }
 
-  @media (max-width: 639px) {
+  @media (max-width: 767px) {
     .nav-logo-backplate {
       inset-inline-end: -0.25rem;
     }
@@ -749,7 +749,7 @@
   }
 }
 
-@media (max-width: 639px) {
+@media (max-width: 767px) {
   .route-to-work-transition {
     min-height: 6.5rem;
     padding: 3.5rem 1.5rem 1rem;
@@ -1123,7 +1123,7 @@
   }
 }
 
-@media (max-width: 639px) {
+@media (max-width: 767px) {
   :root {
     --mobile-bottom-bar-height: 4rem;
   }
@@ -1170,7 +1170,7 @@
     font-weight: 700;
     gap: 0.12rem;
     justify-content: center;
-    min-height: 2.75rem;
+    min-height: 2.65rem;
     padding: 0.35rem 0.2rem;
     text-align: center;
     touch-action: manipulation;
@@ -1199,7 +1199,7 @@
   }
 
   .route-finder-page-section .route-mode-chooser--standalone {
-    display: none;
+    display: flex;
   }
 
   .route-finder-page-section .next-move-cta {
@@ -1342,6 +1342,16 @@
     font-size: 1rem;
   }
 
+  .project-brief-form,
+  .project-brief-form .brief-step-content {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .project-brief-form > .sm\:col-span-2,
+  .project-brief-form .brief-step-content > .sm\:col-span-2 {
+    grid-column: 1 / -1;
+  }
+
   .brief-choice-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1449,6 +1459,15 @@
   .route-result-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .route-result-reasons summary,
+  .route-result-share summary {
+    min-height: 2.75rem;
+  }
+
+  .route-result-share .route-result-actions {
+    margin-top: 0.5rem;
   }
 
   .route-result-secondary-button {
