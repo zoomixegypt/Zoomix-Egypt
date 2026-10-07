@@ -1,0 +1,3 @@
+/studio    /index.html   200
+/route-finder    /index.html   200
+/projects/*    /index.html   200
