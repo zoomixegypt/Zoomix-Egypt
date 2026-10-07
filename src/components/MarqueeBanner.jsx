@@ -51,7 +51,7 @@ const MarqueeBanner = memo(function MarqueeBanner() {
                     <button
                       type="button"
                       onClick={() => scrollToSkill(skill.target)}
-                      className="text-[#BBFF00] hover:text-white transition-all duration-300 hover:drop-shadow-[0_0_12px_rgba(187,255,0,0.6)]"
+                      className="marquee-skill-button text-[#BBFF00] hover:text-white transition-all duration-300 hover:drop-shadow-[0_0_12px_rgba(187,255,0,0.6)]"
                     >
                       {skill.label}
                     </button>
@@ -86,7 +86,7 @@ const MarqueeBanner = memo(function MarqueeBanner() {
                     <button
                       type="button"
                       onClick={() => scrollToSkill(skill.target)}
-                      className="text-black hover:text-white transition-colors duration-300"
+                      className="marquee-skill-button text-black hover:text-white transition-colors duration-300"
                     >
                       {skill.label}
                     </button>

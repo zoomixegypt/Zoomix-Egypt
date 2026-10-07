@@ -159,7 +159,15 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
     try {
       const draft = JSON.parse(window.localStorage.getItem("zoomix-brief-draft") || "null");
       if (draft && typeof draft === "object" && !Array.isArray(draft)) {
-        setForm((current) => ({ ...current, ...draft, website: "", consent: false }));
+        const { activityOther, ...draftWithoutLegacyActivity } = draft;
+        const activity = draft.activity === "other" ? activityOther || "" : draft.activity || "";
+        setForm((current) => ({
+          ...current,
+          ...draftWithoutLegacyActivity,
+          activity,
+          website: "",
+          consent: false,
+        }));
       }
     } catch {
       // Ignore malformed local draft data and start with a clean form.
@@ -222,6 +230,21 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
   }, [draftLoaded, form, submitted]);
 
   useEffect(() => {
+    if (!draftLoaded || window.location.hash !== "#contact-section") return undefined;
+
+    const scrollToBriefForm = () => {
+      document.getElementById("brief-form")?.scrollIntoView({ behavior: "auto", block: "start" });
+    };
+    const firstFrame = requestAnimationFrame(scrollToBriefForm);
+    const settleTimer = window.setTimeout(scrollToBriefForm, 650);
+
+    return () => {
+      cancelAnimationFrame(firstFrame);
+      window.clearTimeout(settleTimer);
+    };
+  }, [draftLoaded]);
+
+  useEffect(() => {
     const node = sectionRef.current;
     if (!node) return undefined;
     const observer = new IntersectionObserver(([entry]) => {
@@ -268,6 +291,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
   const isEventBrief = form.route === "show" && activeShowType === "events";
   const isContentBrief = form.route === "show" && activeShowType === "content";
   const optionLabel = (options, value) => options.find((option) => option.value === value)?.[language] || "";
+  const activityValue = form.activity;
   const briefStep = wizardStep;
   const briefSteps = [
     { number: "01", ar: "الأساسيات", en: "BASICS" },
@@ -300,7 +324,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       [label("الاسم", "Name"), form.name],
       [label("اسم المشروع", "Project"), form.project],
       [label("رقم الهاتف", "Phone"), form.phone],
-      [label("نوع النشاط", "Activity"), form.activity],
+      [label("نوع النشاط", "Activity"), activityValue],
       [label("نوع الخدمة", "Service"), selectedOfferName || optionLabel(serviceOptions, form.service) || pathLabel[form.route]],
       [label("المسار", "Path"), pathLabel[form.route]],
       [label("الاختيار", "Selected offer"), selectedOfferName],
@@ -412,7 +436,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       const response = await fetch("/api/briefs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, goal: form.goal || form.description, service: resolvedService, offerName: selectedOfferName }),
+        body: JSON.stringify({ ...form, activity: activityValue, goal: form.goal || form.description, service: resolvedService, offerName: selectedOfferName }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || label("حصلت مشكلة أثناء حفظ الطلب.", "We could not save the brief."));
@@ -453,7 +477,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
 
   const field = (key, labelText, type = "text", required = false) => (
     <label className="block">
-      <span className="mb-2 block font-mono text-xs font-bold uppercase tracking-[0.08em] text-black/75">
+      <span className="brief-field-label mb-2 block text-sm font-bold tracking-[-0.01em] text-black/75">
         {labelText}
       </span>
       <input
@@ -466,8 +490,8 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
         aria-describedby={errors[key] ? `brief-${key}-error` : undefined}
         required={required}
         maxLength={key === "phone" ? 30 : 160}
-        inputMode={key === "phone" ? "tel" : undefined}
-        autoComplete={key === "name" ? "name" : key === "phone" ? "tel" : "off"}
+        autoComplete={key === "name" ? "name" : key === "phone" ? "tel" : key === "email" ? "email" : key === "project" ? "organization" : "off"}
+        inputMode={key === "email" ? "email" : key === "phone" ? "tel" : undefined}
       />
       {errors[key] && (
         <span id={`brief-${key}-error`} className="block mt-1 text-xs text-red-600">
@@ -479,7 +503,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
 
   const selectField = (key, labelText, options, required = false, placeholder = label("اختار من القائمة", "Choose an option")) => (
     <label className="block">
-      <span className="mb-2 block font-mono text-xs font-bold uppercase tracking-[0.08em] text-black/75">
+      <span className="brief-field-label mb-2 block text-sm font-bold tracking-[-0.01em] text-black/75">
         {labelText}
       </span>
       <select
@@ -574,6 +598,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
             </a>
           </div>
           <form
+            id="brief-form"
             onSubmit={handleSubmit}
             onFocusCapture={handleBriefFocus}
             noValidate
@@ -584,7 +609,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
                   <p className="font-mono text-[11px] font-bold tracking-[0.18em] text-black/45">ZOOMIX / PROJECT BRIEF</p>
-                  <p className="mt-2 text-xl font-black tracking-[-0.03em]">{label("خلّي الخطوة واضحة.", "MAKE THE NEXT MOVE CLEAR.")}</p>
+                  <p className={`${isArabic ? "font-arabic tracking-normal" : "font-display tracking-[-0.03em]"} mt-2 text-xl font-black`}>{label("خلّي الخطوة واضحة.", "MAKE THE NEXT MOVE CLEAR.")}</p>
                   <p className="mt-2 text-xs text-black/45">{label("3 خطوات قصيرة · أقل من دقيقتين", "3 short steps · under two minutes")}</p>
                 </div>
                 <span className="font-mono text-xs font-bold tracking-[0.16em] text-black/50">
@@ -614,7 +639,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
               <>
                 {field("name", label("الاسم *", "Name *"), "text", true)}
                 {field("project", label("اسم المشروع", "Project name"))}
-                {field("activity", label("نوع النشاط", "Business type"))}
+                {field("activity", label("نوع النشاط", "Business type"), "text")}
                 <div className="sm:col-span-2 mt-2 border-t border-black/15 pt-5">
                   <div className="flex flex-wrap items-end justify-between gap-3">
                     <div>
@@ -662,7 +687,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                     </a>
                   )}
                 </div>
-                <div className="sm:col-span-2 flex justify-end border-t border-black/15 pt-5">
+                <div className="brief-step-actions sm:col-span-2 flex justify-end border-t border-black/15 pt-5">
                   <button type="button" onClick={handleNextStep} className="zoomix-button w-full bg-[#BBFF00] text-[#0A0A0A] sm:w-auto">
                     {label("التالي: تفاصيل المشروع", "Next: project details")} <ActionArrow className="brief-next-arrow" size={18} />
                   </button>
@@ -710,7 +735,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                     </span>
                   )}
                 </label>
-                <div className="sm:col-span-2 flex flex-col justify-between gap-4 border-t border-black/15 pt-5 sm:flex-row">
+                <div className="brief-step-actions sm:col-span-2 flex flex-col justify-between gap-4 border-t border-black/15 pt-5 sm:flex-row">
                   <button type="button" onClick={() => goToStep(1)} className="zoomix-button w-full border border-black/20 text-[#0A0A0A] sm:w-auto">
                     {label("رجوع", "Back")}
                   </button>
@@ -781,7 +806,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                     {errors.consent}
                   </span>
                 )}
-                <div className="sm:col-span-2 flex flex-col items-stretch justify-between gap-4 border-t border-black/15 pt-5 sm:flex-row sm:items-center">
+                <div className="brief-step-actions sm:col-span-2 flex flex-col items-stretch justify-between gap-4 border-t border-black/15 pt-5 sm:flex-row sm:items-center">
                   <button type="button" onClick={() => goToStep(2)} className="zoomix-button w-full border border-black/20 text-[#0A0A0A] sm:w-auto">
                     {label("رجوع", "Back")}
                   </button>

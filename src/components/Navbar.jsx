@@ -129,7 +129,7 @@ const Navbar = memo(function Navbar() {
   return (
     <nav
       aria-label={language === "ar" ? "التنقل الرئيسي" : "Primary navigation"}
-      className={`fixed top-0 left-0 w-full p-4 md:p-6 flex justify-between items-center z-50 pointer-events-none transition-all duration-500`}
+      className={`fixed top-0 left-0 w-full p-4 md:p-6 flex justify-between items-center z-50 pointer-events-none transition-all duration-500 ${scrolled ? "nav-scrolled" : ""} ${isOnDarkSection ? "nav-scrolled-dark" : ""}`}
     >
       {/* ── Logo + fixed route finder signal ── */}
       <div className="nav-logo-lockup pointer-events-auto">

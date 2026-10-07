@@ -1,9 +1,10 @@
-import { memo } from "react";
-import { Check } from "lucide-react";
+import { memo, useEffect, useRef, useState } from "react";
+import { Check, MessageCircle } from "lucide-react";
 import { useLanguage } from "../i18n";
 import { Gsap } from "../utils/gsapAnimate";
 import { ZOOMIX_PACKAGES } from "../data/zoomixPackages";
 import { trackEvent } from "../utils/analytics";
+import { SITE_CONTACT } from "../data/siteSettings";
 import {
   ZOOMIX_CONTENT_PACKAGES,
   ZOOMIX_EVENT_PACKAGES,
@@ -26,16 +27,36 @@ function saveSelection(route, offerId, isStart = false, language = "ar") {
   }
   window.dispatchEvent(new CustomEvent("zoomix:route-select", { detail: selection }));
   trackEvent("choose_package", { package_id: offerId, source_section: "packages", language });
-  document.getElementById("contact-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  (document.getElementById("brief-form") || document.getElementById("contact-section"))?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function OfferTierCard({ offer, language, route, isStart, index }) {
+function getPackageWhatsAppHref(offer, language, route) {
+  const name = labelFor(offer.name, language);
+  const routeName = {
+    start: language === "ar" ? "البداية" : "START",
+    show: language === "ar" ? "الظهور" : "SHOW",
+    continue: language === "ar" ? "الاستمرار" : "CONTINUE",
+    "one-thing": language === "ar" ? "خدمة واحدة" : "ONE THING",
+  }[route] || route;
+  const price = offer.price
+    ? /جنيه|EGP/i.test(offer.price)
+      ? offer.price
+      : `${offer.price} ${language === "ar" ? "جنيه" : "EGP"}`
+    : "";
+  const message = language === "ar"
+    ? `أهلًا Zoomix، مهتم بـ${name}${price ? ` (${price})` : ""} من مسار ${routeName}.`
+    : `Hi Zoomix, I am interested in ${name}${price ? ` (${price})` : ""} from the ${routeName} route.`;
+  return `${SITE_CONTACT.whatsappHref}?text=${encodeURIComponent(message)}`;
+}
+
+function OfferTierCard({ offer, language, route, isStart, index, mobileCard = false, featuredRef }) {
   const isArabic = language === "ar";
   const name = labelFor(offer.name, language);
   const description = labelFor(offer.description || offer.tagline, language);
   const outputs = offer.outputs?.[language] || [];
   const visibleOutputs = outputs.slice(0, 4);
   const hiddenOutputs = outputs.slice(4);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const priceSuffix = route === "continue" ? (isArabic ? "جنيه / شهريًا" : "EGP / month") : isArabic ? "جنيه" : "EGP";
   const note = offer.duration
     ? `${isArabic ? "المدة:" : "Duration:"} ${labelFor(offer.duration, language)}`
@@ -47,8 +68,9 @@ function OfferTierCard({ offer, language, route, isStart, index }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.15 }}
       transition={{ duration: 0.6, delay: index * 0.06, ease: "easeOut" }}
+      ref={featuredRef}
       data-featured={offer.featured ? "true" : undefined}
-      className={`offer-tier-card flex h-full flex-col border p-5 md:p-6 ${offer.featured ? "border-[#BBFF00] bg-[#BBFF00]/[0.07]" : "border-white/15 bg-white/[0.02]"}`}
+      className={`offer-tier-card ${mobileCard ? "mobile-package-card" : ""} flex h-full flex-col border p-5 md:p-6 ${offer.featured ? "border-[#BBFF00] bg-[#BBFF00]/[0.07]" : "border-white/15 bg-white/[0.02]"}`}
     >
       {offer.featured && (
         <span className="mb-5 self-start bg-[#BBFF00] px-3 py-1 font-mono text-[10px] tracking-[0.14em] text-[#0A0A0A]">
@@ -73,7 +95,8 @@ function OfferTierCard({ offer, language, route, isStart, index }) {
         ))}
       </ul>
       {hiddenOutputs.length > 0 && (
-        <details className="mt-4 border-t border-white/10 pt-3">
+        <>
+        <details className="package-inline-details mt-4 hidden border-t border-white/10 pt-3 md:block">
           <summary className="cursor-pointer text-xs font-bold text-white/60 hover:text-white">
             {isArabic ? "شوف باقي المخرجات" : "See remaining outputs"}
           </summary>
@@ -86,6 +109,76 @@ function OfferTierCard({ offer, language, route, isStart, index }) {
             ))}
           </ul>
         </details>
+        <button
+          type="button"
+          onClick={() => setDetailsOpen(true)}
+          className="package-mobile-details mt-4 inline-flex min-h-11 items-center gap-2 border-t border-white/10 pt-3 text-xs font-bold text-white/60 md:hidden"
+          aria-haspopup="dialog"
+          aria-expanded={detailsOpen}
+        >
+          {isArabic ? "شوف باقي المخرجات" : "See remaining outputs"}
+          <span aria-hidden="true">↗</span>
+        </button>
+        {detailsOpen && (
+          <div
+            className="package-details-sheet fixed inset-0 z-[80] flex items-end bg-black/70 backdrop-blur-[2px] md:hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={`package-details-title-${offer.id}`}
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) setDetailsOpen(false);
+            }}
+          >
+            <div className="w-full max-h-[82vh] overflow-y-auto rounded-t-[22px] border border-white/15 bg-[#0A0A0A] p-5 text-white shadow-[0_-20px_80px_rgba(0,0,0,0.4)]">
+              <div className="mb-5 flex items-start justify-between gap-4 border-b border-white/15 pb-4">
+                <div>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#BBFF00]">
+                    {isArabic ? "مخرجات الباقة" : "PACKAGE OUTPUTS"}
+                  </span>
+                  <h5 id={`package-details-title-${offer.id}`} className={`${isArabic ? "font-arabic" : "font-display"} mt-2 text-2xl font-black`}>
+                    {name}
+                  </h5>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDetailsOpen(false)}
+                  aria-label={isArabic ? "إغلاق التفاصيل" : "Close details"}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center border border-white/20 text-2xl text-white/75"
+                >
+                  ×
+                </button>
+              </div>
+              <ul className="space-y-3 text-sm leading-6 text-white/75">
+                {hiddenOutputs.map((output) => (
+                  <li key={output} className="flex items-start gap-2">
+                    <Check size={15} className="mt-1 shrink-0 text-[#BBFF00]" aria-hidden="true" />
+                    <span>{output}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6 flex gap-3 border-t border-white/15 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDetailsOpen(false);
+                    saveSelection(route, offer.id, isStart, language);
+                  }}
+                  className="zoomix-button min-h-11 flex-1 bg-[#BBFF00] text-[#0A0A0A]"
+                >
+                  {isArabic ? "اختار المسار" : "Choose this route"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDetailsOpen(false)}
+                  className="zoomix-button min-h-11 border-white/25 text-white/80"
+                >
+                  {isArabic ? "رجوع" : "Back"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        </>
       )}
       {note && <p className="mt-5 text-xs leading-5 text-white/45">{note}</p>}
       <button
@@ -96,6 +189,16 @@ function OfferTierCard({ offer, language, route, isStart, index }) {
       >
         {isArabic ? "اختار المسار" : "Choose this route"}
       </button>
+      <a
+        href={getPackageWhatsAppHref(offer, language, route)}
+        target="_blank"
+        rel="noreferrer"
+        onClick={() => trackEvent("package_whatsapp_click", { package_id: offer.id, route, source_section: "packages", language })}
+        className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 text-xs font-bold text-white/55 transition-colors hover:text-[#BBFF00]"
+      >
+        <MessageCircle size={15} aria-hidden="true" />
+        {isArabic ? "اسأل على واتساب" : "Ask on WhatsApp"}
+      </a>
     </Gsap.article>
   );
 }
@@ -136,6 +239,18 @@ const PackagesSection = memo(function PackagesSection() {
     },
   ];
   const directServices = ZOOMIX_ONE_OFF_SERVICES[language];
+  const [mobileRouteId, setMobileRouteId] = useState("start");
+  const mobileFeaturedRefs = useRef({});
+  const mobileGroup = mobileRouteId === "one-thing"
+    ? { id: "one-thing", number: "04", title: isArabic ? "خدمة واحدة" : "ONE THING", description: isArabic ? "حل محدد بدون باقة كاملة." : "One clear service without a full package.", route: "one-thing", lanes: [] }
+    : groups.find((group) => group.id === mobileRouteId) || groups[0];
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      mobileFeaturedRefs.current[mobileRouteId]?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [mobileRouteId]);
 
   return (
     <section id="packages-section" className="zoomix-section bg-[#0A0A0A] text-white" dir={isArabic ? "rtl" : "ltr"}>
@@ -167,7 +282,7 @@ const PackagesSection = memo(function PackagesSection() {
           </div>
         </div>
 
-        <nav className="offer-route-map mb-16 grid gap-2 md:grid-cols-4" aria-label={isArabic ? "مسارات العمل" : "Work routes"}>
+        <nav className="offer-route-map mb-16 hidden gap-2 md:grid md:grid-cols-4" aria-label={isArabic ? "مسارات العمل" : "Work routes"}>
           {groups.map((group) => (
             <a key={group.id} href={`#offer-${group.id}`} className="offer-route-card group border border-white/15 p-5 transition-colors hover:border-[#BBFF00]">
               <span className="font-mono text-xs text-[#BBFF00]">{group.number}</span>
@@ -182,7 +297,87 @@ const PackagesSection = memo(function PackagesSection() {
           </a>
         </nav>
 
-        <div className="space-y-20">
+        <div className="mobile-packages-explorer mb-20 md:hidden">
+          <div className="mb-5 flex items-end justify-between gap-4 border-t border-white/15 pt-6">
+            <div>
+              <span className="font-mono text-[10px] tracking-[0.18em] text-white/45">MOBILE / ROUTES</span>
+              <h3 className="mt-2 text-2xl font-black">{isArabic ? "اختار مسار واحد" : "Choose one route"}</h3>
+            </div>
+            <span className="font-mono text-[10px] text-white/45">{isArabic ? "اسحب للكروت" : "SWIPE CARDS"} ↔</span>
+          </div>
+
+          <div className="mobile-package-tabs" role="tablist" aria-label={isArabic ? "مسارات الباقات" : "Package routes"}>
+            {[...groups, { id: "one-thing", number: "04", title: isArabic ? "خدمة واحدة" : "ONE THING" }].map((route) => (
+              <button
+                key={route.id}
+                type="button"
+                role="tab"
+                aria-selected={mobileRouteId === route.id}
+                onClick={() => setMobileRouteId(route.id)}
+                className={`mobile-package-tab ${mobileRouteId === route.id ? "mobile-package-tab--active" : ""}`}
+              >
+                <span>{route.number}</span>
+                <strong>{route.title}</strong>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-6">
+            <span className="font-mono text-[10px] tracking-[0.16em] text-[#BBFF00]">{mobileGroup.number} / {mobileGroup.title}</span>
+            <p className="mt-3 max-w-xl text-base leading-7 text-white/65">{mobileGroup.description}</p>
+          </div>
+
+          {mobileGroup.lanes.length > 0 ? mobileGroup.lanes.map((lane) => (
+            <div key={lane.label} className="mt-7">
+              <div className="mb-3 flex items-center gap-3">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#BBFF00]" aria-hidden="true" />
+                <span className="font-mono text-[10px] tracking-[0.16em] text-white/45">{lane.label}</span>
+                <div className="h-px flex-1 bg-white/10" />
+              </div>
+              <div className="mobile-package-scroller" aria-label={lane.label}>
+                {lane.packages.map((offer, index) => (
+                  <OfferTierCard
+                    key={offer.id}
+                    offer={offer}
+                    language={language}
+                    route={mobileGroup.route}
+                    isStart={lane.start}
+                    index={index}
+                    mobileCard
+                    featuredRef={offer.featured ? (node) => { mobileFeaturedRefs.current[mobileRouteId] = node; } : undefined}
+                  />
+                ))}
+              </div>
+            </div>
+          )) : (
+            <div className="mobile-direct-services-scroller mt-7" aria-label={isArabic ? "الخدمات المنفصلة" : "One-off services"}>
+              {directServices.map((service) => (
+                <article
+                  key={service.id}
+                  className="mobile-direct-service-card"
+                >
+                  <span className="text-sm font-bold text-white/85">{service.name}</span>
+                  <span className="font-mono text-xs text-[#BBFF00]" dir="ltr" style={{ unicodeBidi: "isolate" }}>{service.price}</span>
+                  <button type="button" onClick={() => saveSelection("one-off", service.id, false, language)} className="mt-4 min-h-11 border border-white/25 px-3 text-xs font-bold text-white transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00]">
+                    {isArabic ? "اختار الخدمة" : "Choose service"}
+                  </button>
+                  <a
+                    href={getPackageWhatsAppHref(service, language, "one-thing")}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => trackEvent("package_whatsapp_click", { package_id: service.id, route: "one-off", source_section: "packages", language })}
+                    className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 text-xs font-bold text-white/45 transition-colors hover:text-[#BBFF00]"
+                  >
+                    <MessageCircle size={15} aria-hidden="true" />
+                    {isArabic ? "اسأل على واتساب" : "Ask on WhatsApp"}
+                  </a>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="hidden space-y-20 md:block">
           {groups.map((group) => (
             <section key={group.id} id={`offer-${group.id}`} className="offer-family scroll-mt-24 border-t border-white/15 pt-8">
               <div className="grid gap-8 lg:grid-cols-[0.65fr_1.35fr]">
@@ -212,7 +407,7 @@ const PackagesSection = memo(function PackagesSection() {
           ))}
         </div>
 
-        <section id="offer-one-thing" className="mt-20 scroll-mt-24 border-t border-white/15 pt-8">
+        <section id="offer-one-thing" className="mt-20 hidden scroll-mt-24 border-t border-white/15 pt-8 md:block">
           <div className="grid gap-8 lg:grid-cols-[0.65fr_1.35fr]">
             <div>
               <span className="font-mono text-xs tracking-[0.2em] text-[#BBFF00]">{isArabic ? "خدمة واحدة / ONE THING" : "ONE THING / SERVICE"}</span>

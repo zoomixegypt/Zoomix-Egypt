@@ -8,7 +8,7 @@ const ProcessSection = memo(function ProcessSection() {
   const { language } = useLanguage();
   const isArabic = language === "ar";
   const ActionArrow = isArabic ? ArrowUpLeft : ArrowUpRight;
-  const [openFaq, setOpenFaq] = useState(null);
+  const [openFaq, setOpenFaq] = useState(0);
   const processLabels = {
     brief: { ar: "الفهم", en: "BRIEF" },
     direction: { ar: "الاتجاه", en: "DIRECTION" },

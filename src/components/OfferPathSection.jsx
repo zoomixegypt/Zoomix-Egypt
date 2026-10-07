@@ -9,6 +9,7 @@ import {
   ZOOMIX_PARTNER_PACKAGES,
 } from "../data/zoomixOfferings";
 import { ZOOMIX_PACKAGES as ZOOMIX_START_PACKAGES } from "../data/zoomixPackages";
+import { SITE_CONTACT } from "../data/siteSettings";
 import { trackEvent } from "../utils/analytics";
 
 const copy = {
@@ -46,6 +47,35 @@ const copy = {
     exploreRoutes: "استكشف المسارات",
     quickPrompt: "خلّينا نحدد خطوتك في 3 أسئلة.",
     quickDescription: "جاوب على 3 أسئلة، وZoomix ترشح لك المسار والباقة الأنسب.",
+    conversation: {
+      stage: {
+        start: "حلو، كده فهمنا إنك لسه بتبدأ 👌",
+        show: "تمام، الأساس موجود ونركز دلوقتي على ظهوره.",
+        continue: "ممتاز، أنت محتاج شريك يكمل معاك على نفس الاتجاه.",
+        "one-thing": "واضح، نحدد الجزء المطلوب ونحلّه مباشرة.",
+      },
+      need: {
+        foundation: "ممتاز، نرتب الأساس قبل أي خطوة تانية.",
+        presence: "تمام، نخلي البراند جاهز يظهر ويستقبل العملاء.",
+        launch: "جميل، نجهز لك بداية كاملة تقدر تستخدمها فورًا.",
+        content: "حلو، نحدد نوع المحتوى والكمية المناسبة لمشروعك.",
+        events: "تمام، نرتب التغطية بالشكل اللي يحكي الحدث صح.",
+        monthly: "واضح، نثبت اتجاه مستمر بدل الحلول المتقطعة.",
+        identity: "تمام، نحل الجزء المحدد من غير ما نحمّلك باقة كاملة.",
+        digital: "حلو، نجهز الجزء الرقمي المطلوب بشكل مباشر.",
+        print: "تمام، نحدد المخرج المطبوع ونجهزه للاستخدام.",
+      },
+    },
+    saveResult: "احفظ الترشيح",
+    shareResult: "شارك النتيجة",
+    whatsappResult: "ابعت الترشيح على واتساب",
+    savedResult: "الترشيح محفوظ عندك",
+    copiedResult: "اتنسخ ملخص الترشيح",
+    sharedResult: "النتيجة جاهزة للمشاركة",
+    previewOutputs: "شوف المخرجات",
+    closePreview: "اقفل المعاينة",
+    previewLabel: "معاينة مخرجات الباقة",
+    stickyCta: "كمّل تفاصيل مشروعك",
     routeMapBack: "ارجع لاستكشاف الطرق",
     routeMapReason: "المسار ده مناسب لو",
     routeMapOutputs: "هتخرج منه بـ",
@@ -161,6 +191,35 @@ const copy = {
     exploreRoutes: "Explore the routes",
     quickPrompt: "Find your next move in 3 questions.",
     quickDescription: "Answer three questions and Zoomix will match you with the right route, service or package.",
+    conversation: {
+      stage: {
+        start: "Great, we know you are starting out 👌",
+        show: "Good, the foundation is there — now we make it visible.",
+        continue: "Perfect, you need a partner to keep the direction moving.",
+        "one-thing": "Clear — we will solve the specific piece directly.",
+      },
+      need: {
+        foundation: "Great, we will organize the foundation first.",
+        presence: "Good, we will get the brand ready to show up and welcome customers.",
+        launch: "Nice, we will prepare a complete start you can use right away.",
+        content: "Good, we will define the right content type and production size.",
+        events: "Perfect, we will shape the coverage around the event story.",
+        monthly: "Clear, we will build a consistent direction instead of disconnected fixes.",
+        identity: "Good, we will solve the specific piece without a full package.",
+        digital: "Nice, we will prepare the digital piece you need directly.",
+        print: "Good, we will define the print output and prepare it for use.",
+      },
+    },
+    saveResult: "Save recommendation",
+    shareResult: "Share result",
+    whatsappResult: "Send recommendation on WhatsApp",
+    savedResult: "Recommendation saved",
+    copiedResult: "Recommendation summary copied",
+    sharedResult: "Result ready to share",
+    previewOutputs: "See deliverables",
+    closePreview: "Close preview",
+    previewLabel: "Package deliverables preview",
+    stickyCta: "Continue with your project details",
     routeMapBack: "Back to route map",
     routeMapReason: "This route fits when",
     routeMapOutputs: "You leave with",
@@ -245,7 +304,8 @@ const copy = {
 };
 
 function scrollToSection(id) {
-  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const targetId = id === "contact-section" ? "brief-form" : id;
+  (document.getElementById(targetId) || document.getElementById(id))?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function saveRoute(route, packageId = "", language = "ar") {
@@ -289,6 +349,34 @@ function getOfferTiming(offer, language, text, kind) {
   if (offer?.duration?.[language]) return offer.duration[language];
   if (kind === "partner") return text.monthlyTiming;
   return text.scheduleAfterBrief;
+}
+
+function getConversationReply(text, answers) {
+  if (answers.need && text.conversation.need?.[answers.need]) return text.conversation.need[answers.need];
+  if (answers.stage && text.conversation.stage?.[answers.stage]) return text.conversation.stage[answers.stage];
+  return "";
+}
+
+function getAnswersFromSharedResult(route, packageId) {
+  if (route === "start") {
+    if (packageId === "launch-content") return { stage: "start", need: "launch", goal: "start-launch" };
+    if (packageId === "launch") return { stage: "start", need: "presence", goal: "start-presence" };
+    return { stage: "start", need: "foundation", goal: "start-foundation" };
+  }
+  if (route === "content") return { stage: "show", need: "content", goal: packageId || "content-build" };
+  if (route === "events") return { stage: "show", need: "events", goal: packageId || "event-story" };
+  if (route === "partner") return { stage: "continue", need: "monthly", goal: packageId || "partner-growth" };
+  if (route === "one-off") {
+    const needByPackage = {
+      "logo-identity": "identity",
+      "social-post": "content",
+      "landing-page": "digital",
+      "print-design": "print",
+    };
+    const need = needByPackage[packageId] || "identity";
+    return { stage: "one-thing", need, goal: "one-off" };
+  }
+  return null;
 }
 
 function getRoutePackageGroups(route, language) {
@@ -354,8 +442,10 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
   const [selectedRoute, setSelectedRoute] = useState("start");
   const [expandedRoute, setExpandedRoute] = useState("");
   const [expandedAlternativeId, setExpandedAlternativeId] = useState("");
-  const [expandedPackageId, setExpandedPackageId] = useState("");
+  const [previewPackage, setPreviewPackage] = useState(null);
+  const [shareStatus, setShareStatus] = useState("");
   const alternativeTouchStartY = useRef(null);
+  const previewTouchStartY = useRef(null);
   const routeRefs = useRef({});
   const quickMatchRef = useRef(null);
   const [quickMatchVisible, setQuickMatchVisible] = useState(false);
@@ -367,6 +457,14 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
       if (draft?.answers) setAnswers((current) => ({ ...current, ...draft.answers }));
       if (draft?.step >= 1 && draft.step <= 3) setStep(draft.step);
       if (draft?.mode === "quiz" || draft?.mode === "explore") setMode(draft.mode);
+
+      const params = new URLSearchParams(window.location.search);
+      const sharedAnswers = getAnswersFromSharedResult(params.get("route"), params.get("offerId"));
+      if (sharedAnswers) {
+        setAnswers(sharedAnswers);
+        setStep(3);
+        setMode("quiz");
+      }
     } catch {
       // Ignore malformed draft state and start clean.
     } finally {
@@ -384,14 +482,12 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
   }, [answers.stage, answers.need, answers.goal, language]);
 
   useEffect(() => {
-    setExpandedPackageId("");
-  }, [selectedRoute, language]);
-
-  useEffect(() => {
-    if (!expandedAlternativeId) return undefined;
+    if (!expandedAlternativeId && !previewPackage) return undefined;
     const previousOverflow = document.body.style.overflow;
     const closeOnEscape = (event) => {
-      if (event.key === "Escape") setExpandedAlternativeId("");
+      if (event.key !== "Escape") return;
+      setExpandedAlternativeId("");
+      setPreviewPackage(null);
     };
     document.body.style.overflow = "hidden";
     document.addEventListener("keydown", closeOnEscape);
@@ -399,7 +495,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", closeOnEscape);
     };
-  }, [expandedAlternativeId]);
+  }, [expandedAlternativeId, previewPackage]);
 
   useEffect(() => {
     const node = quickMatchRef.current;
@@ -435,6 +531,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
     setStep(1);
     setMode("quiz");
     window.sessionStorage.removeItem(ROUTE_DRAFT_KEY);
+    window.requestAnimationFrame(() => scrollToSection("next-move-quick-match"));
   };
 
   const chooseOffer = (route, id) => {
@@ -465,6 +562,19 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
   ].filter(Boolean);
   const currentQuestion = step === 1 ? text.questions.stage : step === 2 ? text.questions.need : text.questions.goal;
   const selectedRouteData = text.routeMap.find((route) => route.value === selectedRoute) || text.routeMap[0];
+  const conversationReply = getConversationReply(text, answers);
+  const resultOfferName = primaryOffer ? getOfferName(primaryOffer, language) : "";
+  const resultOfferPrice = primaryOffer ? getOfferPrice(primaryOffer, language, text, recommendation.kind) : "";
+  const resultUrl = typeof window === "undefined"
+    ? "https://zoomixegypt.com/route-finder"
+    : `${window.location.origin}/route-finder?route=${encodeURIComponent(recommendation.route)}&offerId=${encodeURIComponent(primaryOffer?.id || "")}`;
+  const resultText = [
+    isArabic ? "ترشيحي من ZOOMIX:" : "My ZOOMIX recommendation:",
+    answerSummary.join(" / "),
+    resultOfferName && resultOfferPrice ? `${resultOfferName} — ${resultOfferPrice}` : "",
+    `${text.packageTiming}: ${primaryTiming}`,
+    resultUrl,
+  ].filter(Boolean).join("\n");
 
   const scrollToRouteStory = (route) => {
     setSelectedRoute(route);
@@ -512,6 +622,77 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
     if (startY !== null && endY !== undefined && endY - startY > 80) setExpandedAlternativeId("");
   };
 
+  const handlePreviewTouchStart = (event) => {
+    previewTouchStartY.current = event.touches[0]?.clientY ?? null;
+  };
+
+  const handlePreviewTouchEnd = (event) => {
+    const startY = previewTouchStartY.current;
+    const endY = event.changedTouches[0]?.clientY;
+    previewTouchStartY.current = null;
+    if (startY !== null && endY !== undefined && endY - startY > 80) setPreviewPackage(null);
+  };
+
+  const setResultFeedback = (message) => {
+    setShareStatus(message);
+    window.setTimeout(() => setShareStatus((current) => current === message ? "" : current), 3200);
+  };
+
+  const handleSaveResult = () => {
+    saveRoute(recommendation.route, primaryOffer?.id || "", language);
+    trackEvent("route_finder_save_result", { route: recommendation.route, package_id: primaryOffer?.id || "" });
+    setResultFeedback(text.savedResult);
+  };
+
+  const handleCopyResult = async () => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(resultText);
+      } else {
+        const helper = document.createElement("textarea");
+        helper.value = resultText;
+        helper.setAttribute("readonly", "true");
+        helper.style.position = "fixed";
+        helper.style.opacity = "0";
+        document.body.appendChild(helper);
+        helper.select();
+        document.execCommand("copy");
+        helper.remove();
+      }
+      trackEvent("route_finder_share_result", { method: "copy", route: recommendation.route, package_id: primaryOffer?.id || "" });
+      setResultFeedback(text.copiedResult);
+    } catch {
+      setResultFeedback(text.shareResult);
+    }
+  };
+
+  const handleShareResult = async () => {
+    if (!navigator.share) {
+      await handleCopyResult();
+      return;
+    }
+    try {
+      await navigator.share({ title: "ZOOMIX / Route Finder", text: resultText, url: resultUrl });
+      trackEvent("route_finder_share_result", { method: "native", route: recommendation.route, package_id: primaryOffer?.id || "" });
+      setResultFeedback(text.sharedResult);
+    } catch (error) {
+      if (error?.name !== "AbortError") await handleCopyResult();
+    }
+  };
+
+  const handleWhatsAppResult = () => {
+    const message = isArabic
+      ? `أهلًا Zoomix، ده الترشيح اللي طلع لي من Route Finder:\n${resultText}`
+      : `Hi Zoomix, this is the recommendation I got from Route Finder:\n${resultText}`;
+    window.open(`${SITE_CONTACT.whatsappHref}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
+    trackEvent("route_finder_share_result", { method: "whatsapp", route: recommendation.route, package_id: primaryOffer?.id || "" });
+  };
+
+  const openPackagePreview = (offer, kind, route = recommendation.route) => {
+    setPreviewPackage({ offer, kind, route });
+    trackEvent("route_finder_package_preview", { package_id: offer.id, route });
+  };
+
   const startQuickMatch = () => {
     setMode("quiz");
     window.requestAnimationFrame(() => scrollToSection("next-move-quick-match"));
@@ -535,12 +716,12 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
           <div className="h-px flex-1 bg-black/15" />
         </div>
 
-        <div className="mb-12 grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
+        <div className={`route-finder-page-intro mb-12 grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end ${standalone ? "route-finder-page-intro--standalone" : ""}`}>
           <h2 className={`${isArabic ? "font-arabic tracking-normal" : "font-display tracking-[-0.05em]"} text-5xl font-black leading-[0.95] md:text-7xl`}>{text.title}</h2>
           <p className="max-w-xl text-lg leading-8 text-black/65 md:text-xl">{text.intro}</p>
         </div>
 
-        <div id="route-mode-chooser" className="route-mode-chooser mb-8 flex flex-col justify-between gap-5 border-y border-black/15 bg-white/35 px-5 py-5 md:flex-row md:items-center md:px-7">
+        <div id="route-mode-chooser" className={`route-mode-chooser mb-8 flex flex-col justify-between gap-5 border-y border-black/15 bg-white/35 px-5 py-5 md:flex-row md:items-center md:px-7 ${standalone ? "route-mode-chooser--standalone" : ""}`}>
           <div>
             <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-black/45">{text.finderName} / MODE</span>
             <p className="mt-2 text-sm font-bold text-black/70">{text.modeLabel}</p>
@@ -662,8 +843,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
                                     {group.packages.map((offer) => {
                                       const outputs = offer.outputs?.[language] || [];
                                       const packageKey = `${route.value}-${offer.id}`;
-                                      const showAllOutputs = expandedPackageId === packageKey;
-                                      const visibleOutputs = showAllOutputs ? outputs : outputs.slice(0, 3);
+                                      const visibleOutputs = outputs.slice(0, 3);
                                       const offerName = getOfferName(offer, language);
                                       return (
                                         <article key={offer.id} className={`route-package-card flex h-full flex-col border p-4 transition-colors ${offer.featured ? "route-package-card--featured border-[#789900] bg-[#F3F9DE]" : "border-black/15 bg-[#F5F4EF]"}`}>
@@ -685,9 +865,9 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
                                                 {visibleOutputs.map((output) => <li key={output} className="flex gap-2"><span className="text-[#789900]">+</span><span>{output}</span></li>)}
                                               </ul>
                                               {outputs.length > 3 && (
-                                                <button type="button" onClick={() => setExpandedPackageId((current) => current === packageKey ? "" : packageKey)} aria-expanded={showAllOutputs} aria-controls={`package-outputs-${packageKey}`} className="route-output-toggle mt-3 inline-flex items-center gap-2 border-b border-black/25 pb-1 text-[11px] font-bold text-black/55 transition-colors hover:border-black hover:text-black">
-                                                  <ChevronDown aria-hidden="true" className={`transition-transform ${showAllOutputs ? "rotate-180" : ""}`} size={14} strokeWidth={2.5} />
-                                                  {showAllOutputs ? text.hideMoreOutputs : text.showMoreOutputs}
+                                                <button type="button" onClick={() => openPackagePreview(offer, group.kind, group.route)} aria-haspopup="dialog" className="route-output-toggle mt-3 inline-flex items-center gap-2 border-b border-black/25 pb-1 text-[11px] font-bold text-black/55 transition-colors hover:border-black hover:text-black">
+                                                  <ChevronDown aria-hidden="true" size={14} strokeWidth={2.5} />
+                                                  {text.previewOutputs}
                                                 </button>
                                               )}
                                             </div>
@@ -750,7 +930,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
           })}
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[0.72fr_1.28fr]">
+        <div data-step={step} className="route-finder-quiz-grid grid gap-5 lg:grid-cols-[0.72fr_1.28fr]">
           <aside className="route-finder-aside relative overflow-hidden bg-[#0A0A0A] p-6 text-white md:p-8" data-step={step}>
             <div className="route-finder-orbit absolute -end-16 -top-20 h-64 w-64 rounded-full border-[28px] border-white/[0.06]" aria-hidden="true" />
             <div className="route-finder-orbit route-finder-orbit--inner absolute -end-2 top-10 h-36 w-36 rounded-full border border-[#BBFF00]/20" aria-hidden="true" />
@@ -763,6 +943,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
                 <div key={`question-${step}`} className="route-question-change">
                   <p className="mt-6 max-w-sm text-3xl font-black leading-tight md:text-4xl">{currentQuestion}</p>
                   <p className="mt-4 max-w-xs text-xs leading-5 text-white/45">{text.routeHint}</p>
+                  {conversationReply && <p className="mt-4 max-w-sm border-s-2 border-[#BBFF00] ps-3 text-sm font-bold leading-6 text-[#BBFF00]" aria-live="polite">{conversationReply}</p>}
                 </div>
                 <div className="mt-8 flex max-w-sm gap-1" aria-hidden="true">
                   {[1, 2, 3].map((number) => <span key={number} className={`h-1 flex-1 ${number <= step ? "bg-[#BBFF00]" : "bg-white/15"}`} />)}
@@ -781,6 +962,18 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
           </aside>
 
           <div className="route-options-panel border border-black/15 bg-white/45 p-5 md:p-8">
+            <div className="route-mobile-question" aria-live="polite">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-black/45">{text.finderName}</span>
+                <span className="font-mono text-[10px] text-black/45">FIT 0{step}/03</span>
+              </div>
+              <p className="mt-4 text-2xl font-black leading-tight">{currentQuestion}</p>
+              <p className="mt-3 text-sm leading-6 text-black/55">{text.routeHint}</p>
+              {conversationReply && <p className="mt-3 border-s-2 border-[#789900] ps-3 text-sm font-bold leading-6 text-[#5e7c00]">{conversationReply}</p>}
+              <div className="mt-5 flex gap-1" aria-hidden="true">
+                {[1, 2, 3].map((number) => <span key={number} className={`h-1 flex-1 ${number <= step ? "bg-[#789900]" : "bg-black/15"}`} />)}
+              </div>
+            </div>
             <div key={`options-${step}`} className="grid gap-3 sm:grid-cols-2">
               {currentOptions.map((option, index) => {
                 const selected = selectedValue === option.value;
@@ -853,6 +1046,18 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
               <button type="button" onClick={() => chooseOffer(recommendation.route, primaryOffer.id)} className="zoomix-button group result-primary-cta route-result-cta bg-[#BBFF00] text-black transition-transform hover:-translate-y-0.5">
                 {text.choose}<ActionArrow className="transition-transform duration-200 group-hover:-translate-y-0.5" size={18} aria-hidden="true" />
               </button>
+              <div className="route-result-actions mt-4 flex flex-wrap gap-2">
+                <button type="button" onClick={handleWhatsAppResult} className="route-result-secondary-button inline-flex min-h-11 items-center border border-white/25 px-3 py-2 text-xs font-bold text-white/75 transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00]">
+                  {text.whatsappResult}
+                </button>
+                <button type="button" onClick={handleShareResult} className="route-result-secondary-button inline-flex min-h-11 items-center border border-white/25 px-3 py-2 text-xs font-bold text-white/75 transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00]">
+                  {text.shareResult}
+                </button>
+                <button type="button" onClick={handleSaveResult} className="route-result-secondary-button inline-flex min-h-11 items-center border border-white/25 px-3 py-2 text-xs font-bold text-white/75 transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00]">
+                  {text.saveResult}
+                </button>
+                {shareStatus && <span className="route-result-feedback basis-full text-xs font-bold text-[#BBFF00]" role="status">{shareStatus}</span>}
+              </div>
             </div>
           </div>
 
@@ -968,6 +1173,65 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+            {previewPackage && (
+              <div className="route-package-preview fixed inset-0 z-[85] flex items-end justify-center bg-black/70 p-0 backdrop-blur-[2px] md:items-center md:p-6" role="dialog" aria-modal="true" aria-labelledby={`package-preview-title-${previewPackage.offer.id}`} onMouseDown={(event) => { if (event.target === event.currentTarget) setPreviewPackage(null); }}>
+                <div className="relative flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-[22px] border border-white/15 bg-[#0A0A0A] text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)] md:max-h-[88vh] md:rounded-none">
+                  <div className="relative flex shrink-0 items-start justify-between gap-5 border-b border-white/15 px-5 py-5 md:px-7 md:py-6" onTouchStart={handlePreviewTouchStart} onTouchEnd={handlePreviewTouchEnd}>
+                    <span className="absolute left-1/2 top-2 h-1 w-12 -translate-x-1/2 rounded-full bg-white/25 md:hidden" aria-hidden="true" />
+                    <div>
+                      <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#BBFF00]">{text.previewLabel}</span>
+                      <h4 id={`package-preview-title-${previewPackage.offer.id}`} className="mt-2 text-2xl font-black md:text-3xl">{getOfferName(previewPackage.offer, language)}</h4>
+                    </div>
+                    <button type="button" onClick={() => setPreviewPackage(null)} aria-label={text.closePreview} className="flex h-10 w-10 shrink-0 items-center justify-center border border-white/20 text-2xl leading-none text-white/75 transition-colors hover:border-[#BBFF00] hover:text-[#BBFF00]">×</button>
+                  </div>
+
+                  <div className="overflow-y-auto overscroll-contain px-5 py-5 md:px-7 md:py-6">
+                    <div className="mb-6 flex items-center justify-between gap-4 border-b border-white/15 pb-5">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/45">{text.priceLabel}</span>
+                      <span className="font-mono text-xl text-[#BBFF00]" dir="ltr" style={{ unicodeBidi: "isolate" }}>{getOfferPrice(previewPackage.offer, language, text, previewPackage.kind)}</span>
+                    </div>
+                    {previewPackage.offer.outputs?.[language]?.length > 0 ? (
+                      <div>
+                        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/45">{text.packageIncludes}</span>
+                        <ul className="mt-3 grid gap-2 text-sm leading-6 text-white/75 sm:grid-cols-2">
+                          {previewPackage.offer.outputs[language].map((output) => <li key={output} className="flex gap-2"><span className="text-[#BBFF00]">+</span><span>{output}</span></li>)}
+                        </ul>
+                      </div>
+                    ) : (
+                      <p className="text-sm leading-6 text-white/65">{text.oneOffNote}</p>
+                    )}
+                    <div className="mt-7 grid gap-5 border-t border-white/15 pt-5 sm:grid-cols-2">
+                      <div>
+                        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/45">{text.packageTiming}</span>
+                        <p className="mt-2 text-sm font-bold leading-6 text-white/80">{getOfferTiming(previewPackage.offer, language, text, previewPackage.kind)}</p>
+                      </div>
+                      <div className="border-s border-white/15 ps-5">
+                        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/45">{previewPackage.offer.exclusions?.[language] ? text.packageNotIncluded : text.packageNote}</span>
+                        <p className="mt-2 text-xs leading-5 text-white/50">{previewPackage.offer.exclusions?.[language] || previewPackage.offer.priceNote?.[language] || text.direct}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 border-t border-white/15 bg-[#0A0A0A] px-5 py-4 md:px-7">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button type="button" onClick={() => { const { route, offer } = previewPackage; setPreviewPackage(null); chooseOffer(route, offer.id); }} className="zoomix-button bg-[#BBFF00] text-black">
+                        {text.choosePackage}<ActionArrow size={18} aria-hidden="true" />
+                      </button>
+                      <button type="button" onClick={() => setPreviewPackage(null)} className="zoomix-button border-white/25 text-white/80 transition-colors hover:border-white hover:text-white">
+                        {text.closePreview}<span aria-hidden="true">↩</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {step === 3 && answers.goal && (
+              <div className="route-finder-mobile-sticky-cta" aria-label={text.stickyCta}>
+                <button type="button" onClick={() => chooseOffer(recommendation.route, primaryOffer.id)} className="zoomix-button w-full bg-[#BBFF00] text-black">
+                  {text.stickyCta}<ActionArrow size={17} aria-hidden="true" />
+                </button>
               </div>
             )}
           </>

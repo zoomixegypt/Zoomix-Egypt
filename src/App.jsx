@@ -3,9 +3,11 @@ import { Routes, Route, useLocation, useNavigationType } from "react-router-dom"
 import Home from "./pages/Home";
 import Studio from "./pages/Studio";
 import BriefEdit from "./pages/BriefEdit";
+import NotFound from "./pages/NotFound";
 import ProjectDetailModal from "./components/projects/ProjectDetailModal";
 import SectionSkeleton from "./components/SectionSkeleton";
 import AnalyticsConsent from "./components/AnalyticsConsent";
+import MobileBottomBar from "./components/MobileBottomBar";
 import { trackPageView } from "./utils/analytics";
 
 const RouteFinder = lazy(() => import("./pages/RouteFinder"));
@@ -89,11 +91,12 @@ function ScrollToTop() {
       // JANGAN scroll ke atas jika ada query param scrollTo
       // Biarkan Home.jsx yang handle scroll ke project card
       if (hash) {
-        const targetId = decodeURIComponent(hash.slice(1));
-        let attempts = 0;
-        const scrollToHashTarget = () => {
-          if (cancelled) return;
-          const target = document.getElementById(targetId);
+          const targetId = decodeURIComponent(hash.slice(1));
+          const resolvedTargetId = targetId === "contact-section" ? "brief-form" : targetId;
+          let attempts = 0;
+          const scrollToHashTarget = () => {
+            if (cancelled) return;
+            const target = document.getElementById(resolvedTargetId) || document.getElementById(targetId);
           if (target) {
             target.scrollIntoView({ behavior: "auto", block: "start" });
             return;
@@ -135,6 +138,7 @@ export default function App() {
         <Route path="/brief/edit/:token" element={<BriefEdit />} />
         <Route path="/route-finder" element={<Suspense fallback={<SectionSkeleton className="min-h-screen" />}><RouteFinder /></Suspense>} />
         <Route path="/projects/:slug" element={<ProjectDetailModal />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
 
       {backgroundLocation && (
@@ -142,6 +146,7 @@ export default function App() {
           <Route path="/projects/:slug" element={<ProjectDetailModal />} />
         </Routes>
       )}
+      <MobileBottomBar />
       {!location.pathname.startsWith("/studio") && <AnalyticsConsent />}
     </>
   );
