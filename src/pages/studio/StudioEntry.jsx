@@ -67,7 +67,7 @@ export default function StudioEntry({ allowDemo = false }) {
       setPassword("");
       setState("authenticated");
     } catch (error) {
-      setError(error.message);
+      setError(error.status === 401 ? "كلمة المرور غير صحيحة. Incorrect password." : error.message);
     } finally {
       setBusy(false);
     }

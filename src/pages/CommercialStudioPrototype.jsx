@@ -102,10 +102,17 @@ export default function CommercialStudioPrototype({ demo = false }) {
   });
   const searchRef = useRef(null);
 
-  const syncQuote = (quote) =>
+  const syncQuote = (quote) => {
     setQuotes((current) =>
-      Array.isArray(current) ? [quote, ...current.filter((item) => item.id !== quote.id)] : current,
+      Array.isArray(current)
+        ? [
+            { ...current.find((item) => item.id === quote.id), ...quote },
+            ...current.filter((item) => item.id !== quote.id),
+          ]
+        : current,
     );
+    retry();
+  };
   const syncPayment = (payment) =>
     setPayments((current) =>
       Array.isArray(current)
@@ -657,6 +664,8 @@ export default function CommercialStudioPrototype({ demo = false }) {
             )}
             {page === "leads" && (
               <LeadsView
+                storageMode={storageMode}
+                onUpdated={retry}
                 language={language}
                 requests={requests}
                 onCreateQuote={createQuoteFromLead}
@@ -706,6 +715,9 @@ export default function CommercialStudioPrototype({ demo = false }) {
                 promotions={promotions}
                 storageMode={storageMode}
                 onQuoteSaved={syncQuote}
+                liveQuoteStatus={
+                  quotes?.find((row) => String(row.id) === String(selectedQuoteId))?.status
+                }
                 lead={selectedLead}
                 requests={requests || []}
                 freshToken={freshToken}

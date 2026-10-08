@@ -1,10 +1,11 @@
 import { FileText, Users } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { studioRequest } from "./api";
 import { briefLabel, safeDate } from "./briefs";
 import {} from "../../data/commercialStudioPrototype";
 
 import { StatusChip } from "./shared";
-export default function LeadsView({ language, requests, onCreateQuote }) {
+export default function LeadsView({ language, requests, onCreateQuote, storageMode, onUpdated }) {
   const isArabic = language === "ar";
   const rows = Array.isArray(requests) ? requests : [];
   const [query, setQuery] = useState("");
@@ -76,6 +77,7 @@ export default function LeadsView({ language, requests, onCreateQuote }) {
             >
               <span className="csp-item-name">
                 <strong>{request.name}</strong>
+                {Boolean(request.is_test) && <StatusChip>{isArabic ? "اختبار QA" : "TEST QA"}</StatusChip>}
                 <small>
                   {request.reference_code} ·{" "}
                   {request.project || (isArabic ? "بدون اسم مشروع" : "Untitled project")}
@@ -153,6 +155,9 @@ export default function LeadsView({ language, requests, onCreateQuote }) {
                     </div>
                   ))}
               </dl>
+              {storageMode === "cloud" && (
+                <BriefManagement request={request} language={language} onUpdated={onUpdated} />
+              )}
             </details>
           </article>
         ))}
@@ -174,5 +179,102 @@ export default function LeadsView({ language, requests, onCreateQuote }) {
         )}
       </section>
     </div>
+  );
+}
+
+function BriefManagement({ request, language, onUpdated }) {
+  const ar = language === "ar";
+  const [status, setStatus] = useState(request.status || "new");
+  const [notes, setNotes] = useState(request.notes || "");
+  const [isTest, setIsTest] = useState(Boolean(request.is_test));
+  const [dirty, setDirty] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    if (!dirty) {
+      setStatus(request.status || "new");
+      setNotes(request.notes || "");
+      setIsTest(Boolean(request.is_test));
+    }
+  }, [request.status, request.notes, request.is_test, dirty]);
+  return (
+    <form
+      className="csp-form-grid"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        setBusy(true);
+        setMessage("");
+        setFailed(false);
+        try {
+          await studioRequest(`/api/studio/requests/${request.id}`, {
+            method: "PATCH",
+            body: JSON.stringify({ status, notes, isTest }),
+          });
+          setDirty(false);
+          setMessage(ar ? "تم حفظ بيانات الإدارة." : "Management data saved.");
+          onUpdated?.();
+        } catch (error) {
+          setFailed(true);
+          setMessage(error.message);
+        } finally {
+          setBusy(false);
+        }
+      }}
+    >
+      <label>
+        {ar ? "حالة الطلب" : "Brief status"}
+        <select
+          disabled={busy}
+          value={status}
+          onChange={(e) => {
+            setStatus(e.target.value);
+            setDirty(true);
+          }}
+        >
+          {["new", "contacted", "in-progress", "won", "archived"].map((s) => (
+            <option key={s} value={s}>
+              {briefLabel(s, language)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        {ar ? "ملاحظات الإدارة" : "Admin notes"}
+        <textarea
+          disabled={busy}
+          maxLength={4000}
+          value={notes}
+          onChange={(e) => {
+            setNotes(e.target.value);
+            setDirty(true);
+          }}
+        />
+      </label>
+      <label>
+        <input
+          disabled={busy}
+          type="checkbox"
+          checked={isTest}
+          onChange={(e) => {
+            setIsTest(e.target.checked);
+            setDirty(true);
+          }}
+        />
+        {ar
+          ? "بيانات اختبار — يشمل استبعاد عروضها ومشروعاتها من التقارير والتذكيرات"
+          : "Test data — exclude related quotes/projects from reports and reminders"}
+      </label>
+      <button className="csp-button" disabled={!dirty || busy} type="submit">
+        {busy
+          ? ar
+            ? "جارٍ الحفظ…"
+            : "Saving…"
+          : ar
+            ? "حفظ بيانات الإدارة"
+            : "Save management data"}
+      </button>
+      {message && <p role={failed ? "alert" : "status"}>{message}</p>}
+    </form>
   );
 }

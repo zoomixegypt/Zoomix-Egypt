@@ -12,10 +12,10 @@ export default function PaymentsView({ language, payments, onPaymentUpdated, sto
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState(null);
   const paid = list
-    .filter((item) => item.status === "paid")
+    .filter((item) => !item.isTest && item.status === "paid")
     .reduce((sum, item) => sum + item.amount, 0);
   const pending = list
-    .filter((item) => ["pending", "overdue"].includes(item.status))
+    .filter((item) => !item.isTest && ["pending", "overdue"].includes(item.status))
     .reduce((sum, item) => sum + item.amount, 0);
   const update = async (payment) => {
     if (busyId !== null) return;
@@ -108,6 +108,7 @@ export default function PaymentsView({ language, payments, onPaymentUpdated, sto
               <strong>{payment.projectName}</strong>
               <small>
                 {payment.reference} · {payment.clientName}
+                {payment.isTest && <StatusChip>{isArabic ? "اختبار QA" : "TEST QA"}</StatusChip>}
                 {payment.dueAt
                   ? ` · ${isArabic ? "استحقاق" : "Due"} ${new Date(payment.dueAt).toLocaleDateString("en-GB")}`
                   : ""}

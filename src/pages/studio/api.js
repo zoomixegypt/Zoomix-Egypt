@@ -1,5 +1,12 @@
 export async function studioFetch(path, options = {}) {
-  const response = await fetch(path, { credentials: "same-origin", ...options });
+  const response = await fetch(path, {
+    credentials: "same-origin",
+    ...options,
+    headers: {
+      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...options.headers,
+    },
+  });
   if (response.status === 401 && typeof window !== "undefined")
     window.dispatchEvent(new Event("studio-session-expired"));
   if (!(response.headers.get("content-type") || "").includes("application/json"))

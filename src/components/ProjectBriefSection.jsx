@@ -70,7 +70,9 @@ const ROUTE_SERVICE_OPTIONS = {
     { value: "print", ar: "مطبوعات", en: "Print" },
     { value: "not-sure", ar: "مش متأكد وعاوز توجيه", en: "Not sure yet — I need guidance" },
   ],
-  default: [{ value: "not-sure", ar: "مش متأكد وعاوز توجيه", en: "Not sure yet — I need guidance" }],
+  default: [
+    { value: "not-sure", ar: "مش متأكد وعاوز توجيه", en: "Not sure yet — I need guidance" },
+  ],
 };
 
 const SHOW_TYPE_OPTIONS = [
@@ -247,12 +249,15 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
   useEffect(() => {
     const node = sectionRef.current;
     if (!node) return undefined;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        trackEvent("reach_project_brief", { source_section: "project_brief" });
-        observer.disconnect();
-      }
-    }, { threshold: 0.2 });
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          trackEvent("reach_project_brief", { source_section: "project_brief" });
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.2 },
+    );
     observer.observe(node);
     return () => observer.disconnect();
   }, []);
@@ -271,7 +276,11 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
     ];
     const offer = packageGroups.find((pkg) => pkg.id === form.offerId);
     if (offer) return offer.name[language];
-    return ZOOMIX_ONE_OFF_SERVICES[language].find((service) => service.id === form.offerId)?.name || selectedPackage?.name[language] || "";
+    return (
+      ZOOMIX_ONE_OFF_SERVICES[language].find((service) => service.id === form.offerId)?.name ||
+      selectedPackage?.name[language] ||
+      ""
+    );
   }, [form.offerId, language, selectedPackage]);
   const selectedOfferId = form.offerId || form.packageId;
   const guidedSelection = Boolean(selectedOfferId || form.route);
@@ -290,7 +299,8 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
               : ROUTE_SERVICE_OPTIONS.default;
   const isEventBrief = form.route === "show" && activeShowType === "events";
   const isContentBrief = form.route === "show" && activeShowType === "content";
-  const optionLabel = (options, value) => options.find((option) => option.value === value)?.[language] || "";
+  const optionLabel = (options, value) =>
+    options.find((option) => option.value === value)?.[language] || "";
   const activityValue = form.activity;
   const briefStep = wizardStep;
   const briefSteps = [
@@ -309,6 +319,14 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       });
     }
   };
+  useEffect(() => {
+    if (form.route === "show" && form.showType === "events") return;
+    setForm((current) => {
+      const eventKeys = ["eventType", "eventDate", "eventLocation", "coverageType"];
+      if (!eventKeys.some((key) => current[key])) return current;
+      return { ...current, eventType: "", eventDate: "", eventLocation: "", coverageType: "" };
+    });
+  }, [form.route, form.showType]);
   const ActionArrow = isArabic ? ArrowUpLeft : ArrowUpRight;
   const pathLabel = {
     start: label("البداية", "Start"),
@@ -325,22 +343,37 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       [label("اسم المشروع", "Project"), form.project],
       [label("رقم الهاتف", "Phone"), form.phone],
       [label("نوع النشاط", "Activity"), activityValue],
-      [label("نوع الخدمة", "Service"), selectedOfferName || optionLabel(serviceOptions, form.service) || pathLabel[form.route]],
+      [
+        label("نوع الخدمة", "Service"),
+        selectedOfferName || optionLabel(serviceOptions, form.service) || pathLabel[form.route],
+      ],
       [label("المسار", "Path"), pathLabel[form.route]],
       [label("الاختيار", "Selected offer"), selectedOfferName],
       [label("نوع الطلب", "Request type"), optionLabel(SHOW_TYPE_OPTIONS, activeShowType)],
-      [label("مصدر الخامات", "Content source"), optionLabel(CONTENT_SOURCE_OPTIONS, form.contentSource)],
+      [
+        label("مصدر الخامات", "Content source"),
+        optionLabel(CONTENT_SOURCE_OPTIONS, form.contentSource),
+      ],
       [label("نوع الإيفنت", "Event type"), optionLabel(EVENT_TYPE_OPTIONS, form.eventType)],
       [label("تاريخ الإيفنت", "Event date"), form.eventDate],
       [label("مكان الإيفنت", "Event location"), form.eventLocation],
-      [label("نوع التغطية", "Coverage type"), optionLabel(EVENT_COVERAGE_OPTIONS, form.coverageType)],
+      [
+        label("نوع التغطية", "Coverage type"),
+        optionLabel(EVENT_COVERAGE_OPTIONS, form.coverageType),
+      ],
       [label("الميزانية التقريبية", "Approx. budget"), optionLabel(BUDGET_OPTIONS, form.budget)],
       [label("التوقيت المطلوب", "Timeline"), optionLabel(TIMELINE_OPTIONS, form.launchDate)],
       [label("رابط المشروع", "Project link"), form.projectLink],
       [label("الهدف والتفاصيل", "Goal and details"), form.description],
-      [label("وسيلة التواصل", "Preferred contact"), optionLabel(CONTACT_OPTIONS, form.contactPreference)],
+      [
+        label("وسيلة التواصل", "Preferred contact"),
+        optionLabel(CONTACT_OPTIONS, form.contactPreference),
+      ],
       [label("الإيميل", "Email"), form.email],
-      [label("الوقت المفضل للمكالمة", "Preferred call time"), optionLabel(CALL_TIME_OPTIONS, form.preferredTime)],
+      [
+        label("الوقت المفضل للمكالمة", "Preferred call time"),
+        optionLabel(CALL_TIME_OPTIONS, form.preferredTime),
+      ],
       [label("رقم الطلب", "Reference"), reference],
       [label("رابط تعديل البريف", "Brief edit link"), link],
     ].filter(([, value]) => String(value ?? "").trim());
@@ -378,7 +411,10 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
         nextErrors.email = label("اكتب إيميل صحيح", "Enter a valid email");
       }
       if (!form.consent) {
-        nextErrors.consent = label("مطلوب للموافقة قبل الإرسال", "Consent is required before sending");
+        nextErrors.consent = label(
+          "مطلوب للموافقة قبل الإرسال",
+          "Consent is required before sending",
+        );
       }
     }
     setErrors(nextErrors);
@@ -391,7 +427,9 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
 
   const goToStep = (step) => {
     setWizardStep(step);
-    requestAnimationFrame(() => sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    requestAnimationFrame(() =>
+      sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
   };
 
   const handleNextStep = () => {
@@ -421,7 +459,10 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       nextErrors.eventDate = label("مطلوب لتحديد التغطية", "Required for event planning");
     }
     if (!form.consent) {
-      nextErrors.consent = label("مطلوب للموافقة قبل الإرسال", "Consent is required before sending");
+      nextErrors.consent = label(
+        "مطلوب للموافقة قبل الإرسال",
+        "Consent is required before sending",
+      );
     }
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) {
@@ -436,17 +477,32 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       const response = await fetch("/api/briefs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, activity: activityValue, goal: form.goal || form.description, service: resolvedService, offerName: selectedOfferName }),
+        body: JSON.stringify({
+          ...form,
+          activity: activityValue,
+          goal: form.goal || form.description,
+          service: resolvedService,
+          offerName: selectedOfferName,
+        }),
       });
       const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.error || label("حصلت مشكلة أثناء حفظ الطلب.", "We could not save the brief."));
+      if (!response.ok)
+        throw new Error(
+          result.error || label("حصلت مشكلة أثناء حفظ الطلب.", "We could not save the brief."),
+        );
       setReferenceCode(result.referenceCode || "");
       setEditUrl(result.editUrl || "");
       setSubmitted(true);
       window.localStorage.removeItem("zoomix-brief-draft");
-      trackEvent("brief_submitted", { route: form.route || "unknown", package_id: form.offerId || form.packageId || "none" });
+      trackEvent("brief_submitted", {
+        route: form.route || "unknown",
+        package_id: form.offerId || form.packageId || "none",
+      });
       if (form.contactPreference === "whatsapp") {
-        trackEvent("send_to_whatsapp", { route: form.route || "unknown", package_id: form.offerId || form.packageId || "none" });
+        trackEvent("send_to_whatsapp", {
+          route: form.route || "unknown",
+          package_id: form.offerId || form.packageId || "none",
+        });
         const whatsappWindow = window.open(
           `https://wa.me/201555451535?text=${encodeURIComponent(buildMessage(result.referenceCode, result.editUrl))}`,
           "_blank",
@@ -456,7 +512,9 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       }
     } catch (error) {
       setSubmitted(false);
-      setSubmitError(error.message || label("حصلت مشكلة أثناء الإرسال.", "Something went wrong while sending."));
+      setSubmitError(
+        error.message || label("حصلت مشكلة أثناء الإرسال.", "Something went wrong while sending."),
+      );
     }
   };
 
@@ -490,7 +548,17 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
         aria-describedby={errors[key] ? `brief-${key}-error` : undefined}
         required={required}
         maxLength={key === "phone" ? 30 : 160}
-        autoComplete={key === "name" ? "name" : key === "phone" ? "tel" : key === "email" ? "email" : key === "project" ? "organization" : "off"}
+        autoComplete={
+          key === "name"
+            ? "name"
+            : key === "phone"
+              ? "tel"
+              : key === "email"
+                ? "email"
+                : key === "project"
+                  ? "organization"
+                  : "off"
+        }
         inputMode={key === "email" ? "email" : key === "phone" ? "tel" : undefined}
       />
       {errors[key] && (
@@ -501,7 +569,13 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
     </label>
   );
 
-  const selectField = (key, labelText, options, required = false, placeholder = label("اختار من القائمة", "Choose an option")) => (
+  const selectField = (
+    key,
+    labelText,
+    options,
+    required = false,
+    placeholder = label("اختار من القائمة", "Choose an option"),
+  ) => (
     <label className="block">
       <span className="brief-field-label mb-2 block text-sm font-bold tracking-[-0.01em] text-black/75">
         {labelText}
@@ -559,8 +633,14 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
             </h2>
             <p className="mt-8 text-white/60 leading-7">
               {guidedSelection
-                ? label("اختيارك اتنقل خلاص. فاضل نعرف الأساسيات بس.", "Your direction is already set. We only need the essentials now.")
-                : label("مش محتاج تجهز كل الإجابات. إحنا نرتب الصورة معاك.", "You do not need every answer. We will organize the picture with you.")}
+                ? label(
+                    "اختيارك اتنقل خلاص. فاضل نعرف الأساسيات بس.",
+                    "Your direction is already set. We only need the essentials now.",
+                  )
+                : label(
+                    "مش محتاج تجهز كل الإجابات. إحنا نرتب الصورة معاك.",
+                    "You do not need every answer. We will organize the picture with you.",
+                  )}
             </p>
             <p className="mt-4 text-[#BBFF00] leading-7">
               {label(
@@ -569,17 +649,36 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
               )}
             </p>
             <div className="relative mt-10 max-w-sm border-t border-white/15 pt-6">
-              <div className="absolute inset-x-0 top-0 h-px bg-[#BBFF00] transition-all duration-500" style={{ width: `${briefStep * 33.333}%` }} />
+              <div
+                className="absolute inset-x-0 top-0 h-px bg-[#BBFF00] transition-all duration-500"
+                style={{ width: `${briefStep * 33.333}%` }}
+              />
               <div className="grid grid-cols-3 gap-3">
                 {briefSteps.map((step, index) => {
                   const isActive = briefStep >= index + 1;
                   const isComplete = briefStep > index + 1;
                   return (
-                    <div key={step.number} className={`transition-colors duration-300 ${isActive ? "text-white" : "text-white/60"}`}>
-                      <span className={`mb-3 flex h-8 w-8 items-center justify-center rounded-full border font-mono text-[11px] ${isActive ? "border-[#BBFF00] bg-[#BBFF00] text-[#0A0A0A]" : "border-white/20"}`}>
-                        {isComplete ? <Check className="brief-step-check" size={14} strokeWidth={3} aria-hidden="true" /> : step.number}
+                    <div
+                      key={step.number}
+                      className={`transition-colors duration-300 ${isActive ? "text-white" : "text-white/60"}`}
+                    >
+                      <span
+                        className={`mb-3 flex h-8 w-8 items-center justify-center rounded-full border font-mono text-[11px] ${isActive ? "border-[#BBFF00] bg-[#BBFF00] text-[#0A0A0A]" : "border-white/20"}`}
+                      >
+                        {isComplete ? (
+                          <Check
+                            className="brief-step-check"
+                            size={14}
+                            strokeWidth={3}
+                            aria-hidden="true"
+                          />
+                        ) : (
+                          step.number
+                        )}
                       </span>
-                      <span className="block font-mono text-[10px] tracking-[0.12em]">{label(step.ar, step.en)}</span>
+                      <span className="block font-mono text-[10px] tracking-[0.12em]">
+                        {label(step.ar, step.en)}
+                      </span>
                     </div>
                   );
                 })}
@@ -608,19 +707,37 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
             <div className="brief-progress-header sm:col-span-2 -mx-4 -mt-4 border-b border-black/15 bg-white px-4 pb-5 pt-6 sm:-mx-5 sm:-mt-5 sm:px-5 md:-mx-10 md:-mt-10 md:px-10">
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
-                  <p className="font-mono text-[11px] font-bold tracking-[0.18em] text-black/65">ZOOMIX / PROJECT BRIEF</p>
-                  <p className={`${isArabic ? "font-arabic tracking-normal" : "font-display tracking-[-0.03em]"} mt-2 text-xl font-black`}>{label("خلّي الخطوة واضحة.", "MAKE THE NEXT MOVE CLEAR.")}</p>
-                  <p className="mt-2 text-xs text-black/65">{label("3 خطوات قصيرة · أقل من دقيقتين", "3 short steps · under two minutes")}</p>
+                  <p className="font-mono text-[11px] font-bold tracking-[0.18em] text-black/65">
+                    ZOOMIX / PROJECT BRIEF
+                  </p>
+                  <p
+                    className={`${isArabic ? "font-arabic tracking-normal" : "font-display tracking-[-0.03em]"} mt-2 text-xl font-black`}
+                  >
+                    {label("خلّي الخطوة واضحة.", "MAKE THE NEXT MOVE CLEAR.")}
+                  </p>
+                  <p className="mt-2 text-xs text-black/65">
+                    {label("3 خطوات قصيرة · أقل من دقيقتين", "3 short steps · under two minutes")}
+                  </p>
                 </div>
-                <span className="font-mono text-xs font-bold tracking-[0.16em] text-black/65" dir="ltr" style={{ unicodeBidi: "isolate" }}>
-                  {label("الخطوة", "STEP")} {String(briefStep).padStart(2, "0")} / 03 · {label(briefSteps[briefStep - 1].ar, briefSteps[briefStep - 1].en)}
+                <span
+                  className="font-mono text-xs font-bold tracking-[0.16em] text-black/65"
+                  dir="ltr"
+                  style={{ unicodeBidi: "isolate" }}
+                >
+                  {label("الخطوة", "STEP")} {String(briefStep).padStart(2, "0")} / 03 ·{" "}
+                  {label(briefSteps[briefStep - 1].ar, briefSteps[briefStep - 1].en)}
                 </span>
               </div>
               <div className="mt-5 h-1 bg-black/10">
-                <div className="h-full bg-[#BBFF00] transition-all duration-500" style={{ width: `${briefStep * 33.333}%` }} />
+                <div
+                  className="h-full bg-[#BBFF00] transition-all duration-500"
+                  style={{ width: `${briefStep * 33.333}%` }}
+                />
               </div>
               <div className="mt-3 flex items-center justify-between font-mono text-[10px] tracking-[0.1em] text-black/45">
-                {briefSteps.map((step) => <span key={step.number}>{label(step.ar, step.en)}</span>)}
+                {briefSteps.map((step) => (
+                  <span key={step.number}>{label(step.ar, step.en)}</span>
+                ))}
               </div>
             </div>
             {Object.keys(errors).length > 0 && (
@@ -634,191 +751,344 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 )}
               </div>
             )}
-            <div key={wizardStep} className="sm:col-span-2 grid grid-cols-1 gap-5 sm:grid-cols-2 brief-step-content">
-            {wizardStep === 1 && (
-              <>
-                {field("name", label("الاسم *", "Name *"), "text", true)}
-                {field("project", label("اسم المشروع", "Project name"))}
-                {field("activity", label("نوع النشاط", "Business type"), "text")}
-                <div className="sm:col-span-2 mt-2 border-t border-black/15 pt-5">
-                  <div className="flex flex-wrap items-end justify-between gap-3">
-                    <div>
-                      <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-black/65">01 / {label("الاختيار", "THE CHOICE")}</p>
-                      <p className="mt-2 text-sm text-black/55">{label("اختيارك من خطوتك الجاية يدخل هنا تلقائيًا.", "Your next-move choice comes through here automatically.")}</p>
+            <div
+              key={wizardStep}
+              className="sm:col-span-2 grid grid-cols-1 gap-5 sm:grid-cols-2 brief-step-content"
+            >
+              {wizardStep === 1 && (
+                <>
+                  {field("name", label("الاسم *", "Name *"), "text", true)}
+                  {field("project", label("اسم المشروع", "Project name"))}
+                  {field("activity", label("نوع النشاط", "Business type"), "text")}
+                  <div className="sm:col-span-2 mt-2 border-t border-black/15 pt-5">
+                    <div className="flex flex-wrap items-end justify-between gap-3">
+                      <div>
+                        <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-black/65">
+                          01 / {label("الاختيار", "THE CHOICE")}
+                        </p>
+                        <p className="mt-2 text-sm text-black/55">
+                          {label(
+                            "اختيارك من خطوتك الجاية يدخل هنا تلقائيًا.",
+                            "Your next-move choice comes through here automatically.",
+                          )}
+                        </p>
+                      </div>
+                      {form.route && (
+                        <span className="font-mono text-[11px] font-bold tracking-[0.12em] text-[#5e7c00]">
+                          {pathLabel[form.route]}
+                        </span>
+                      )}
                     </div>
-                    {form.route && <span className="font-mono text-[11px] font-bold tracking-[0.12em] text-[#5e7c00]">{pathLabel[form.route]}</span>}
-                  </div>
-                  {guidedSelection ? (
-                    <div className="mt-5 border border-[#6b8d00] bg-[#BBFF00]/15 p-4 shadow-[4px_4px_0_#0A0A0A]" aria-live="polite">
-                      <div className="flex flex-wrap items-start justify-between gap-4">
-                        <div>
-                          <p className="font-mono text-[10px] font-bold tracking-[0.16em] text-[#5e7c00]">ZOOMIX / NEXT MOVE</p>
-                          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                            <div className="border border-[#6b8d00]/30 bg-white/55 p-3">
-                              <span className="block font-mono text-[10px] font-bold tracking-[0.12em] text-black/45">{label("المسار", "ROUTE")}</span>
-                              <strong className="mt-1 block text-base leading-tight">{selectedPathLabel}</strong>
+                    {guidedSelection ? (
+                      <div
+                        className="mt-5 border border-[#6b8d00] bg-[#BBFF00]/15 p-4 shadow-[4px_4px_0_#0A0A0A]"
+                        aria-live="polite"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-4">
+                          <div>
+                            <p className="font-mono text-[10px] font-bold tracking-[0.16em] text-[#5e7c00]">
+                              ZOOMIX / NEXT MOVE
+                            </p>
+                            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                              <div className="border border-[#6b8d00]/30 bg-white/55 p-3">
+                                <span className="block font-mono text-[10px] font-bold tracking-[0.12em] text-black/45">
+                                  {label("المسار", "ROUTE")}
+                                </span>
+                                <strong className="mt-1 block text-base leading-tight">
+                                  {selectedPathLabel}
+                                </strong>
+                              </div>
+                              <div className="border border-[#6b8d00]/30 bg-white/55 p-3">
+                                <span className="block font-mono text-[10px] font-bold tracking-[0.12em] text-black/45">
+                                  {label("الباقة / الخدمة", "PACKAGE / SERVICE")}
+                                </span>
+                                <strong className="mt-1 block text-base leading-tight">
+                                  {selectedChoiceLabel}
+                                </strong>
+                              </div>
                             </div>
-                            <div className="border border-[#6b8d00]/30 bg-white/55 p-3">
-                              <span className="block font-mono text-[10px] font-bold tracking-[0.12em] text-black/45">{label("الباقة / الخدمة", "PACKAGE / SERVICE")}</span>
-                              <strong className="mt-1 block text-base leading-tight">{selectedChoiceLabel}</strong>
-                            </div>
+                            <p className="mt-2 text-xs leading-5 text-black/60">
+                              {label(
+                                "اختيارك محفوظ واتنقل تلقائيًا — مش محتاج تختاره تاني.",
+                                "Your choice is saved and carried over automatically — no need to choose it again.",
+                              )}
+                            </p>
                           </div>
-                          <p className="mt-2 text-xs leading-5 text-black/60">
-                            {label("اختيارك محفوظ واتنقل تلقائيًا — مش محتاج تختاره تاني.", "Your choice is saved and carried over automatically — no need to choose it again.")}
-                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              window.localStorage.removeItem("zoomix-selected-package");
+                              window.localStorage.removeItem("zoomix-project-route");
+                              window.location.assign("/route-finder");
+                            }}
+                            className="shrink-0 text-xs font-bold underline decoration-black/30 underline-offset-4 transition-colors hover:text-[#5e7c00]"
+                          >
+                            {label("تغيير الاختيار", "Change selection")}
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            window.localStorage.removeItem("zoomix-selected-package");
-                            window.localStorage.removeItem("zoomix-project-route");
-                            window.location.assign("/route-finder");
-                          }}
-                          className="shrink-0 text-xs font-bold underline decoration-black/30 underline-offset-4 transition-colors hover:text-[#5e7c00]"
-                        >
-                          {label("تغيير الاختيار", "Change selection")}
-                        </button>
+                      </div>
+                    ) : (
+                      <a
+                        href="/route-finder"
+                        className="mt-5 flex items-center justify-between border border-black/20 bg-white p-4 font-bold transition-colors hover:border-[#6b8d00] hover:bg-[#BBFF00]/15"
+                      >
+                        <span>
+                          {label("ساعدني أختار المسار المناسب", "Help me choose the right route")}
+                        </span>
+                        <span aria-hidden="true">↗</span>
+                      </a>
+                    )}
+                  </div>
+                  <div className="brief-step-actions sm:col-span-2 flex justify-end border-t border-black/15 pt-5">
+                    <button
+                      type="button"
+                      onClick={handleNextStep}
+                      className="zoomix-button w-full bg-[#BBFF00] text-[#0A0A0A] sm:w-auto"
+                    >
+                      {label("التالي: تفاصيل المشروع", "Next: project details")}{" "}
+                      <ActionArrow className="brief-next-arrow" size={18} />
+                    </button>
+                  </div>
+                </>
+              )}
+              {wizardStep === 2 && (
+                <>
+                  {form.route === "show" &&
+                    !activeShowType &&
+                    selectField(
+                      "showType",
+                      label("نوع الطلب *", "Request type *"),
+                      SHOW_TYPE_OPTIONS,
+                      true,
+                      label("اختار نوع الطلب", "Choose a request type"),
+                    )}
+                  {isContentBrief &&
+                    selectField(
+                      "contentSource",
+                      label("الخامات الموجودة", "Available footage"),
+                      CONTENT_SOURCE_OPTIONS,
+                    )}
+                  {isEventBrief && (
+                    <div className="sm:col-span-2 grid gap-5 sm:grid-cols-2">
+                      {selectField(
+                        "eventType",
+                        label("نوع الإيفنت", "Event type"),
+                        EVENT_TYPE_OPTIONS,
+                      )}
+                      {field("eventDate", label("تاريخ الإيفنت *", "Event date *"), "date", true)}
+                      {field("eventLocation", label("مكان الإيفنت", "Event location"))}
+                      {selectField(
+                        "coverageType",
+                        label("شكل التغطية", "Coverage style"),
+                        EVENT_COVERAGE_OPTIONS,
+                      )}
+                    </div>
+                  )}
+                  <div className="sm:col-span-2 mt-2 border-t border-black/15 pt-5">
+                    <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-black/45">
+                      02 / {label("تفاصيل المشروع", "PROJECT DETAILS")}
+                    </p>
+                    <p className="mt-2 text-sm text-black/55">
+                      {label(
+                        "قول لنا الأساسيات، وإحنا نرتب باقي التفاصيل معاك.",
+                        "Share the essentials and we will organize the rest with you.",
+                      )}
+                    </p>
+                  </div>
+                  {selectField(
+                    "budget",
+                    label("الميزانية التقريبية", "Approx. budget"),
+                    BUDGET_OPTIONS,
+                  )}
+                  {selectField(
+                    "launchDate",
+                    label("التوقيت المطلوب", "When do you want to start?"),
+                    TIMELINE_OPTIONS,
+                  )}
+                  {field(
+                    "projectLink",
+                    label("عندك حاجة نراجعها؟ (اختياري)", "Anything we should review? (optional)"),
+                    "url",
+                  )}
+                  <label className="block sm:col-span-2">
+                    <span className="mb-2 block font-mono text-xs font-bold uppercase tracking-[0.08em] text-black/75">
+                      {label(
+                        "إيه اللي عاوز توصله؟ واحكيلنا عنه باختصار *",
+                        "What should this move achieve? *",
+                      )}
+                    </span>
+                    <textarea
+                      id="brief-description"
+                      rows="5"
+                      value={form.description}
+                      onChange={(event) => updateField("description", event.target.value)}
+                      placeholder={label(
+                        "مثال: عاوز نطلع بهوية أو محتوى يخلي المشروع جاهز للظهور.",
+                        "Example: I want a clear identity or content system that makes the project ready to show up.",
+                      )}
+                      className={`min-h-36 min-w-0 w-full resize-y border bg-white px-4 py-3.5 outline-none transition-colors focus:border-[#6b8d00] focus:ring-2 focus:ring-[#BBFF00]/35 ${errors.description ? "border-red-500" : "border-black/25"}`}
+                      aria-invalid={Boolean(errors.description)}
+                      aria-describedby={errors.description ? "brief-description-error" : undefined}
+                      required
+                      maxLength={1200}
+                    />
+                    {errors.description && (
+                      <span
+                        id="brief-description-error"
+                        className="block mt-1 text-xs text-red-600"
+                      >
+                        {errors.description}
+                      </span>
+                    )}
+                  </label>
+                  <div className="brief-step-actions sm:col-span-2 flex flex-col justify-between gap-4 border-t border-black/15 pt-5 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={() => goToStep(1)}
+                      className="zoomix-button w-full border border-black/20 text-[#0A0A0A] sm:w-auto"
+                    >
+                      {label("رجوع", "Back")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleNextStep}
+                      className="zoomix-button w-full bg-[#BBFF00] text-[#0A0A0A] sm:w-auto"
+                    >
+                      {label("التالي: وسيلة التواصل", "Next: contact method")}{" "}
+                      <ActionArrow className="brief-next-arrow" size={18} />
+                    </button>
+                  </div>
+                </>
+              )}
+              {wizardStep === 3 && (
+                <>
+                  <div
+                    className="sm:col-span-2 border border-black/15 bg-black/[0.03] p-4"
+                    aria-live="polite"
+                  >
+                    <p className="font-mono text-[10px] font-bold tracking-[0.16em] text-black/45">
+                      ZOOMIX / READY TO SEND
+                    </p>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <div className="border border-black/10 bg-white/70 p-3">
+                        <span className="block font-mono text-[10px] font-bold tracking-[0.12em] text-black/45">
+                          {label("المسار", "ROUTE")}
+                        </span>
+                        <strong className="mt-1 block text-base leading-tight">
+                          {selectedPathLabel}
+                        </strong>
+                      </div>
+                      <div className="border border-black/10 bg-white/70 p-3">
+                        <span className="block font-mono text-[10px] font-bold tracking-[0.12em] text-black/45">
+                          {label("الباقة / الخدمة", "PACKAGE / SERVICE")}
+                        </span>
+                        <strong className="mt-1 block text-base leading-tight">
+                          {selectedChoiceLabel || label("بريف مشروع جديد", "New project brief")}
+                        </strong>
                       </div>
                     </div>
-                  ) : (
-                    <a href="/route-finder" className="mt-5 flex items-center justify-between border border-black/20 bg-white p-4 font-bold transition-colors hover:border-[#6b8d00] hover:bg-[#BBFF00]/15">
-                      <span>{label("ساعدني أختار المسار المناسب", "Help me choose the right route")}</span>
-                      <span aria-hidden="true">↗</span>
-                    </a>
-                  )}
-                </div>
-                <div className="brief-step-actions sm:col-span-2 flex justify-end border-t border-black/15 pt-5">
-                  <button type="button" onClick={handleNextStep} className="zoomix-button w-full bg-[#BBFF00] text-[#0A0A0A] sm:w-auto">
-                    {label("التالي: تفاصيل المشروع", "Next: project details")} <ActionArrow className="brief-next-arrow" size={18} />
-                  </button>
-                </div>
-              </>
-            )}
-            {wizardStep === 2 && (
-              <>
-                {form.route === "show" && !activeShowType && selectField("showType", label("نوع الطلب *", "Request type *"), SHOW_TYPE_OPTIONS, true, label("اختار نوع الطلب", "Choose a request type"))}
-                {isContentBrief && selectField("contentSource", label("الخامات الموجودة", "Available footage"), CONTENT_SOURCE_OPTIONS)}
-                {isEventBrief && (
-                  <div className="sm:col-span-2 grid gap-5 sm:grid-cols-2">
-                    {selectField("eventType", label("نوع الإيفنت", "Event type"), EVENT_TYPE_OPTIONS)}
-                    {field("eventDate", label("تاريخ الإيفنت *", "Event date *"), "date", true)}
-                    {field("eventLocation", label("مكان الإيفنت", "Event location"))}
-                    {selectField("coverageType", label("شكل التغطية", "Coverage style"), EVENT_COVERAGE_OPTIONS)}
+                    <p className="mt-1 text-sm text-black/55">
+                      {label(
+                        "راجعنا الاختيار والتفاصيل. فاضل طريقة التواصل فقط.",
+                        "The direction and details are set. Only the contact method is left.",
+                      )}
+                    </p>
                   </div>
-                )}
-                <div className="sm:col-span-2 mt-2 border-t border-black/15 pt-5">
-                  <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-black/45">02 / {label("تفاصيل المشروع", "PROJECT DETAILS")}</p>
-                  <p className="mt-2 text-sm text-black/55">{label("قول لنا الأساسيات، وإحنا نرتب باقي التفاصيل معاك.", "Share the essentials and we will organize the rest with you.")}</p>
-                </div>
-                {selectField("budget", label("الميزانية التقريبية", "Approx. budget"), BUDGET_OPTIONS)}
-                {selectField("launchDate", label("التوقيت المطلوب", "When do you want to start?"), TIMELINE_OPTIONS)}
-                {field("projectLink", label("عندك حاجة نراجعها؟ (اختياري)", "Anything we should review? (optional)"), "url")}
-                <label className="block sm:col-span-2">
-                  <span className="mb-2 block font-mono text-xs font-bold uppercase tracking-[0.08em] text-black/75">
-                    {label("إيه اللي عاوز توصله؟ واحكيلنا عنه باختصار *", "What should this move achieve? *")}
-                  </span>
-                  <textarea
-                    id="brief-description"
-                    rows="5"
-                    value={form.description}
-                    onChange={(event) => updateField("description", event.target.value)}
-                    placeholder={label("مثال: عاوز نطلع بهوية أو محتوى يخلي المشروع جاهز للظهور.", "Example: I want a clear identity or content system that makes the project ready to show up.")}
-                    className={`min-h-36 min-w-0 w-full resize-y border bg-white px-4 py-3.5 outline-none transition-colors focus:border-[#6b8d00] focus:ring-2 focus:ring-[#BBFF00]/35 ${errors.description ? "border-red-500" : "border-black/25"}`}
-                    aria-invalid={Boolean(errors.description)}
-                    aria-describedby={errors.description ? "brief-description-error" : undefined}
-                    required
-                    maxLength={1200}
+                  <div className="sm:col-span-2 border-t border-black/15 pt-5">
+                    <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-black/45">
+                      CONTACT LINE / {label("وسيلة التواصل", "YOUR CONTACT LINE")}
+                    </p>
+                    <p className="mt-2 text-sm text-black/55">
+                      {label(
+                        "لو واتساب مش مناسب، اختار الطريقة اللي تريحك.",
+                        "WhatsApp is not required — choose the way that works for you.",
+                      )}
+                    </p>
+                    <p className="mt-3 max-w-2xl text-xs leading-6 text-black/45">
+                      {label(
+                        `${SITE_CONTACT.responseTime.ar} ${PAYMENT_TERMS.ar}`,
+                        `${SITE_CONTACT.responseTime.en} ${PAYMENT_TERMS.en}`,
+                      )}
+                    </p>
+                  </div>
+                  <div className="sm:col-span-2">
+                    {selectField(
+                      "contactPreference",
+                      label("تحب نكمل معاك إزاي؟ *", "How should we reach you? *"),
+                      CONTACT_OPTIONS,
+                      true,
+                      label("اختار وسيلة التواصل", "Choose a contact method"),
+                    )}
+                  </div>
+                  {["whatsapp", "call"].includes(form.contactPreference) &&
+                    field("phone", label("رقم الهاتف *", "Phone *"), "tel", true)}
+                  {form.contactPreference === "email" &&
+                    field("email", label("الإيميل *", "Email *"), "email", true)}
+                  {form.contactPreference === "call" &&
+                    selectField(
+                      "preferredTime",
+                      label("الوقت المفضل للمكالمة", "Preferred call time"),
+                      CALL_TIME_OPTIONS,
+                    )}
+                  <label className="sm:col-span-2 flex items-start gap-3 text-sm leading-6 text-black/70">
+                    <input
+                      type="checkbox"
+                      checked={form.consent}
+                      onChange={(event) => updateField("consent", event.target.checked)}
+                      className="mt-1 h-4 w-4 accent-[#BBFF00]"
+                      aria-invalid={Boolean(errors.consent)}
+                      aria-describedby={errors.consent ? "brief-consent-error" : undefined}
+                      required
+                    />
+                    <span>
+                      {label(
+                        "أوافق على استخدام بياناتي للتواصل بخصوص مشروعي فقط.",
+                        "I agree that my details may be used only to discuss my project.",
+                      )}
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    name="website"
+                    value={form.website}
+                    onChange={(event) => update("website", event.target.value)}
+                    className="absolute -left-[9999px] h-px w-px opacity-0"
+                    tabIndex="-1"
+                    autoComplete="off"
+                    aria-hidden="true"
                   />
-                  {errors.description && (
-                    <span id="brief-description-error" className="block mt-1 text-xs text-red-600">
-                      {errors.description}
+                  {errors.consent && (
+                    <span
+                      id="brief-consent-error"
+                      className="sm:col-span-2 -mt-3 text-xs text-red-600"
+                    >
+                      {errors.consent}
                     </span>
                   )}
-                </label>
-                <div className="brief-step-actions sm:col-span-2 flex flex-col justify-between gap-4 border-t border-black/15 pt-5 sm:flex-row">
-                  <button type="button" onClick={() => goToStep(1)} className="zoomix-button w-full border border-black/20 text-[#0A0A0A] sm:w-auto">
-                    {label("رجوع", "Back")}
-                  </button>
-                  <button type="button" onClick={handleNextStep} className="zoomix-button w-full bg-[#BBFF00] text-[#0A0A0A] sm:w-auto">
-                    {label("التالي: وسيلة التواصل", "Next: contact method")} <ActionArrow className="brief-next-arrow" size={18} />
-                  </button>
-                </div>
-              </>
-            )}
-            {wizardStep === 3 && (
-              <>
-                <div className="sm:col-span-2 border border-black/15 bg-black/[0.03] p-4" aria-live="polite">
-                  <p className="font-mono text-[10px] font-bold tracking-[0.16em] text-black/45">ZOOMIX / READY TO SEND</p>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <div className="border border-black/10 bg-white/70 p-3">
-                      <span className="block font-mono text-[10px] font-bold tracking-[0.12em] text-black/45">{label("المسار", "ROUTE")}</span>
-                      <strong className="mt-1 block text-base leading-tight">{selectedPathLabel}</strong>
-                    </div>
-                    <div className="border border-black/10 bg-white/70 p-3">
-                      <span className="block font-mono text-[10px] font-bold tracking-[0.12em] text-black/45">{label("الباقة / الخدمة", "PACKAGE / SERVICE")}</span>
-                      <strong className="mt-1 block text-base leading-tight">{selectedChoiceLabel || label("بريف مشروع جديد", "New project brief")}</strong>
-                    </div>
+                  <div className="brief-step-actions sm:col-span-2 flex flex-col items-stretch justify-between gap-4 border-t border-black/15 pt-5 sm:flex-row sm:items-center">
+                    <button
+                      type="button"
+                      onClick={() => goToStep(2)}
+                      className="zoomix-button w-full border border-black/20 text-[#0A0A0A] sm:w-auto"
+                    >
+                      {label("رجوع", "Back")}
+                    </button>
+                    <button
+                      type="submit"
+                      className="zoomix-button w-full bg-[#BBFF00] text-[#0A0A0A] shadow-[0_8px_24px_rgba(187,255,0,0.15)] sm:w-auto"
+                    >
+                      {label("ابعت البريف", "Send the brief")}{" "}
+                      <ActionArrow className="brief-next-arrow" size={18} />
+                    </button>
                   </div>
-                  <p className="mt-1 text-sm text-black/55">{label("راجعنا الاختيار والتفاصيل. فاضل طريقة التواصل فقط.", "The direction and details are set. Only the contact method is left.")}</p>
-                </div>
-                <div className="sm:col-span-2 border-t border-black/15 pt-5">
-                  <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-black/45">CONTACT LINE / {label("وسيلة التواصل", "YOUR CONTACT LINE")}</p>
-                  <p className="mt-2 text-sm text-black/55">{label("لو واتساب مش مناسب، اختار الطريقة اللي تريحك.", "WhatsApp is not required — choose the way that works for you.")}</p>
-                  <p className="mt-3 max-w-2xl text-xs leading-6 text-black/45">
-                    {label(`${SITE_CONTACT.responseTime.ar} ${PAYMENT_TERMS.ar}`, `${SITE_CONTACT.responseTime.en} ${PAYMENT_TERMS.en}`)}
-                  </p>
-                </div>
-                <div className="sm:col-span-2">
-                  {selectField("contactPreference", label("تحب نكمل معاك إزاي؟ *", "How should we reach you? *"), CONTACT_OPTIONS, true, label("اختار وسيلة التواصل", "Choose a contact method"))}
-                </div>
-                {["whatsapp", "call"].includes(form.contactPreference) && field("phone", label("رقم الهاتف *", "Phone *"), "tel", true)}
-                {form.contactPreference === "email" && field("email", label("الإيميل *", "Email *"), "email", true)}
-                {form.contactPreference === "call" && selectField("preferredTime", label("الوقت المفضل للمكالمة", "Preferred call time"), CALL_TIME_OPTIONS)}
-                <label className="sm:col-span-2 flex items-start gap-3 text-sm leading-6 text-black/70">
-                  <input
-                    type="checkbox"
-                    checked={form.consent}
-                    onChange={(event) => updateField("consent", event.target.checked)}
-                    className="mt-1 h-4 w-4 accent-[#BBFF00]"
-                    aria-invalid={Boolean(errors.consent)}
-                    aria-describedby={errors.consent ? "brief-consent-error" : undefined}
-                    required
-                  />
-                  <span>
-                    {label(
-                      "أوافق على استخدام بياناتي للتواصل بخصوص مشروعي فقط.",
-                      "I agree that my details may be used only to discuss my project.",
-                    )}
-                  </span>
-                </label>
-                <input
-                  type="text"
-                  name="website"
-                  value={form.website}
-                  onChange={(event) => update("website", event.target.value)}
-                  className="absolute -left-[9999px] h-px w-px opacity-0"
-                  tabIndex="-1"
-                  autoComplete="off"
-                  aria-hidden="true"
-                />
-                {errors.consent && (
-                  <span id="brief-consent-error" className="sm:col-span-2 -mt-3 text-xs text-red-600">
-                    {errors.consent}
-                  </span>
-                )}
-                <div className="brief-step-actions sm:col-span-2 flex flex-col items-stretch justify-between gap-4 border-t border-black/15 pt-5 sm:flex-row sm:items-center">
-                  <button type="button" onClick={() => goToStep(2)} className="zoomix-button w-full border border-black/20 text-[#0A0A0A] sm:w-auto">
-                    {label("رجوع", "Back")}
-                  </button>
-                  <button type="submit" className="zoomix-button w-full bg-[#BBFF00] text-[#0A0A0A] shadow-[0_8px_24px_rgba(187,255,0,0.15)] sm:w-auto">
-                    {label("ابعت البريف", "Send the brief")} <ActionArrow className="brief-next-arrow" size={18} />
-                  </button>
-                </div>
-              </>
-            )}
+                </>
+              )}
             </div>
             {submitError && (
-              <div className="sm:col-span-2 border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+              <div
+                className="sm:col-span-2 border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800"
+                role="alert"
+              >
                 <p>{submitError}</p>
                 <button type="button" onClick={copyMessage} className="mt-3 font-bold underline">
                   {label("نسخ نسخة من البريف", "Copy a brief copy")}
@@ -850,7 +1120,10 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                   <Check className="brief-success-icon" size={16} aria-hidden="true" />
                   {form.contactPreference === "whatsapp"
                     ? label("تم حفظ البريف وفتح واتساب.", "Brief saved and WhatsApp opened.")
-                    : label("تم حفظ البريف. هنتواصل معاك بالطريقة اللي اخترتها.", "Brief saved. We will follow up using your preferred contact method.")}
+                    : label(
+                        "تم حفظ البريف. هنتواصل معاك بالطريقة اللي اخترتها.",
+                        "Brief saved. We will follow up using your preferred contact method.",
+                      )}
                   {referenceCode && <span className="font-mono font-bold">{referenceCode}</span>}
                 </p>
                 {editUrl && (
@@ -860,7 +1133,8 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                     rel="noreferrer"
                     className="inline-flex w-fit items-center gap-2 font-bold underline decoration-[#6b8d00]/40 underline-offset-4 transition-colors hover:text-black"
                   >
-                    {label("احتفظ برابط تعديل البريف", "Keep your brief edit link")} <span aria-hidden="true">↗</span>
+                    {label("احتفظ برابط تعديل البريف", "Keep your brief edit link")}{" "}
+                    <span aria-hidden="true">↗</span>
                   </a>
                 )}
               </div>

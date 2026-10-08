@@ -38,7 +38,8 @@
     "react-router-dom": "^7.14.1"
   },
   "scripts": {
-    "test:studio": "node scripts/test-studio.mjs && node scripts/test-commercial.mjs",
+    "test:studio": "node scripts/test-studio.mjs && node scripts/test-commercial.mjs && node scripts/test-studio-matrix.mjs",
+    "test:studio:matrix": "node scripts/test-studio-matrix.mjs",
     "start": "vite --host 0.0.0.0",
     "dev": "vite --host 0.0.0.0",
     "build": "vite build && node scripts/prepare-pages-routes.mjs",

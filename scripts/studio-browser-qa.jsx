@@ -1,7 +1,8 @@
 // Local browser regression fixture. No live API requests, messages or payments.
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Routes, Route } from "react-router-dom";
+import ClientQuote from "../src/pages/ClientQuote";
 import Studio from "../src/pages/CommercialStudioPrototype";
 import { PROTOTYPE_CATALOG } from "../src/data/commercialStudioPrototype";
 import "../src/index.css";
@@ -37,18 +38,23 @@ const requests = [
   },
 ];
 const catalog = PROTOTYPE_CATALOG.map((row) => ({ ...row, status: "draft" }));
+const scenario = new URLSearchParams(window.location.search).get("scenario");
 const quotes = [
   {
     id: 901,
     reference: "QA-QUOTE-901",
     clientName: "QA Alpha",
     projectName: "QA Origin",
-    status: "draft",
+    status: scenario === "accepted" ? "accepted" : "revision_requested",
     total: 6000,
     version: 1,
   },
 ];
 const saved = {
+  revisionRequest: {
+    message: "اختبار: تقليل عدد البنود مع الحفاظ على النطاق المتفق عليه.",
+    created_at: "2026-10-09T00:00:00Z",
+  },
   briefRequestId: 901,
   clientName: "QA Alpha",
   projectName: "QA Origin",
@@ -93,7 +99,48 @@ window.fetch = async (input, options = {}) => {
       status: 409,
       headers: { "Content-Type": "application/json" },
     });
-  if (path === "/api/studio/catalog") payload = { items: catalog };
+  if (path === "/api/quotes/QA-CLIENT/fixture-only")
+    payload = {
+      quote: {
+        reference: "QA-CLIENT",
+        version: 1,
+        language: "ar",
+        status: "accepted",
+        clientName: "QA فقط",
+        projectName: "عرض مقبول — بيانات غير حقيقية",
+        expiresAt: "2030-01-01T00:00:00Z",
+        subtotal: 8000,
+        discount: 0,
+        tax: 0,
+        total: 8000,
+        taxPercent: 0,
+        depositPercent: 60,
+        timeline: "شهر تجريبي",
+        revisions: 2,
+        selectedOptionalItemIds: [],
+        items: [
+          {
+            id: 1,
+            name: { ar: "النطاق الأساسي", en: "Core scope" },
+            description: { ar: "اختبار حفظ حالة القبول بعد التحميل", en: "Accepted reload QA" },
+            quantity: 1,
+            unitPrice: 6000,
+            discount: 0,
+            optional: false,
+          },
+          {
+            id: 2,
+            name: { ar: "إضافة لم يقبلها العميل", en: "Unselected addon" },
+            description: { ar: "لا تدخل في الإجمالي المقبول", en: "Not in accepted total" },
+            quantity: 1,
+            unitPrice: 2000,
+            discount: 0,
+            optional: true,
+          },
+        ],
+      },
+    };
+  else if (path === "/api/studio/catalog") payload = { items: catalog };
   else if (path === "/api/studio/promotions") payload = { promotions };
   else if (path === "/api/studio/quotes") payload = { quotes };
   else if (path === "/api/studio/quotes/901") payload = { draft: saved };
@@ -110,7 +157,19 @@ window.fetch = async (input, options = {}) => {
   return new Response(JSON.stringify(payload), { headers: { "Content-Type": "application/json" } });
 };
 createRoot(document.getElementById("root")).render(
-  <MemoryRouter initialEntries={["/studio?view=leads"]}>
-    <Studio />
+  <MemoryRouter
+    initialEntries={[
+      scenario === "client-accepted"
+        ? "/q/QA-CLIENT/fixture-only"
+        : "/studio?view=quotes&record=901",
+    ]}
+  >
+    {scenario === "client-accepted" ? (
+      <Routes>
+        <Route path="/q/:reference/:token" element={<ClientQuote />} />
+      </Routes>
+    ) : (
+      <Studio />
+    )}
   </MemoryRouter>,
 );

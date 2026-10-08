@@ -7,9 +7,9 @@ export default function ReportsView({ language, quotes, projects, payments }) {
   const quoteRows = Array.isArray(quotes) ? quotes : null;
   const projectRows = Array.isArray(projects) ? projects : null;
   const paymentRows = Array.isArray(payments) ? payments : null;
-  const quoteList = quoteRows || [];
-  const projectList = projectRows || [];
-  const paymentList = paymentRows || [];
+  const quoteList = (quoteRows || []).filter((row) => !row.isTest);
+  const projectList = (projectRows || []).filter((row) => !row.isTest);
+  const paymentList = (paymentRows || []).filter((row) => !row.isTest);
   const waiting = !quoteRows || !projectRows || !paymentRows;
   const accepted = quoteList.filter((item) => item.status === "accepted").length;
   const sent = quoteList.filter((item) => item.status !== "draft").length;
@@ -57,7 +57,11 @@ export default function ReportsView({ language, quotes, projects, payments }) {
         <Metric
           label={isArabic ? "نسبة التحويل" : "CONVERSION"}
           value={quoteRows ? `${conversion}%` : "—"}
-          note={isArabic ? "المقبول من العروض غير المسودة · آخر 200" : "Accepted / non-drafts · latest 200"}
+          note={
+            isArabic
+              ? "المقبول من العروض غير المسودة · دون بيانات الاختبار"
+              : "Accepted / non-drafts · excluding test data"
+          }
           accent
         />
         <Metric

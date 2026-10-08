@@ -315,17 +315,21 @@ export default function CatalogView({
             <span className="csp-sensitive-number">{money(item.cost, language)}</span>
             <span className="csp-sensitive-number">{margin(item.price, item.cost)}%</span>
             <StatusChip accent={item.visible && !item.draft}>
-              {item.draft
+              {item.status === "archived"
                 ? isArabic
-                  ? "مسودة"
-                  : "DRAFT"
-                : item.visible
+                  ? "مؤرشف"
+                  : "ARCHIVED"
+                : item.draft
                   ? isArabic
-                    ? "ظاهر"
-                    : "LIVE"
-                  : isArabic
-                    ? "داخلي"
-                    : "INTERNAL"}
+                    ? "مسودة"
+                    : "DRAFT"
+                  : item.visible
+                    ? isArabic
+                      ? "ظاهر"
+                      : "LIVE"
+                    : isArabic
+                      ? "داخلي"
+                      : "INTERNAL"}
             </StatusChip>
           </button>
         ))}

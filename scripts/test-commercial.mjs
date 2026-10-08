@@ -177,6 +177,7 @@ assert.equal(
 const payload = {
   clientName: "Test client",
   projectName: "Test project",
+  timeline: "QA only — one month",
   items: lines.map((row) => ({
     ...row,
     name: { ar: "اختبار", en: "Test" },

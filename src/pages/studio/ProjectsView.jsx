@@ -6,6 +6,7 @@ export default function ProjectsView({ language, projects }) {
   const isArabic = language === "ar";
   const rows = Array.isArray(projects) ? projects : null;
   const list = rows || [];
+  const businessList = list.filter((item) => !item.isTest);
   const waiting = !rows;
   return (
     <div className="csp-view-enter">
@@ -30,12 +31,14 @@ export default function ProjectsView({ language, projects }) {
       <section className="csp-metrics-grid">
         <Metric
           label={isArabic ? "مشروعات نشطة" : "ACTIVE PROJECTS"}
-          value={waiting ? "—" : String(list.length)}
+          value={waiting ? "—" : String(businessList.length)}
           note={isArabic ? "من عروض مقبولة" : "From accepted quotes"}
         />
         <Metric
           label={isArabic ? "قيمة التعاقدات" : "CONTRACT VALUE"}
-          value={waiting ? "—" : money(list.reduce((sum, item) => sum + item.contractValue, 0))}
+          value={
+            waiting ? "—" : money(businessList.reduce((sum, item) => sum + item.contractValue, 0))
+          }
           note="EGP"
         />
         <Metric
@@ -44,7 +47,7 @@ export default function ProjectsView({ language, projects }) {
             waiting
               ? "—"
               : money(
-                  list.reduce(
+                  businessList.reduce(
                     (sum, item) =>
                       sum + (item.netContractValue ?? item.contractValue) - item.expectedCost,
                     0,
@@ -72,6 +75,7 @@ export default function ProjectsView({ language, projects }) {
             <span className="csp-item-name">
               <strong>{project.projectName}</strong>
               <small>{project.reference}</small>
+              {project.isTest && <StatusChip>{isArabic ? "اختبار QA" : "TEST QA"}</StatusChip>}
             </span>
             <span>{project.clientName}</span>
             <b className="csp-sensitive-number">{money(project.contractValue)} EGP</b>

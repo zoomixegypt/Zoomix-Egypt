@@ -34,6 +34,7 @@ export default function QuoteView({
   freshRef,
   draftId = "working",
   selectedQuoteId,
+  liveQuoteStatus,
 }) {
   const isArabic = language === "ar";
   const storageKey = `${storageMode}:${draftId}`;
@@ -77,6 +78,8 @@ export default function QuoteView({
   const [sent, setSent] = useState(null);
   const [saveState, setSaveState] = useState("draft");
   const [quoteRecord, setQuoteRecord] = useState(null);
+  const [revisionRequest, setRevisionRequest] = useState(null);
+  const [testModeBusy, setTestModeBusy] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [clientName, setClientName] = useState(lead?.name || "");
   const [projectName, setProjectName] = useState(lead?.project || "");
@@ -90,6 +93,20 @@ export default function QuoteView({
   const [localSavedAt, setLocalSavedAt] = useState("");
   const [savedDiscountPlan, setSavedDiscountPlan] = useState(null);
   const skipBackup = useRef(false);
+  useEffect(() => {
+    if (liveQuoteStatus)
+      setQuoteRecord((current) =>
+        current && String(current.id) === String(selectedQuoteId)
+          ? { ...current, status: liveQuoteStatus }
+          : current,
+      );
+  }, [liveQuoteStatus, selectedQuoteId]);
+  const previousLanguage = useRef(language);
+  useEffect(() => {
+    if (previousLanguage.current !== language && draftReady && quoteRecord?.status !== "accepted")
+      setSaveState("dirty");
+    previousLanguage.current = language;
+  }, [language, draftReady, quoteRecord?.status]);
   useUnsavedChanges(saveState === "dirty" || saveState === "saving");
 
   useEffect(() => {
@@ -114,6 +131,7 @@ export default function QuoteView({
       setProjectName(saved.projectName || "");
       setBriefRequestId(saved.briefRequestId ?? null);
       setQuoteRecord(saved.record || null);
+      setRevisionRequest(saved.revisionRequest || null);
       setSaveState(saved.cloudDirty ? "dirty" : saved.record ? "saved" : "draft");
       setLocalSavedAt(saved.savedAt || "");
       setSavedDiscountPlan(saved.discountPlan || null);
@@ -128,8 +146,25 @@ export default function QuoteView({
             setSaveError(isArabic ? "الحفظ المحلي غير متاح." : "Device backup is unavailable.");
         }
         const cloudId = selectedQuoteId || (storageMode === "cloud" ? saved?.record?.id : null);
-        if (saved && (saved.cloudDirty || !cloudId || storageMode === "local")) restore(saved);
-        else if (cloudId && storageMode === "cloud") {
+        if (saved && (saved.cloudDirty || !cloudId || storageMode === "local")) {
+          restore(saved);
+          if (cloudId && storageMode === "cloud") {
+            // Keep unsaved item edits, but never hide new client responses or an acceptance lock.
+            const latest = await studioRequest(`/api/studio/quotes/${cloudId}`);
+            if (active) {
+              setRevisionRequest(latest.draft.revisionRequest || null);
+              setQuoteRecord((current) =>
+                current
+                  ? {
+                      ...current,
+                      status: latest.draft.record.status,
+                      isTest: latest.draft.record.isTest,
+                    }
+                  : latest.draft.record,
+              );
+            }
+          }
+        } else if (cloudId && storageMode === "cloud") {
           fetchingQuote = true;
           const result = await studioRequest(`/api/studio/quotes/${cloudId}`);
           if (active) restore(result.draft);
@@ -165,6 +200,7 @@ export default function QuoteView({
         projectName,
         briefRequestId,
         record: quoteRecord,
+        revisionRequest,
         cloudDirty: ["dirty", "saving"].includes(saveState),
         discountPlan: savedDiscountPlan,
       });
@@ -190,6 +226,7 @@ export default function QuoteView({
     projectName,
     briefRequestId,
     quoteRecord,
+    revisionRequest,
     saveState,
     savedDiscountPlan,
   ]);
@@ -312,6 +349,12 @@ export default function QuoteView({
   };
   const applyPromo = () => {
     markDirty();
+    if (!promoInput.trim()) {
+      setAppliedPromo("");
+      setPromoMessage(null);
+      setSavedDiscountPlan(null);
+      return;
+    }
     const nextPromo = promotions.find((item) => item.code === promoInput.trim().toUpperCase());
     if (!nextPromo) {
       setAppliedPromo("");
@@ -355,6 +398,7 @@ export default function QuoteView({
     markDirty();
   };
   const saveDraft = async () => {
+    if (quoteRecord?.status === "accepted") return null;
     if (
       !items.length ||
       !clientName.trim() ||
@@ -471,6 +515,7 @@ export default function QuoteView({
         }
       }
       setSent({ channel: sendChannel, clientUrl: result.clientUrl, expiresAt: result.expiresAt });
+      setQuoteRecord({ ...record, status: "sent" });
       onQuoteSaved?.({
         ...record,
         status: "sent",
@@ -766,7 +811,7 @@ export default function QuoteView({
             type="button"
             className="csp-button"
             onClick={saveDraft}
-            disabled={saveState === "saving"}
+            disabled={saveState === "saving" || quoteRecord?.status === "accepted"}
           >
             <Save size={16} />
             {isArabic ? "حفظ المسودة" : "Save draft"}
@@ -779,6 +824,7 @@ export default function QuoteView({
             type="button"
             className="csp-button csp-button--primary"
             onClick={() => setSendOpen(true)}
+            disabled={quoteRecord?.status === "accepted"}
           >
             <Send size={16} />
             {isArabic ? "إرسال العرض" : "Send quote"}
@@ -815,354 +861,417 @@ export default function QuoteView({
             ? "لم تُحفظ نسخة على الجهاز بعد"
             : "No device backup yet"}
       </p>
-      <section className="csp-form-grid">
-        <label>
-          {isArabic ? "اسم العميل" : "Client name"}
-          <input
-            value={clientName}
-            onChange={(e) => {
-              setClientName(e.target.value);
-              markDirty();
-            }}
-          />
-        </label>
-        <label>
-          {isArabic ? "اسم المشروع" : "Project name"}
-          <input
-            value={projectName}
-            onChange={(e) => {
-              setProjectName(e.target.value);
-              markDirty();
-            }}
-          />
-        </label>
-      </section>
-      <section className="csp-lead-strip">
-        <div>
-          <span>{linkedLead?.reference_code || "—"}</span>
-          <strong>
-            {linkedLead?.name || clientName || "—"} · {linkedLead?.project || projectName || "—"}
-          </strong>
-        </div>
-        <div>
-          <span>{isArabic ? "الميزانية" : "BUDGET"}</span>
-          <strong>{briefLabel(linkedLead?.budget, language)}</strong>
-        </div>
-        <div>
-          <span>{isArabic ? "المدة" : "TIMELINE"}</span>
-          <strong>{briefLabel(linkedLead?.launch_timeline, language)}</strong>
-        </div>
-      </section>
-      {costsPending && (
-        <p className="csp-warning" role="status">
+      {revisionRequest && (
+        <section
+          className="csp-warning"
+          aria-label={isArabic ? "طلب تعديل العميل" : "Client revision request"}
+        >
+          <strong>{isArabic ? "طلب تعديل العميل" : "Client revision request"}</strong>
+          <p>{revisionRequest.message}</p>
+          <small>{shortTime(revisionRequest.created_at)}</small>
+        </section>
+      )}
+      {quoteRecord?.status === "accepted" && (
+        <p role="status">
           {isArabic
-            ? "التكلفة الداخلية غير محددة لبعض البنود. أدخلها قبل الحفظ؛ الهامش الحالي ليس تقديرًا معتمدًا."
-            : "Some internal costs are unknown. Enter them before saving; the current margin is not a reliable estimate."}
+            ? "هذا العرض مقبول ومحفوظ. أنشئ عرضًا جديدًا لأي تغيير في النطاق."
+            : "This accepted quote is locked. Create a new quote for scope changes."}
         </p>
       )}
-      <div className="csp-quote-grid">
-        <section className="csp-panel">
-          <div className="csp-panel-head">
-            <h2>
-              {quoteReferenceLabel} · V{quoteVersionLabel}
-            </h2>
-            <StatusChip>{isArabic ? "مسودة" : "DRAFT"}</StatusChip>
-          </div>
-          {items.map((row, index) => (
-            <div className="csp-quote-row" key={row.rowId}>
-              <div className="csp-quote-row-main">
-                <input
-                  className="csp-line-name"
-                  value={row.name[language]}
-                  onChange={(event) =>
-                    updateRow(row.rowId, { name: { ...row.name, [language]: event.target.value } })
-                  }
-                  aria-label={isArabic ? "اسم البند" : "Item name"}
-                />
-                <textarea
-                  value={row.description[language]}
-                  onChange={(event) =>
-                    updateRow(row.rowId, {
-                      description: { ...row.description, [language]: event.target.value },
-                    })
-                  }
-                  aria-label={isArabic ? "وصف البند" : "Item description"}
-                  rows={2}
-                />
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={row.optional}
-                    onChange={(event) => updateRow(row.rowId, { optional: event.target.checked })}
-                  />
-                  {isArabic ? "إضافة اختيارية للعميل" : "Optional client add-on"}
-                </label>
-              </div>
-              <label className="csp-compact-field">
-                <span>{isArabic ? "الكمية" : "Qty"}</span>
-                <input
-                  type="number"
-                  min="1"
-                  value={row.quantity}
-                  onChange={(event) =>
-                    updateRow(row.rowId, { quantity: Math.max(1, Number(event.target.value)) })
-                  }
-                />
-              </label>
-              <label className="csp-compact-field">
-                <span>{isArabic ? "سعر الوحدة" : "Unit price"}</span>
-                <input
-                  type="number"
-                  min="0"
-                  value={row.unitPrice}
-                  onChange={(event) =>
-                    updateRow(row.rowId, { unitPrice: Math.max(0, Number(event.target.value)) })
-                  }
-                />
-              </label>
-              <label className="csp-compact-field">
-                <span>{isArabic ? "خصم البند" : "Item discount"}</span>
-                <input
-                  type="number"
-                  min="0"
-                  value={row.discount}
-                  onChange={(event) =>
-                    updateRow(row.rowId, { discount: Math.max(0, Number(event.target.value)) })
-                  }
-                />
-              </label>
-              <div className="csp-line-total">
-                <span>{isArabic ? "الإجمالي" : "Total"}</span>
-                <b>
-                  {money(rowTotal(row), language)} {isArabic ? "جنيه" : "EGP"}
-                </b>
-              </div>
-              <label className="csp-compact-field csp-internal-cost">
-                <span>{isArabic ? "تكلفة الوحدة الداخلية" : "Internal unit cost"}</span>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={row.cost ?? ""}
-                  onChange={(event) =>
-                    updateRow(row.rowId, {
-                      cost:
-                        event.target.value === "" ? null : Math.max(0, Number(event.target.value)),
-                      costPending: event.target.value === "",
-                    })
-                  }
-                />
-              </label>
-              <div className="csp-row-actions">
-                <button
-                  type="button"
-                  onClick={() => moveRow(index, -1)}
-                  disabled={index === 0}
-                  aria-label={isArabic ? `تحريك ${row.name.ar} لأعلى` : `Move ${row.name.en} up`}
-                >
-                  <ArrowUp />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => moveRow(index, 1)}
-                  disabled={index === items.length - 1}
-                  aria-label={isArabic ? `تحريك ${row.name.ar} لأسفل` : `Move ${row.name.en} down`}
-                >
-                  <ArrowDown />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => removeRow(row.rowId)}
-                  aria-label={isArabic ? `حذف ${row.name.ar}` : `Remove ${row.name.en}`}
-                >
-                  <Trash2 />
-                </button>
-              </div>
-            </div>
-          ))}
-          {!items.length && (
-            <div className="csp-empty-state">
-              <Package />
-              <strong>{isArabic ? "العرض بلا بنود" : "This quote has no items"}</strong>
-              <span>
-                {isArabic
-                  ? "أضف باقة أو بندًا مخصصًا للبدء."
-                  : "Add a package or custom item to begin."}
-              </span>
-            </div>
-          )}
-          <div className="csp-add-item">
-            <select
-              defaultValue=""
-              onChange={(event) => {
-                if (event.target.value) addItem(event.target.value);
-                event.target.value = "";
+      {storageMode === "cloud" && quoteRecord && (
+        <label className="csp-warning">
+          <input
+            type="checkbox"
+            checked={Boolean(quoteRecord.isTest)}
+            disabled={testModeBusy}
+            onChange={async (event) => {
+              const isTest = event.target.checked;
+              setTestModeBusy(true);
+              try {
+                await studioRequest(`/api/studio/quotes/${quoteRecord.id}/test-mode`, {
+                  method: "PATCH",
+                  body: JSON.stringify({ isTest }),
+                });
+                setQuoteRecord((current) => ({ ...current, isTest }));
+                onQuoteSaved?.({ ...quoteRecord, isTest });
+              } catch (error) {
+                setSaveError(error.message);
+              } finally {
+                setTestModeBusy(false);
+              }
+            }}
+          />
+          {isArabic
+            ? "بيانات اختبار — استبعاد من التقارير وتذكيرات الدفع (يشمل الطلب المرتبط)"
+            : "Test data — exclude from reports and payment reminders (includes linked brief)"}
+        </label>
+      )}
+      <fieldset disabled={quoteRecord?.status === "accepted"} style={{ display: "contents" }}>
+        <section className="csp-form-grid">
+          <label>
+            {isArabic ? "اسم العميل" : "Client name"}
+            <input
+              value={clientName}
+              onChange={(e) => {
+                setClientName(e.target.value);
+                markDirty();
               }}
-            >
-              <option value="" disabled>
-                {isArabic ? "+ إضافة من قائمة الأسعار" : "+ Add from price list"}
-              </option>
-              {catalog
-                .filter((item) => item.status !== "archived")
-                .map((item) => (
-                  <option value={item.id} key={item.id}>
-                    {item.name[language]} · {money(item.price, language)}
-                    {item.status === "draft"
-                      ? isArabic
-                        ? " · سعر غير معتمد"
-                        : " · Unreviewed price"
-                      : ""}
-                  </option>
-                ))}
-            </select>
-            <button type="button" className="csp-button" onClick={addCustomItem}>
-              <Plus size={15} />
-              {isArabic ? "بند مخصص" : "Custom item"}
-            </button>
+            />
+          </label>
+          <label>
+            {isArabic ? "اسم المشروع" : "Project name"}
+            <input
+              value={projectName}
+              onChange={(e) => {
+                setProjectName(e.target.value);
+                markDirty();
+              }}
+            />
+          </label>
+        </section>
+        <section className="csp-lead-strip">
+          <div>
+            <span>{linkedLead?.reference_code || "—"}</span>
+            <strong>
+              {linkedLead?.name || clientName || "—"} · {linkedLead?.project || projectName || "—"}
+            </strong>
+          </div>
+          <div>
+            <span>{isArabic ? "الميزانية" : "BUDGET"}</span>
+            <strong>{briefLabel(linkedLead?.budget, language)}</strong>
+          </div>
+          <div>
+            <span>{isArabic ? "المدة" : "TIMELINE"}</span>
+            <strong>{briefLabel(linkedLead?.launch_timeline, language)}</strong>
           </div>
         </section>
-        <aside>
-          <div className="csp-panel csp-commercial-summary">
+        {costsPending && (
+          <p className="csp-warning" role="status">
+            {isArabic
+              ? "التكلفة الداخلية غير محددة لبعض البنود. أدخلها قبل الحفظ؛ الهامش الحالي ليس تقديرًا معتمدًا."
+              : "Some internal costs are unknown. Enter them before saving; the current margin is not a reliable estimate."}
+          </p>
+        )}
+        <div className="csp-quote-grid">
+          <section className="csp-panel">
             <div className="csp-panel-head">
-              <h2>{isArabic ? "الملخص التجاري" : "Commercial summary"}</h2>
-              <CircleDollarSign size={18} />
+              <h2>
+                {quoteReferenceLabel} · V{quoteVersionLabel}
+              </h2>
+              <StatusChip>
+                {
+                  {
+                    draft: isArabic ? "مسودة" : "DRAFT",
+                    sent: isArabic ? "مُرسل" : "SENT",
+                    viewed: isArabic ? "تمت المشاهدة" : "VIEWED",
+                    revision_requested: isArabic ? "مطلوب تعديل" : "REVISION REQUESTED",
+                    accepted: isArabic ? "مقبول" : "ACCEPTED",
+                  }[quoteRecord?.status || "draft"]
+                }
+              </StatusChip>
             </div>
-            <label>
-              <span>{isArabic ? "كود الخصم" : "Promo code"}</span>
-              <div className="csp-promo-input">
-                <input
-                  value={promoInput}
-                  onChange={(event) => setPromoInput(event.target.value.toUpperCase())}
-                />
-                <button type="button" onClick={applyPromo}>
-                  {isArabic ? "تطبيق" : "Apply"}
-                </button>
+            {items.map((row, index) => (
+              <div className="csp-quote-row" key={row.rowId}>
+                <div className="csp-quote-row-main">
+                  <input
+                    className="csp-line-name"
+                    value={row.name[language]}
+                    onChange={(event) =>
+                      updateRow(row.rowId, {
+                        name: { ...row.name, [language]: event.target.value },
+                      })
+                    }
+                    aria-label={isArabic ? "اسم البند" : "Item name"}
+                  />
+                  <textarea
+                    value={row.description[language]}
+                    onChange={(event) =>
+                      updateRow(row.rowId, {
+                        description: { ...row.description, [language]: event.target.value },
+                      })
+                    }
+                    aria-label={isArabic ? "وصف البند" : "Item description"}
+                    rows={2}
+                  />
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={row.optional}
+                      onChange={(event) => updateRow(row.rowId, { optional: event.target.checked })}
+                    />
+                    {isArabic ? "إضافة اختيارية للعميل" : "Optional client add-on"}
+                  </label>
+                </div>
+                <label className="csp-compact-field">
+                  <span>{isArabic ? "الكمية" : "Qty"}</span>
+                  <input
+                    type="number"
+                    min="1"
+                    value={row.quantity}
+                    onChange={(event) =>
+                      updateRow(row.rowId, { quantity: Math.max(1, Number(event.target.value)) })
+                    }
+                  />
+                </label>
+                <label className="csp-compact-field">
+                  <span>{isArabic ? "سعر الوحدة" : "Unit price"}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={row.unitPrice}
+                    onChange={(event) =>
+                      updateRow(row.rowId, { unitPrice: Math.max(0, Number(event.target.value)) })
+                    }
+                  />
+                </label>
+                <label className="csp-compact-field">
+                  <span>{isArabic ? "خصم البند" : "Item discount"}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={row.discount}
+                    onChange={(event) =>
+                      updateRow(row.rowId, { discount: Math.max(0, Number(event.target.value)) })
+                    }
+                  />
+                </label>
+                <div className="csp-line-total">
+                  <span>{isArabic ? "الإجمالي" : "Total"}</span>
+                  <b>
+                    {money(rowTotal(row), language)} {isArabic ? "جنيه" : "EGP"}
+                  </b>
+                </div>
+                <label className="csp-compact-field csp-internal-cost">
+                  <span>{isArabic ? "تكلفة الوحدة الداخلية" : "Internal unit cost"}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={row.cost ?? ""}
+                    onChange={(event) =>
+                      updateRow(row.rowId, {
+                        cost:
+                          event.target.value === ""
+                            ? null
+                            : Math.max(0, Number(event.target.value)),
+                        costPending: event.target.value === "",
+                      })
+                    }
+                  />
+                </label>
+                <div className="csp-row-actions">
+                  <button
+                    type="button"
+                    onClick={() => moveRow(index, -1)}
+                    disabled={index === 0}
+                    aria-label={isArabic ? `تحريك ${row.name.ar} لأعلى` : `Move ${row.name.en} up`}
+                  >
+                    <ArrowUp />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveRow(index, 1)}
+                    disabled={index === items.length - 1}
+                    aria-label={
+                      isArabic ? `تحريك ${row.name.ar} لأسفل` : `Move ${row.name.en} down`
+                    }
+                  >
+                    <ArrowDown />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeRow(row.rowId)}
+                    aria-label={isArabic ? `حذف ${row.name.ar}` : `Remove ${row.name.en}`}
+                  >
+                    <Trash2 />
+                  </button>
+                </div>
               </div>
-            </label>
-            {promoMessage && (
-              <p className={`csp-promo-message is-${promoMessage.type}`} role="status">
-                {promoMessage.type === "success" ? <Check /> : <X />}
-                {promoMessageLabel}
-                {promoMessage.type === "success" && discount > 0
-                  ? ` ${isArabic ? "وفرت" : "Saved"} ${money(discount, language)} ${isArabic ? "جنيه" : "EGP"}.`
-                  : ""}
-              </p>
+            ))}
+            {!items.length && (
+              <div className="csp-empty-state">
+                <Package />
+                <strong>{isArabic ? "العرض بلا بنود" : "This quote has no items"}</strong>
+                <span>
+                  {isArabic
+                    ? "أضف باقة أو بندًا مخصصًا للبدء."
+                    : "Add a package or custom item to begin."}
+                </span>
+              </div>
             )}
-            <div className="csp-quote-settings">
-              <label>
-                <span>{isArabic ? "الضريبة %" : "Tax %"}</span>
-                <input
-                  type="number"
-                  min="0"
-                  value={taxPercent}
-                  onChange={(event) => {
-                    setTaxPercent(Number(event.target.value));
-                    markDirty();
-                  }}
-                />
-              </label>
-              <label>
-                <span>{isArabic ? "المقدم %" : "Deposit %"}</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={depositPercent}
-                  onChange={(event) => {
-                    setDepositPercent(Number(event.target.value));
-                    markDirty();
-                  }}
-                />
-              </label>
-              <label>
-                <span>{isArabic ? "مدة التنفيذ" : "Timeline"}</span>
-                <input
-                  value={duration}
-                  onChange={(event) => {
-                    setDuration(event.target.value);
-                    markDirty();
-                  }}
-                />
-              </label>
-              <label>
-                <span>{isArabic ? "المراجعات" : "Revisions"}</span>
-                <input
-                  type="number"
-                  min="0"
-                  value={revisions}
-                  onChange={(event) => {
-                    setRevisions(Number(event.target.value));
-                    markDirty();
-                  }}
-                />
-              </label>
+            <div className="csp-add-item">
+              <select
+                defaultValue=""
+                onChange={(event) => {
+                  if (event.target.value) addItem(event.target.value);
+                  event.target.value = "";
+                }}
+              >
+                <option value="" disabled>
+                  {isArabic ? "+ إضافة من قائمة الأسعار" : "+ Add from price list"}
+                </option>
+                {catalog
+                  .filter((item) => item.status !== "archived")
+                  .map((item) => (
+                    <option value={item.id} key={item.id}>
+                      {item.name[language]} · {money(item.price, language)}
+                      {item.status === "draft"
+                        ? isArabic
+                          ? " · سعر غير معتمد"
+                          : " · Unreviewed price"
+                        : ""}
+                    </option>
+                  ))}
+              </select>
+              <button type="button" className="csp-button" onClick={addCustomItem}>
+                <Plus size={15} />
+                {isArabic ? "بند مخصص" : "Custom item"}
+              </button>
             </div>
-            <dl>
+          </section>
+          <aside>
+            <div className="csp-panel csp-commercial-summary">
+              <div className="csp-panel-head">
+                <h2>{isArabic ? "الملخص التجاري" : "Commercial summary"}</h2>
+                <CircleDollarSign size={18} />
+              </div>
+              <label>
+                <span>{isArabic ? "كود الخصم" : "Promo code"}</span>
+                <div className="csp-promo-input">
+                  <input
+                    value={promoInput}
+                    onChange={(event) => setPromoInput(event.target.value.toUpperCase())}
+                  />
+                  <button type="button" onClick={applyPromo}>
+                    {isArabic ? "تطبيق" : "Apply"}
+                  </button>
+                </div>
+              </label>
+              {promoMessage && (
+                <p className={`csp-promo-message is-${promoMessage.type}`} role="status">
+                  {promoMessage.type === "success" ? <Check /> : <X />}
+                  {promoMessageLabel}
+                  {promoMessage.type === "success" && discount > 0
+                    ? ` ${isArabic ? "وفرت" : "Saved"} ${money(discount, language)} ${isArabic ? "جنيه" : "EGP"}.`
+                    : ""}
+                </p>
+              )}
+              <div className="csp-quote-settings">
+                <label>
+                  <span>{isArabic ? "الضريبة %" : "Tax %"}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={taxPercent}
+                    onChange={(event) => {
+                      setTaxPercent(Number(event.target.value));
+                      markDirty();
+                    }}
+                  />
+                </label>
+                <label>
+                  <span>{isArabic ? "المقدم %" : "Deposit %"}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={depositPercent}
+                    onChange={(event) => {
+                      setDepositPercent(Number(event.target.value));
+                      markDirty();
+                    }}
+                  />
+                </label>
+                <label>
+                  <span>{isArabic ? "مدة التنفيذ" : "Timeline"}</span>
+                  <input
+                    value={duration}
+                    onChange={(event) => {
+                      setDuration(event.target.value);
+                      markDirty();
+                    }}
+                  />
+                </label>
+                <label>
+                  <span>{isArabic ? "المراجعات" : "Revisions"}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={revisions}
+                    onChange={(event) => {
+                      setRevisions(Number(event.target.value));
+                      markDirty();
+                    }}
+                  />
+                </label>
+              </div>
+              <dl>
+                <div>
+                  <dt>{isArabic ? "الإجمالي" : "Subtotal"}</dt>
+                  <dd>
+                    {money(subtotal, language)} {isArabic ? "جنيه" : "EGP"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>{isArabic ? "الخصم" : "Discount"}</dt>
+                  <dd>
+                    −{money(discount, language)} {isArabic ? "جنيه" : "EGP"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>{isArabic ? "الضريبة" : "Tax"}</dt>
+                  <dd>
+                    {money(tax, language)} {isArabic ? "جنيه" : "EGP"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>{isArabic ? "التكلفة الداخلية" : "Internal cost"}</dt>
+                  <dd>
+                    {money(cost, language)} {isArabic ? "جنيه" : "EGP"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>{isArabic ? "الهامش المتوقع" : "Expected margin"}</dt>
+                  <dd className={quoteMargin < 30 ? "is-warning" : ""}>
+                    {costsPending ? "—" : `${quoteMargin}%`}
+                  </dd>
+                </div>
+                <div className="is-total">
+                  <dt>{isArabic ? "إجمالي العميل" : "Client total"}</dt>
+                  <dd>
+                    {money(total, language)} {isArabic ? "جنيه" : "EGP"}
+                  </dd>
+                </div>
+              </dl>
+              {!costsPending && quoteMargin < 30 && (
+                <p className="csp-warning">
+                  {isArabic
+                    ? "هامش الربح أقل من الحد الموصى به."
+                    : "Margin is below the recommended floor."}
+                </p>
+              )}
+              <button
+                type="button"
+                className="csp-button csp-button--primary csp-button--block"
+                onClick={() => setPreview(true)}
+              >
+                <Eye size={16} />
+                {isArabic ? "معاينة العرض كعميل" : "Preview as client"}
+              </button>
+            </div>
+            <div className="csp-telegram-preview">
               <div>
-                <dt>{isArabic ? "الإجمالي" : "Subtotal"}</dt>
-                <dd>
-                  {money(subtotal, language)} {isArabic ? "جنيه" : "EGP"}
-                </dd>
+                <MessageCircle size={18} />
+                <span>TELEGRAM / PREVIEW</span>
               </div>
-              <div>
-                <dt>{isArabic ? "الخصم" : "Discount"}</dt>
-                <dd>
-                  −{money(discount, language)} {isArabic ? "جنيه" : "EGP"}
-                </dd>
-              </div>
-              <div>
-                <dt>{isArabic ? "الضريبة" : "Tax"}</dt>
-                <dd>
-                  {money(tax, language)} {isArabic ? "جنيه" : "EGP"}
-                </dd>
-              </div>
-              <div>
-                <dt>{isArabic ? "التكلفة الداخلية" : "Internal cost"}</dt>
-                <dd>
-                  {money(cost, language)} {isArabic ? "جنيه" : "EGP"}
-                </dd>
-              </div>
-              <div>
-                <dt>{isArabic ? "الهامش المتوقع" : "Expected margin"}</dt>
-                <dd className={quoteMargin < 30 ? "is-warning" : ""}>
-                  {costsPending ? "—" : `${quoteMargin}%`}
-                </dd>
-              </div>
-              <div className="is-total">
-                <dt>{isArabic ? "إجمالي العميل" : "Client total"}</dt>
-                <dd>
-                  {money(total, language)} {isArabic ? "جنيه" : "EGP"}
-                </dd>
-              </div>
-            </dl>
-            {!costsPending && quoteMargin < 30 && (
-              <p className="csp-warning">
-                {isArabic
-                  ? "هامش الربح أقل من الحد الموصى به."
-                  : "Margin is below the recommended floor."}
+              <strong>{isArabic ? "عرض جديد جاهز للمراجعة" : "New quote ready for review"}</strong>
+              <p>
+                {quoteReferenceLabel} · {money(total, language)} {isArabic ? "جنيه" : "EGP"}
               </p>
-            )}
-            <button
-              type="button"
-              className="csp-button csp-button--primary csp-button--block"
-              onClick={() => setPreview(true)}
-            >
-              <Eye size={16} />
-              {isArabic ? "معاينة العرض كعميل" : "Preview as client"}
-            </button>
-          </div>
-          <div className="csp-telegram-preview">
-            <div>
-              <MessageCircle size={18} />
-              <span>TELEGRAM / PREVIEW</span>
             </div>
-            <strong>{isArabic ? "عرض جديد جاهز للمراجعة" : "New quote ready for review"}</strong>
-            <p>
-              {quoteReferenceLabel} · {money(total, language)} {isArabic ? "جنيه" : "EGP"}
-            </p>
-          </div>
-        </aside>
-      </div>
+          </aside>
+        </div>
+      </fieldset>
       {sendOpen && (
         <div className="csp-modal-backdrop">
           <div

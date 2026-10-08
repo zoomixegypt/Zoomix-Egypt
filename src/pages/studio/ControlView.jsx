@@ -11,8 +11,8 @@ export default function ControlView({
   storageMode,
 }) {
   const isArabic = language === "ar";
-  const liveQuotes = Array.isArray(quotes) ? quotes : null;
-  const liveRequests = Array.isArray(requests) ? requests : null;
+  const liveQuotes = Array.isArray(quotes) ? quotes.filter((row) => !row.isTest) : null;
+  const liveRequests = Array.isArray(requests) ? requests.filter((row) => !row.is_test) : null;
   const hasQuoteData = liveQuotes !== null;
   const openQuotes =
     liveQuotes?.filter((quote) => !["accepted", "cancelled", "expired"].includes(quote.status)) ||

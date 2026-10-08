@@ -110,6 +110,26 @@ export default function SettingsView({ language, storageMode }) {
           </p>
         </div>
       </header>
+      {storageMode === "cloud" && (
+        <section className="csp-panel">
+          <div className="csp-panel-head">
+            <h2>{isArabic ? "تصدير البيانات والنسخة الاحتياطية" : "Exports and backup"}</h2>
+          </div>
+          <div className="csp-head-actions">
+            <a className="csp-button" href="/api/studio/export.csv">
+              {isArabic ? "تصدير الطلبات CSV" : "Export briefs CSV"}
+            </a>
+            <a className="csp-button" href="/api/studio/backup.json">
+              {isArabic ? "تنزيل نسخة البيانات التجارية JSON" : "Download commercial data JSON"}
+            </a>
+          </div>
+          <p>
+            {isArabic
+              ? "ملف خاص يحتوي بيانات العملاء؛ احفظه في مكان آمن. الاستعادة ليست إجراءً متاحًا من هذه الشاشة."
+              : "Private customer data: store securely. Restore is not available from this screen."}
+          </p>
+        </section>
+      )}
       <section className="csp-panel csp-integration-card">
         <div>
           <MessageCircle />
@@ -124,8 +144,8 @@ export default function SettingsView({ language, storageMode }) {
                 : "UNVERIFIED"
               : configured
                 ? isArabic
-                ? "المفاتيح مضبوطة"
-                : "CONFIGURED"
+                  ? "المفاتيح مضبوطة"
+                  : "CONFIGURED"
                 : isArabic
                   ? "غير مُعد"
                   : "NOT CONFIGURED"}

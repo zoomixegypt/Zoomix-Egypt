@@ -38,7 +38,12 @@ export default function ClientQuote() {
           fail(response.status >= 400 && response.status < 500 ? "invalid" : "network");
         if (!payload || !payload.quote || !Array.isArray(payload.quote.items)) fail("network");
         setQuote(payload.quote);
-        setSelected(payload.quote.items.filter((item) => item.optional).map((item) => item.id));
+        setResult(payload.quote.status === "accepted" ? "accepted" : "");
+        setSelected(
+          payload.quote.status === "accepted"
+            ? payload.quote.selectedOptionalItemIds || []
+            : payload.quote.items.filter((item) => item.optional).map((item) => item.id),
+        );
       })
       .catch((requestError) => {
         if (requestError?.name === "AbortError") return;
@@ -178,6 +183,7 @@ export default function ClientQuote() {
               {item.optional ? (
                 <input
                   type="checkbox"
+                  aria-label={`${isArabic ? "إضافة اختيارية" : "Optional item"}: ${item.name[quote.language]}`}
                   checked={selected.includes(item.id)}
                   onChange={(event) =>
                     setSelected((current) =>
@@ -229,6 +235,15 @@ export default function ClientQuote() {
           <ul>
             <li>
               {quote.depositPercent}% {isArabic ? "مقدم" : "deposit"}
+              {` · ${money(Math.round(selectedTotal * quote.depositPercent) / 100)} EGP`}
+            </li>
+            <li>
+              {isArabic ? "المتبقي" : "Balance"}:{" "}
+              {money(selectedTotal - Math.round(selectedTotal * quote.depositPercent) / 100)} EGP
+            </li>
+            <li>
+              {isArabic ? "صالح حتى" : "Valid until"}:{" "}
+              {new Date(quote.expiresAt).toLocaleDateString("en-GB")}
             </li>
             <li>{quote.timeline}</li>
             <li>
@@ -263,6 +278,7 @@ export default function ClientQuote() {
                 </span>
               </label>
               <textarea
+                aria-label={isArabic ? "ملاحظات أو تعديل مطلوب" : "Notes or requested change"}
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
                 placeholder={isArabic ? "ملاحظات أو تعديل مطلوب…" : "Notes or requested change…"}
