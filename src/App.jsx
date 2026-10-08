@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect, useLayoutEffect } from "react";
 import { Routes, Route, useLocation, useNavigationType } from "react-router-dom";
 import Home from "./pages/Home";
-import Studio from "./pages/Studio";
 import BriefEdit from "./pages/BriefEdit";
 import NotFound from "./pages/NotFound";
 import ProjectDetailModal from "./components/projects/ProjectDetailModal";
@@ -11,6 +10,8 @@ import MobileBottomBar from "./components/MobileBottomBar";
 import { trackPageView } from "./utils/analytics";
 
 const RouteFinder = lazy(() => import("./pages/RouteFinder"));
+const StudioEntry = lazy(() => import("./pages/studio/StudioEntry"));
+const ClientQuote = lazy(() => import("./pages/ClientQuote"));
 
 // Component untuk scroll ke atas setiap kali route berubah
 function ScrollToTop() {
@@ -37,8 +38,10 @@ function ScrollToTop() {
 
     // Jika navigasi ke halaman project fallback (bukan modal), cleanup Lenis dan ScrollTrigger
     if (pathname !== "/") {
-      import("gsap/ScrollTrigger").then(({ ScrollTrigger }) => {
+      Promise.all([import("gsap"), import("gsap/ScrollTrigger")]).then(([{ gsap }, { ScrollTrigger }]) => {
         if (cancelled) return;
+        // Direct Studio entry may never mount Home, which normally registers GSAP.
+        gsap.registerPlugin(ScrollTrigger);
 
         // Disable CSS scroll-behavior smooth untuk mencegah animasi scroll
         if (document.documentElement) {
@@ -91,12 +94,13 @@ function ScrollToTop() {
       // JANGAN scroll ke atas jika ada query param scrollTo
       // Biarkan Home.jsx yang handle scroll ke project card
       if (hash) {
-          const targetId = decodeURIComponent(hash.slice(1));
-          const resolvedTargetId = targetId === "contact-section" ? "brief-form" : targetId;
-          let attempts = 0;
-          const scrollToHashTarget = () => {
-            if (cancelled) return;
-            const target = document.getElementById(resolvedTargetId) || document.getElementById(targetId);
+        const targetId = decodeURIComponent(hash.slice(1));
+        const resolvedTargetId = targetId === "contact-section" ? "brief-form" : targetId;
+        let attempts = 0;
+        const scrollToHashTarget = () => {
+          if (cancelled) return;
+          const target =
+            document.getElementById(resolvedTargetId) || document.getElementById(targetId);
           if (target) {
             target.scrollIntoView({ behavior: "auto", block: "start" });
             return;
@@ -134,9 +138,39 @@ export default function App() {
       <ScrollToTop />
       <Routes location={backgroundLocation || location}>
         <Route path="/" element={<Home />} />
-        <Route path="/studio" element={<Studio />} />
+        <Route
+          path="/prototype/commercial-studio"
+          element={
+            <Suspense fallback={<SectionSkeleton className="min-h-screen" />}>
+              <StudioEntry allowDemo />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/studio"
+          element={
+            <Suspense fallback={<SectionSkeleton className="min-h-screen" />}>
+              <StudioEntry />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/q/:reference/:token"
+          element={
+            <Suspense fallback={<SectionSkeleton className="min-h-screen" />}>
+              <ClientQuote />
+            </Suspense>
+          }
+        />
         <Route path="/brief/edit/:token" element={<BriefEdit />} />
-        <Route path="/route-finder" element={<Suspense fallback={<SectionSkeleton className="min-h-screen" />}><RouteFinder /></Suspense>} />
+        <Route
+          path="/route-finder"
+          element={
+            <Suspense fallback={<SectionSkeleton className="min-h-screen" />}>
+              <RouteFinder />
+            </Suspense>
+          }
+        />
         <Route path="/projects/:slug" element={<ProjectDetailModal />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
@@ -146,8 +180,12 @@ export default function App() {
           <Route path="/projects/:slug" element={<ProjectDetailModal />} />
         </Routes>
       )}
-      <MobileBottomBar />
-      {!location.pathname.startsWith("/studio") && <AnalyticsConsent />}
+      {!location.pathname.startsWith("/studio") &&
+        !location.pathname.startsWith("/prototype") &&
+        !location.pathname.startsWith("/q/") && <MobileBottomBar />}
+      {!location.pathname.startsWith("/studio") &&
+        !location.pathname.startsWith("/prototype") &&
+        !location.pathname.startsWith("/q/") && <AnalyticsConsent />}
     </>
   );
 }

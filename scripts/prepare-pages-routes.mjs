@@ -16,16 +16,22 @@ const { ZOOMIX_PROJECTS } = await vite.ssrLoadModule("/src/data/zoomixProjects.j
 const routes = [
   { path: "/", type: "home" },
   { path: "/route-finder", type: "route-finder" },
-  { path: "/studio", type: "studio" },
-  ...PROJECT_META.map((project) => ({ path: `/projects/${project.slug}`, type: "project", project })),
+  { path: "/prototype/commercial-studio", type: "prototype" },
+  { path: "/studio", type: "prototype" },
+  ...PROJECT_META.map((project) => ({
+    path: `/projects/${project.slug}`,
+    type: "project",
+    project,
+  })),
 ];
 
-const escapeHtml = (value) => String(value)
-  .replaceAll("&", "&amp;")
-  .replaceAll("<", "&lt;")
-  .replaceAll(">", "&gt;")
-  .replaceAll('"', "&quot;")
-  .replaceAll("'", "&#39;");
+const escapeHtml = (value) =>
+  String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 
 const escapeJson = (value) => JSON.stringify(value).replaceAll("<", "\\u003c");
 
@@ -33,13 +39,17 @@ function replaceMeta(html, attribute, name, content) {
   const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const tagPattern = new RegExp(`<meta\\s+${attribute}=["']${escapedName}["'][^>]*>`, "i");
   const nextTag = `<meta ${attribute}="${escapeHtml(name)}" content="${escapeHtml(content)}" />`;
-  return tagPattern.test(html) ? html.replace(tagPattern, nextTag) : html.replace("</head>", `    ${nextTag}\n  </head>`);
+  return tagPattern.test(html)
+    ? html.replace(tagPattern, nextTag)
+    : html.replace("</head>", `    ${nextTag}\n  </head>`);
 }
 
 function replaceLink(html, rel, href) {
   const tagPattern = new RegExp(`<link\\s+rel=["']${rel}["'][^>]*>`, "i");
   const nextTag = `<link rel="${rel}" href="${escapeHtml(href)}" />`;
-  return tagPattern.test(html) ? html.replace(tagPattern, nextTag) : html.replace("</head>", `    ${nextTag}\n  </head>`);
+  return tagPattern.test(html)
+    ? html.replace(tagPattern, nextTag)
+    : html.replace("</head>", `    ${nextTag}\n  </head>`);
 }
 
 function replaceTitle(html, title) {
@@ -49,13 +59,16 @@ function replaceTitle(html, title) {
 function replaceSchema(html, schema) {
   const nextScript = `<script type="application/ld+json">${escapeJson(schema)}</script>`;
   const schemaPattern = /<script type="application\/ld\+json">[\s\S]*?<\/script>/i;
-  return schemaPattern.test(html) ? html.replace(schemaPattern, nextScript) : html.replace("</head>", `    ${nextScript}\n  </head>`);
+  return schemaPattern.test(html)
+    ? html.replace(schemaPattern, nextScript)
+    : html.replace("</head>", `    ${nextScript}\n  </head>`);
 }
 
 function pageHead(route) {
   if (route.type === "route-finder") {
     const title = "خطوتك الجاية — ZOOMIX Route Finder";
-    const description = "جاوب على أسئلة بسيطة، وخلي Zoomix تحدد لك المسار والخدمة أو الباقة الأنسب لمشروعك.";
+    const description =
+      "جاوب على أسئلة بسيطة، وخلي Zoomix تحدد لك المسار والخدمة أو الباقة الأنسب لمشروعك.";
     return {
       title,
       description,
@@ -94,11 +107,11 @@ function pageHead(route) {
     };
   }
 
-  if (route.type === "studio") {
+  if (route.type === "prototype") {
     return {
-      title: "ZOOMIX Studio",
-      description: "Internal project workspace for ZOOMIX.",
-      canonical: `${SITE_URL}/studio`,
+      title: "ZOOMIX Commercial Studio Prototype",
+      description: "Interactive commercial workspace prototype for ZOOMIX.",
+      canonical: `${SITE_URL}${route.path}`,
       image: `${SITE_URL}/og-image.png`,
       robots: "noindex, nofollow",
       schema: null,

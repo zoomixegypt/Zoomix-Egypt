@@ -1,0 +1,233 @@
+/* Studio's final layout/type layer: business inputs must never use intrinsic grid widths. */
+.csp-refresh-state,
+.csp-draft-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 0;
+}
+.csp-draft-list h2 {
+  width: 100%;
+  font-size: 16px;
+}
+.csp-record-highlight {
+  outline: 3px solid #92bd00;
+  outline-offset: -3px;
+}
+.csp-root {
+  --csp-font-numeric: Arial, Helvetica, sans-serif;
+  --csp-border: var(--csp-line);
+}
+.csp-root *,
+.csp-root *::before,
+.csp-root *::after {
+  box-sizing: border-box;
+}
+.csp-root .csp-quote-row {
+  grid-template-columns:
+    minmax(180px, 1.4fr) minmax(60px, 0.35fr) minmax(90px, 0.55fr) minmax(90px, 0.55fr)
+    minmax(95px, 0.6fr) 34px;
+}
+.csp-root .csp-quote-row > *,
+.csp-root .csp-quote-row-main,
+.csp-root .csp-form-grid > *,
+.csp-root .csp-quote-grid > * {
+  min-width: 0;
+}
+.csp-root .csp-internal-cost {
+  grid-column: 1 / -1;
+  max-width: 240px;
+}
+.csp-client-scope small { white-space: pre-line; line-height: 1.8; }
+.csp-client-page h1 { overflow-wrap: anywhere; }
+.csp-root .csp-quote-row .csp-row-actions { grid-column: -2 / -1; grid-row: 1; }
+/* Legacy generic table rules hid the fifth column, including mobile actions. */
+@media (max-width: 900px) {
+  .csp-root .csp-leads-row > *,
+  .csp-root .csp-projects-row > *,
+  .csp-root .csp-payments-row > * { display: block; grid-column: 1 / -1; grid-row: auto; }
+  .csp-root .csp-leads-row > .csp-button,
+  .csp-root .csp-payments-row > .csp-button { display: inline-flex; justify-content: center; min-height: 44px; }
+  .csp-root .csp-lead-strip > div { display: block; }
+}
+.csp-brief-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: end;
+  margin-block: 18px;
+}
+.csp-brief-filters label {
+  display: grid;
+  gap: 6px;
+  flex: 1 1 220px;
+}
+.csp-brief-filters input,
+.csp-brief-filters select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--csp-line);
+  padding: 10px;
+  background: white;
+}
+.csp-brief-details {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--csp-line);
+}
+.csp-brief-details summary {
+  cursor: pointer;
+  min-height: 32px;
+  font-weight: 600;
+}
+.csp-brief-details dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 18px;
+  padding-block: 16px;
+}
+.csp-brief-details dt {
+  font-weight: 700;
+}
+.csp-brief-details dd {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.csp-root .csp-quote-row input:not([type="checkbox"]),
+.csp-root .csp-quote-row textarea,
+.csp-root .csp-form-grid input,
+.csp-root .csp-commercial-summary input {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+.csp-root input[type="number"],
+.csp-root .csp-sensitive-number,
+.csp-root .csp-line-total b,
+.csp-root .csp-commercial-summary dd,
+.csp-root .csp-client-total strong,
+.csp-root .csp-client-scope b,
+.csp-root .csp-client-selection-summary b,
+.csp-root .csp-quote-reference {
+  font-family: var(--csp-font-numeric);
+  font-variant-numeric: tabular-nums lining-nums;
+  direction: ltr;
+  unicode-bidi: isolate;
+  letter-spacing: 0;
+}
+.csp-root input[type="number"] {
+  font-size: 14px;
+  font-weight: 600;
+  min-height: 40px;
+}
+.csp-root .csp-page-description,
+.csp-root .csp-item-name small,
+.csp-root .csp-task small,
+.csp-root .csp-metric span {
+  color: #62625b;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.csp-root .csp-quote-row-main textarea {
+  font-size: 14px;
+  line-height: 1.7;
+}
+.csp-root .csp-quote-row label {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.csp-root .csp-metric--accent span {
+  color: #deded7;
+}
+.csp-root .csp-client-total strong {
+  font-size: 30px;
+}
+.csp-auth {
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.csp-auth-card {
+  width: min(100%, 480px);
+  background: white;
+  border: 1px solid var(--csp-line);
+  padding: 28px;
+}
+.csp-auth-card form {
+  display: grid;
+  gap: 14px;
+  margin: 24px 0;
+}
+.csp-auth-card input {
+  min-width: 0;
+  width: 100%;
+  min-height: 46px;
+  padding: 12px;
+  border: 1px solid var(--csp-line);
+}
+.csp-auth-card > button {
+  margin: 8px 0;
+  width: 100%;
+}
+.csp-session-strip {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background: #e8eddc;
+  font: 600 13px/1.6 var(--font-arabic);
+}
+.csp-session-strip button {
+  border: 1px solid #565b4a;
+  background: white;
+  padding: 6px 12px;
+  font: inherit;
+  cursor: pointer;
+}
+@media (max-width: 1250px) {
+  .csp-root .csp-quote-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .csp-root .csp-commercial-summary {
+    position: static;
+  }
+  .csp-root .csp-quote-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .csp-root .csp-quote-row-main {
+    grid-column: 1 / -1;
+  }
+  .csp-root .csp-quote-row .csp-row-actions {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+@media (max-width: 560px) {
+  .csp-root .csp-quote-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 14px;
+    gap: 14px;
+  }
+  .csp-root .csp-quote-row-main,
+  .csp-root .csp-line-total {
+    grid-column: 1 / -1;
+  }
+  .csp-root .csp-line-total {
+    display: flex;
+    justify-content: space-between;
+  }
+  .csp-root input[type="number"] {
+    min-height: 44px;
+    font-size: 16px;
+  }
+  .csp-root .csp-page-head h1 {
+    font-size: clamp(28px, 8vw, 38px);
+  }
+  .csp-session-strip {
+    flex-wrap: wrap;
+  }
+}

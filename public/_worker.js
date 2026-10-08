@@ -1,3 +1,4 @@
+import { calculateCommercial, promotionError } from "./commercial-rules.js";
 import { DurableObject } from "cloudflare:workers";
 
 const JSON_HEADERS = {
@@ -25,6 +26,8 @@ const ANALYTICS_EVENTS = new Set([
 ]);
 const STUDIO_EVENTS_ROOM = "studio-live";
 const EDIT_LINK_TTL_DAYS = 30;
+const CATALOG_TYPES = new Set(["package", "service", "addon", "expense"]);
+const CATALOG_STATUSES = new Set(["draft", "published", "archived"]);
 
 function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
@@ -356,6 +359,7 @@ async function createBrief(request, env, ctx) {
     }).catch((error) => console.error("Zoomix Studio live update failed", error)));
   }
 
+  if (ctx) ctx.waitUntil(notifyTelegram(env, ["ZOOMIX / NEW REQUEST", brief.referenceCode, brief.fullName || brief.name, brief.projectType || brief.service, brief.phone]).catch(() => console.error("Telegram lead notification failed")));
   if (brief.contactPreference === "email") {
     ctx.waitUntil(sendBriefEmails(brief, env).catch((error) => console.error("Zoomix email notification failed", error)));
   } else if (env.EMAIL && env.EMAIL_FROM && env.ADMIN_EMAIL) {
@@ -500,6 +504,675 @@ async function studioRequests(request, env) {
   return json({ requests: result.results || [] });
 }
 
+async function notifyTelegram(env, lines) {
+  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) return false;
+  const response = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text: lines.filter(Boolean).join("\n"), disable_web_page_preview: true }),
+    signal: AbortSignal.timeout(10000),
+  });
+  const result = await response.json().catch(() => null);
+  if (!response.ok || result?.ok !== true) throw new Error(`Telegram notification failed (${response.status}).`);
+  return true;
+}
+
+function quoteReference() {
+  const year = new Date().getUTCFullYear();
+  const suffix = crypto.randomUUID().replaceAll("-", "").slice(0, 6).toUpperCase();
+  return `QT-${year}-${suffix}`;
+}
+
+function catalogItem(row) {
+  let included = { ar: [], en: [] };
+  try { included = JSON.parse(row.included_json || '{"ar":[],"en":[]}'); } catch { included = { ar: [], en: [] }; }
+  return {
+    id: row.id,
+    type: row.item_type,
+    category: row.category || "",
+    name: { ar: row.name_ar || "", en: row.name_en || "" },
+    description: { ar: row.description_ar || "", en: row.description_en || "" },
+    price: Number(row.price_minor || 0) / 100,
+    cost: Number(row.cost_minor || 0) / 100,
+    minimumPrice: Number(row.minimum_price_minor || 0) / 100,
+    currency: row.currency || "EGP",
+    unit: row.unit || "project",
+    status: row.status,
+    visible: Boolean(row.visible_on_site),
+    featured: Boolean(row.featured),
+    included: { ar: Array.isArray(included.ar) ? included.ar : [], en: Array.isArray(included.en) ? included.en : [] },
+    exclusions: { ar: row.exclusions_ar || "", en: row.exclusions_en || "" },
+    duration: { ar: row.duration_ar || "", en: row.duration_en || "" },
+    revisions: Number(row.revisions || 0),
+    sortOrder: Number(row.sort_order || 0),
+    draft: row.status === "draft",
+    hasPublishedVersion: Boolean(row.published_snapshot_json),
+    publishedPrice: row.published_snapshot_json ? Number((()=>{ const published=JSON.parse(row.published_snapshot_json); return published.price_minor !== undefined ? published.price_minor / 100 : published.price; })()) : null,
+    updatedAt: row.updated_at,
+    publishedAt: row.published_at,
+  };
+}
+
+async function studioCatalog(request, env) {
+  const auth = await authenticateStudio(request, env);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+  const result = await env.DB.prepare("SELECT * FROM commercial_catalog_items ORDER BY sort_order ASC, updated_at DESC").all();
+  return json({ items: (result.results || []).map(catalogItem) });
+}
+
+async function publicCatalog(env) {
+  if (!env.DB) return json({ error: "Catalog storage is not configured." }, 503);
+  const result = await env.DB.prepare("SELECT * FROM commercial_catalog_items WHERE published_snapshot_json IS NOT NULL AND status != 'archived' ORDER BY sort_order ASC").all();
+  return json({ items: (result.results || []).map(row => {
+    const snapshot = JSON.parse(row.published_snapshot_json);
+    const item = snapshot.name ? snapshot : catalogItem(snapshot);
+    return { id:item.id,type:item.type,category:item.category,name:item.name,description:item.description,price:item.price,currency:item.currency,unit:item.unit,visible:item.visible,featured:item.featured,included:item.included,exclusions:item.exclusions,duration:item.duration,revisions:item.revisions,sortOrder:item.sortOrder,updatedAt:item.updatedAt };
+  }).filter(item=>item.visible) });
+}
+
+async function studioCatalogCreate(request, env) {
+  const auth = await authenticateStudio(request, env);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+  let payload;
+  try {
+    payload = await request.json();
+  } catch {
+    return json({ error: "Invalid request body." }, 400);
+  }
+
+  const id = text(payload.id, 80).toLowerCase();
+  const type = text(payload.type || "service", 30);
+  const nameAr = text(payload.name?.ar, 180);
+  const nameEn = text(payload.name?.en, 180);
+  if (!/^[a-z0-9][a-z0-9-]{1,79}$/.test(id) || !CATALOG_TYPES.has(type) || !nameAr || !nameEn) {
+    return json({ error: "A valid id, type and Arabic/English names are required." }, 400);
+  }
+  const exists = await env.DB.prepare("SELECT id FROM commercial_catalog_items WHERE id = ? LIMIT 1").bind(id).first();
+  if (exists) return json({ error: "Catalog item id already exists." }, 409);
+
+  const numericMinor = (value) => {
+    const numeric = Number(value || 0);
+    return Number.isFinite(numeric) && numeric >= 0 ? Math.round(numeric * 100) : null;
+  };
+  const priceMinor = numericMinor(payload.price);
+  const costMinor = numericMinor(payload.cost);
+  const minimumPriceMinor = numericMinor(payload.minimumPrice);
+  if ([priceMinor, costMinor, minimumPriceMinor].some((value) => value === null)) return json({ error: "Prices must be positive numbers." }, 400);
+
+  const createdAt = now();
+  const row = {
+    id,
+    item_type: type,
+    category: text(payload.category, 80),
+    name_ar: nameAr,
+    name_en: nameEn,
+    description_ar: text(payload.description?.ar, 2000),
+    description_en: text(payload.description?.en, 2000),
+    price_minor: priceMinor,
+    cost_minor: costMinor,
+    minimum_price_minor: minimumPriceMinor,
+    currency: "EGP",
+    unit: text(payload.unit, 50) || "project",
+    status: "draft",
+    visible_on_site: payload.visible ? 1 : 0,
+    featured: payload.featured ? 1 : 0,
+    included_json: JSON.stringify({ ar: Array.isArray(payload.included?.ar) ? payload.included.ar.map((value) => text(value, 300)).filter(Boolean).slice(0, 50) : [], en: Array.isArray(payload.included?.en) ? payload.included.en.map((value) => text(value, 300)).filter(Boolean).slice(0, 50) : [] }),
+    exclusions_ar: text(payload.exclusions?.ar, 2000),
+    exclusions_en: text(payload.exclusions?.en, 2000),
+    duration_ar: text(payload.duration?.ar, 120),
+    duration_en: text(payload.duration?.en, 120),
+    revisions: Math.max(0, Math.min(100, Math.round(Number(payload.revisions || 0)))),
+    sort_order: Number.isFinite(Number(payload.sortOrder)) ? Math.round(Number(payload.sortOrder)) : 999,
+    created_at: createdAt,
+    updated_at: createdAt,
+    published_at: null,
+  };
+  const snapshot = JSON.stringify(catalogItem(row));
+  await env.DB.batch([
+    env.DB.prepare(`INSERT INTO commercial_catalog_items (id, item_type, category, name_ar, name_en, description_ar, description_en, price_minor, cost_minor, minimum_price_minor, currency, unit, status, visible_on_site, featured, sort_order, included_json, exclusions_ar, exclusions_en, duration_ar, duration_en, revisions, created_at, updated_at, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'EGP', ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`).bind(id, type, row.category, nameAr, nameEn, row.description_ar, row.description_en, priceMinor, costMinor, minimumPriceMinor, row.unit, row.visible_on_site, row.featured, row.sort_order, row.included_json, row.exclusions_ar, row.exclusions_en, row.duration_ar, row.duration_en, row.revisions, createdAt, createdAt),
+    env.DB.prepare("INSERT INTO commercial_catalog_versions (catalog_item_id, version_number, snapshot_json, change_type, created_at) VALUES (?, 1, ?, 'created', ?)").bind(id, snapshot, createdAt),
+    env.DB.prepare("INSERT INTO commercial_audit_log (entity_type, entity_id, action, before_json, after_json, created_at) VALUES ('catalog_item', ?, 'created', NULL, ?, ?)").bind(id, snapshot, createdAt),
+  ]);
+  return json({ item: catalogItem(row), version: 1 }, 201);
+}
+
+async function studioCatalogUpdate(request, env, id) {
+  const auth = await authenticateStudio(request, env);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+  if (!/^[a-z0-9][a-z0-9-]{1,79}$/i.test(id)) return json({ error: "Invalid catalog item id." }, 400);
+
+  let payload;
+  try {
+    payload = await request.json();
+  } catch {
+    return json({ error: "Invalid request body." }, 400);
+  }
+
+  const current = await env.DB.prepare("SELECT * FROM commercial_catalog_items WHERE id = ? LIMIT 1").bind(id).first();
+  if (!current) return json({ error: "Catalog item not found." }, 404);
+
+  const type = text(payload.type ?? current.item_type, 30);
+  const requestedStatus = text(payload.status ?? current.status, 30);
+  const status = payload.publish === true ? "published" : requestedStatus;
+  const nameAr = text(payload.name?.ar ?? current.name_ar, 180);
+  const nameEn = text(payload.name?.en ?? current.name_en, 180);
+  if (!CATALOG_TYPES.has(type) || !CATALOG_STATUSES.has(status) || !nameAr || !nameEn) {
+    return json({ error: "Invalid catalog item data." }, 400);
+  }
+
+  const toMinor = (value, fallback) => {
+    if (value === undefined) return Number(fallback || 0);
+    const numeric = Number(value);
+    return Number.isFinite(numeric) && numeric >= 0 ? Math.round(numeric * 100) : null;
+  };
+  const priceMinor = toMinor(payload.price, current.price_minor);
+  const costMinor = toMinor(payload.cost, current.cost_minor);
+  const minimumPriceMinor = toMinor(payload.minimumPrice, current.minimum_price_minor);
+  if ([priceMinor, costMinor, minimumPriceMinor].some((value) => value === null)) return json({ error: "Prices must be positive numbers." }, 400);
+
+  const updatedAt = now();
+  const next = {
+    id,
+    item_type: type,
+    category: text(payload.category ?? current.category, 80),
+    name_ar: nameAr,
+    name_en: nameEn,
+    description_ar: text(payload.description?.ar ?? current.description_ar, 2000),
+    description_en: text(payload.description?.en ?? current.description_en, 2000),
+    price_minor: priceMinor,
+    cost_minor: costMinor,
+    minimum_price_minor: minimumPriceMinor,
+    currency: "EGP",
+    unit: text(payload.unit ?? current.unit, 50) || "project",
+    status,
+    visible_on_site: payload.visible === undefined ? Number(current.visible_on_site) : (payload.visible ? 1 : 0),
+    featured: payload.featured === undefined ? Number(current.featured) : (payload.featured ? 1 : 0),
+    included_json: JSON.stringify({ ar: Array.isArray(payload.included?.ar) ? payload.included.ar.map((value) => text(value, 300)).filter(Boolean).slice(0, 50) : (catalogItem(current).included.ar), en: Array.isArray(payload.included?.en) ? payload.included.en.map((value) => text(value, 300)).filter(Boolean).slice(0, 50) : (catalogItem(current).included.en) }),
+    exclusions_ar: text(payload.exclusions?.ar ?? current.exclusions_ar, 2000),
+    exclusions_en: text(payload.exclusions?.en ?? current.exclusions_en, 2000),
+    duration_ar: text(payload.duration?.ar ?? current.duration_ar, 120),
+    duration_en: text(payload.duration?.en ?? current.duration_en, 120),
+    revisions: payload.revisions === undefined ? Number(current.revisions || 0) : Math.max(0, Math.min(100, Math.round(Number(payload.revisions || 0)))),
+    sort_order: Number.isFinite(Number(payload.sortOrder)) ? Math.round(Number(payload.sortOrder)) : Number(current.sort_order || 0),
+    updated_at: updatedAt,
+    published_at: status === "published" ? updatedAt : current.published_at,
+  };
+  const version = await env.DB.prepare("SELECT COALESCE(MAX(version_number), 0) + 1 AS next_version FROM commercial_catalog_versions WHERE catalog_item_id = ?").bind(id).first();
+  next.published_snapshot_json = status === 'published' ? JSON.stringify({...next,published_snapshot_json:undefined}) : status === 'archived' ? null : current.published_snapshot_json;
+  const snapshot = JSON.stringify(catalogItem(next));
+  const changeType = status === "published" ? "published" : status === "archived" ? "archived" : "draft_saved";
+
+  await env.DB.batch([
+    env.DB.prepare("UPDATE commercial_catalog_items SET published_snapshot_json = ? WHERE id = ?").bind(next.published_snapshot_json, id),
+    env.DB.prepare(`UPDATE commercial_catalog_items SET item_type = ?, category = ?, name_ar = ?, name_en = ?, description_ar = ?, description_en = ?, price_minor = ?, cost_minor = ?, minimum_price_minor = ?, unit = ?, status = ?, visible_on_site = ?, featured = ?, sort_order = ?, included_json = ?, exclusions_ar = ?, exclusions_en = ?, duration_ar = ?, duration_en = ?, revisions = ?, updated_at = ?, published_at = ? WHERE id = ?`).bind(type, next.category, nameAr, nameEn, next.description_ar, next.description_en, priceMinor, costMinor, minimumPriceMinor, next.unit, status, next.visible_on_site, next.featured, next.sort_order, next.included_json, next.exclusions_ar, next.exclusions_en, next.duration_ar, next.duration_en, next.revisions, updatedAt, next.published_at, id),
+    env.DB.prepare("INSERT INTO commercial_catalog_versions (catalog_item_id, version_number, snapshot_json, change_type, created_at) VALUES (?, ?, ?, ?, ?)").bind(id, Number(version?.next_version || 1), snapshot, changeType, updatedAt),
+    env.DB.prepare("INSERT INTO commercial_audit_log (entity_type, entity_id, action, before_json, after_json, created_at) VALUES ('catalog_item', ?, ?, ?, ?, ?)").bind(id, changeType, JSON.stringify(catalogItem(current)), snapshot, updatedAt),
+  ]);
+
+  return json({ item: catalogItem(next), version: Number(version?.next_version || 1) });
+}
+
+function quoteItemFromPayload(item, index) {
+  if (!item || typeof item !== "object" || item.costPending || item.cost === null) return null;
+  const quantity = Number(item.quantity ?? 1);
+  const unitPrice = Number(item.unitPrice ?? 0);
+  const cost = Number(item.cost ?? 0);
+  const itemDiscount = Number(item.discount ?? 0);
+  if (![quantity, unitPrice, cost, itemDiscount].every((value) => Number.isFinite(value) && value >= 0)) return null;
+  if (quantity <= 0 || quantity > 10000) return null;
+  const toMinor = (value) => Math.round(value * 100);
+  return {
+    catalogItemId: text(item.catalogId, 80) || null,
+    category: text(item.category, 80),
+    sortOrder: index,
+    nameAr: text(item.name?.ar, 180),
+    nameEn: text(item.name?.en, 180),
+    descriptionAr: text(item.description?.ar, 2000),
+    descriptionEn: text(item.description?.en, 2000),
+    quantity,
+    unitPriceMinor: toMinor(unitPrice),
+    costMinor: toMinor(cost),
+    discountMinor: toMinor(itemDiscount),
+    optional: item.optional ? 1 : 0,
+  };
+}
+
+function quoteCalculation(items, payload) {
+  const subtotalMinor = items.reduce((sum, item) => sum + Math.max(0, Math.round(item.unitPriceMinor * item.quantity) - item.discountMinor), 0);
+  const internalCostMinor = items.reduce((sum, item) => sum + Math.round(item.costMinor * item.quantity), 0);
+  const discountMinor = Math.min(subtotalMinor, Math.max(0, Math.round(Number(payload.discount || 0) * 100)));
+  const taxPercent = Math.min(100, Math.max(0, Number(payload.taxPercent || 0)));
+  const taxMinor = Math.round((subtotalMinor - discountMinor) * (taxPercent / 100));
+  return { subtotalMinor, discountMinor, taxMinor, totalMinor: subtotalMinor - discountMinor + taxMinor, internalCostMinor, taxPercent };
+}
+
+function promotionItem(row) {
+  let scope = {};
+  try { scope = JSON.parse(row.scope_json || "{}"); } catch { scope = {}; }
+  return {
+    id: row.id,
+    code: row.code,
+    kind: row.promotion_type === "free_item" ? "free-item" : row.promotion_type,
+    value: row.promotion_type === "percentage" ? Number(row.percentage_value || 0) : Number(row.value_minor || 0) / 100,
+    description: { ar: scope.descriptionAr || "", en: scope.descriptionEn || "" },
+    scope: scope.scope || "all",
+    catalogIds: scope.catalogIds || [],
+    freeItemId: scope.freeItemId || null,
+    access: scope.access || "private",
+    status: row.ends_at && row.ends_at < now() ? 'expired' : row.status === 'scheduled' && (!row.starts_at || row.starts_at <= now()) ? 'active' : row.status,
+    uses: Number(row.usage_count || 0),
+    limit: row.usage_limit === null ? null : Number(row.usage_limit),
+    startsAt: row.starts_at,
+    endsAt: row.ends_at,
+  };
+}
+
+async function resolvePromotion(env, code, items) {
+  if (!code) return { discountMinor:0, promotion:null, allocations:items.map(()=>0) };
+  const row = await env.DB.prepare("SELECT * FROM commercial_promotions WHERE code = ? LIMIT 1").bind(text(code,80).toUpperCase()).first();
+  const promotion = row ? promotionItem(row) : null;
+  const error = promotionError(promotion);
+  if(error) return {error};
+  const ids = [...new Set(items.map(item=>item.catalogItemId).filter(Boolean))];
+  const categories = {};
+  for(const id of ids) { const item = await env.DB.prepare("SELECT category FROM commercial_catalog_items WHERE id = ?").bind(id).first(); categories[id] = item?.category; }
+  const lines = items.map(item=>({catalogId:item.catalogItemId, category:item.catalogItemId ? categories[item.catalogItemId] : item.category, unitPrice:item.unitPriceMinor/100,quantity:item.quantity,discount:item.discountMinor/100}));
+  const calculation = calculateCommercial(lines,promotion);
+  if (!calculation.discountMinor) return {error:"Promotion does not apply to these items. Add the eligible package/free item first."};
+  return { ...calculation, promotion };
+}
+
+async function studioPromotions(request, env) {
+  const auth = await authenticateStudio(request, env);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+  const result = await env.DB.prepare("SELECT * FROM commercial_promotions ORDER BY updated_at DESC").all();
+  return json({ promotions: (result.results || []).map(promotionItem) });
+}
+
+async function studioIntegrations(request, env) {
+  const auth = await authenticateStudio(request, env);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+  return json({ telegram: { configured: Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID) } });
+}
+
+async function studioAudit(request, env) {
+  const auth = await authenticateStudio(request, env); if (!auth.ok) return json({ error: auth.error }, auth.status);
+  const result = await env.DB.prepare("SELECT entity_type, entity_id, action, created_at FROM commercial_audit_log ORDER BY created_at DESC LIMIT 50").all();
+  return json({ entries: (result.results || []).map((item) => ({ entity: item.entity_type, entityId: item.entity_id, action: item.action, at: item.created_at })) });
+}
+
+async function studioTelegramTest(request, env) {
+  const auth = await authenticateStudio(request, env);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) return json({ error: "Telegram secrets are not configured." }, 409);
+  await notifyTelegram(env, ["ZOOMIX / TELEGRAM TEST", "Studio notifications are connected successfully.", now()]);
+  return json({ ok: true });
+}
+
+async function studioPromotionCreate(request, env) {
+  const auth = await authenticateStudio(request, env);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+  let payload;
+  try { payload = await request.json(); } catch { return json({ error: "Invalid request body." }, 400); }
+  const code = text(payload.code, 80).toUpperCase();
+  const kind = payload.kind === "free-item" ? "free_item" : payload.kind;
+  const value = Number(payload.value || 0);
+  const limit = Number(payload.limit);
+  if (!/^[A-Z0-9][A-Z0-9_-]{2,79}$/.test(code) || !["percentage", "fixed", "free_item"].includes(kind) || !Number.isFinite(value) || value <= 0 || !Number.isInteger(limit) || limit <= 0) return json({ error: "Invalid promotion data." }, 400);
+  if (kind === "percentage" && value > 80) return json({ error: "Percentage discount cannot exceed 80%." }, 400);
+  if((payload.startsAt && !Number.isFinite(Date.parse(payload.startsAt))) || (payload.endsAt && !Number.isFinite(Date.parse(payload.endsAt)))) return json({error:'Invalid promotion date.'},400);
+  const startsAt = payload.startsAt ? new Date(payload.startsAt).toISOString() : now();
+  const endsAt = payload.endsAt ? new Date(String(payload.endsAt).includes('T') ? payload.endsAt : `${payload.endsAt}T23:59:59.999Z`).toISOString() : null;
+  if (endsAt && endsAt <= startsAt) return json({ error: "End date must be after the start date." }, 400);
+  const createdAt = now();
+  const id = `${code.toLowerCase().replaceAll("_", "-")}-${crypto.randomUUID().slice(0, 6)}`;
+  const status = startsAt > createdAt ? "scheduled" : "active";
+  const catalogIds = Array.isArray(payload.catalogIds) ? payload.catalogIds.map(id=>text(id,80)).filter(Boolean).slice(0,100) : [];
+  const freeItemId = text(payload.freeItemId,80);
+  if (payload.scope === "selected" && !catalogIds.length) return json({error:"Select at least one eligible catalog item."},400);
+  if (kind === "free_item" && !freeItemId) return json({error:"Select the free catalog item."},400);
+  for(const catalogId of catalogIds){if(!await env.DB.prepare('SELECT id FROM commercial_catalog_items WHERE id = ?').bind(catalogId).first())return json({error:'Eligible catalog item does not exist.'},400);}
+  if(kind==='free_item'){const item=await env.DB.prepare('SELECT item_type FROM commercial_catalog_items WHERE id = ?').bind(freeItemId).first();if(!item || item.item_type!=='addon')return json({error:'The free item must be a catalog addon.'},400);}
+  if (!["all","foundation","content","events","operations","production","digital","partnership","selected"].includes(payload.scope || "all")) return json({error:"Invalid promotion scope."},400);
+  const scopeJson = JSON.stringify({ catalogIds, freeItemId, descriptionAr: text(payload.description?.ar, 500), descriptionEn: text(payload.description?.en, 500), scope: text(payload.scope, 100) || "all", access: text(payload.access, 50) || "private" });
+  try {
+    await env.DB.batch([
+      env.DB.prepare(`INSERT INTO commercial_promotions (id, code, promotion_type, value_minor, percentage_value, scope_json, usage_limit, usage_count, starts_at, ends_at, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)`).bind(id, code, kind, kind === "percentage" ? 0 : Math.round(value * 100), kind === "percentage" ? value : 0, scopeJson, limit, startsAt, endsAt, status, createdAt, createdAt),
+      env.DB.prepare("INSERT INTO commercial_audit_log (entity_type, entity_id, action, after_json, created_at) VALUES ('promotion', ?, 'created', ?, ?)").bind(id, JSON.stringify({ code, kind, value, status }), createdAt),
+    ]);
+  } catch (error) {
+    if (String(error).toLowerCase().includes("unique")) return json({ error: "Promotion code already exists." }, 409);
+    throw error;
+  }
+  const row = await env.DB.prepare("SELECT * FROM commercial_promotions WHERE id = ?").bind(id).first();
+  return json({ promotion: promotionItem(row) }, 201);
+}
+
+async function studioPromotionUpdate(request, env, id) {
+  const auth = await authenticateStudio(request, env);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+  const current = await env.DB.prepare("SELECT * FROM commercial_promotions WHERE id = ? LIMIT 1").bind(id).first();
+  if (!current) return json({ error: "Promotion not found." }, 404);
+  let payload;
+  try { payload = await request.json(); } catch { return json({ error: "Invalid request body." }, 400); }
+  const status = text(payload.status ?? current.status, 30);
+  if (!["draft", "scheduled", "active", "paused", "expired", "archived"].includes(status)) return json({ error: "Invalid promotion status." }, 400);
+  const updatedAt = now();
+  await env.DB.batch([
+    env.DB.prepare("UPDATE commercial_promotions SET status = ?, updated_at = ? WHERE id = ?").bind(status, updatedAt, id),
+    env.DB.prepare("INSERT INTO commercial_audit_log (entity_type, entity_id, action, before_json, after_json, created_at) VALUES ('promotion', ?, 'status_changed', ?, ?, ?)").bind(id, JSON.stringify({ status: current.status }), JSON.stringify({ status }), updatedAt),
+  ]);
+  const updated = await env.DB.prepare("SELECT * FROM commercial_promotions WHERE id = ?").bind(id).first();
+  return json({ promotion: promotionItem(updated) });
+}
+
+function validateQuotePayload(payload) {
+  const taxPercent=Number(payload.taxPercent || 0);
+  if(!Number.isFinite(taxPercent) || taxPercent < 0 || taxPercent > 100) return {error:'Tax must be between 0 and 100.'};
+  if (!Array.isArray(payload.items) || !payload.items.length || payload.items.length > 100) return { error: "A quote must include between 1 and 100 items." };
+  const items = payload.items.map(quoteItemFromPayload);
+  if (items.some((item) => !item || !item.nameAr || !item.nameEn)) return { error: "Every quote item needs valid names, quantity and prices." };
+  const depositPercent = Number(payload.depositPercent || 0);
+  const revisions = Number(payload.revisions || 0);
+  if (!Number.isFinite(depositPercent) || depositPercent < 0 || depositPercent > 100 || !Number.isInteger(revisions) || revisions < 0 || revisions > 100) {
+    return { error: "Invalid deposit percentage or revisions count." };
+  }
+  return { items, depositPercent, revisions, calculation: quoteCalculation(items, payload) };
+}
+
+async function insertQuoteVersion(env, quoteId, versionNumber, payload, normalized) {
+  const createdAt = now();
+  const terms = JSON.stringify({
+    taxPercent: normalized.calculation.taxPercent,
+    promoCode: text(payload.promoCode, 80),
+    notes: text(payload.notes, 5000),
+    promotionId: normalized.promotion?.id || null,
+    discountPlan: normalized.calculation.allocations || [],
+    itemCategories: normalized.items.map(item => item.category || ""),
+  });
+  const versionResult = await env.DB.prepare(`INSERT INTO commercial_quote_versions (quote_id, version_number, subtotal_minor, discount_minor, tax_minor, total_minor, internal_cost_minor, deposit_percent, timeline_text, revisions, terms_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(quoteId, versionNumber, normalized.calculation.subtotalMinor, normalized.calculation.discountMinor, normalized.calculation.taxMinor, normalized.calculation.totalMinor, normalized.calculation.internalCostMinor, normalized.depositPercent, text(payload.timeline, 240), normalized.revisions, terms, createdAt).run();
+  const versionId = Number(versionResult.meta?.last_row_id);
+  if (!versionId) throw new Error("Quote version could not be created.");
+  await env.DB.batch(normalized.items.map((item) => env.DB.prepare(`INSERT INTO commercial_quote_items (quote_version_id, catalog_item_id, sort_order, name_ar, name_en, description_ar, description_en, quantity, unit_price_minor, cost_minor, discount_minor, optional) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(versionId, item.catalogItemId, item.sortOrder, item.nameAr, item.nameEn, item.descriptionAr, item.descriptionEn, item.quantity, item.unitPriceMinor, item.costMinor, item.discountMinor, item.optional)));
+  return { versionId, createdAt };
+}
+
+function quoteResponse(quote, version, calculation) {
+  return {
+    id: Number(quote.id),
+    reference: quote.reference_code,
+    status: quote.status,
+    version: Number(version),
+    clientName: quote.client_name || "",
+    projectName: quote.project_name || "",
+    subtotal: calculation.subtotalMinor / 100,
+    discount: calculation.discountMinor / 100,
+    tax: calculation.taxMinor / 100,
+    total: calculation.totalMinor / 100,
+    internalCost: calculation.internalCostMinor / 100,
+    discountPlan: calculation.allocations || null,
+    updatedAt: quote.updated_at,
+  };
+}
+
+async function studioQuoteCreate(request, env) {
+  const auth = await authenticateStudio(request, env);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+  let payload;
+  try { payload = await request.json(); } catch { return json({ error: "Invalid request body." }, 400); }
+  if (!text(payload.clientName,180) || !text(payload.projectName,180)) return json({error:"Client and project names are required."},400);
+  const normalized = validateQuotePayload(payload);
+  if (normalized.error) return json({ error: normalized.error }, 400);
+  const promotion = await resolvePromotion(env, payload.promoCode, normalized.items);
+  if (promotion.error) return json({ error: promotion.error }, 400);
+  normalized.promotion = promotion.promotion;
+  normalized.calculation.allocations = promotion.allocations;
+  normalized.calculation.discountMinor = promotion.discountMinor;
+  normalized.calculation.taxMinor = Math.round((normalized.calculation.subtotalMinor - promotion.discountMinor) * (normalized.calculation.taxPercent / 100));
+  normalized.calculation.totalMinor = normalized.calculation.subtotalMinor - promotion.discountMinor + normalized.calculation.taxMinor;
+  const createdAt = now();
+  const reference = quoteReference();
+  const briefRequestId = payload.briefRequestId == null || payload.briefRequestId === "" ? null : Number(payload.briefRequestId);
+  if (briefRequestId !== null && (!Number.isInteger(briefRequestId) || briefRequestId <= 0 || !await env.DB.prepare("SELECT id FROM brief_requests WHERE id = ?").bind(briefRequestId).first())) return json({ error: "The linked brief does not exist." }, 400);
+  const result = await env.DB.prepare(`INSERT INTO commercial_quotes (reference_code, brief_request_id, client_name, project_name, language, status, current_version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 'draft', 1, ?, ?)`).bind(reference, briefRequestId, text(payload.clientName, 180), text(payload.projectName, 180), payload.language === "en" ? "en" : "ar", createdAt, createdAt).run();
+  const quoteId = Number(result.meta?.last_row_id);
+  if (!quoteId) return json({ error: "Quote could not be created." }, 500);
+  await insertQuoteVersion(env, quoteId, 1, payload, normalized);
+  const quote = await env.DB.prepare("SELECT * FROM commercial_quotes WHERE id = ?").bind(quoteId).first();
+  await env.DB.prepare("INSERT INTO commercial_audit_log (entity_type, entity_id, action, before_json, after_json, created_at) VALUES ('quote', ?, 'created', NULL, ?, ?)").bind(String(quoteId), JSON.stringify(quoteResponse(quote, 1, normalized.calculation)), createdAt).run();
+  return json({ quote: quoteResponse(quote, 1, normalized.calculation) }, 201);
+}
+
+async function studioQuotes(request, env) {
+  const auth = await authenticateStudio(request, env);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+  const result = await env.DB.prepare(`
+    SELECT q.id, q.reference_code, q.client_name, q.project_name, q.language, q.status, q.current_version, q.expires_at, q.created_at, q.updated_at,
+      v.total_minor, v.tax_minor, v.internal_cost_minor,
+      (SELECT event_type FROM commercial_quote_events e WHERE e.quote_id = q.id ORDER BY e.created_at DESC, e.id DESC LIMIT 1) AS last_event,
+      (SELECT created_at FROM commercial_quote_events e WHERE e.quote_id = q.id ORDER BY e.created_at DESC, e.id DESC LIMIT 1) AS last_event_at
+    FROM commercial_quotes q
+    LEFT JOIN commercial_quote_versions v ON v.quote_id = q.id AND v.version_number = q.current_version
+    ORDER BY q.updated_at DESC LIMIT 200
+  `).all();
+  return json({ quotes: (result.results || []).map((quote) => ({ id: Number(quote.id), reference: quote.reference_code, clientName: quote.client_name || "", projectName: quote.project_name || "", language: quote.language || "ar", status: quote.expires_at && quote.expires_at < now() && !["draft", "accepted", "cancelled"].includes(quote.status) ? "expired" : quote.status, version: Number(quote.current_version), total: Number(quote.total_minor || 0) / 100, netValue: (Number(quote.total_minor || 0) - Number(quote.tax_minor || 0)) / 100, internalCost: Number(quote.internal_cost_minor || 0) / 100, expiresAt: quote.expires_at, createdAt: quote.created_at, updatedAt: quote.updated_at, lastEvent: quote.last_event || "", lastEventAt: quote.last_event_at || "" })) });
+}
+
+async function studioQuoteDetail(request,env,id) {
+ const auth=await authenticateStudio(request,env); if(!auth.ok)return json({error:auth.error},auth.status);
+ const quote=await env.DB.prepare("SELECT * FROM commercial_quotes WHERE id = ?").bind(id).first();
+ if(!quote)return json({error:"Quote not found."},404);
+ const version=await env.DB.prepare("SELECT * FROM commercial_quote_versions WHERE quote_id = ? AND version_number = ?").bind(id,quote.current_version).first();
+ if(!version)return json({error:"Quote version not found."},404);
+ const rows=await env.DB.prepare("SELECT * FROM commercial_quote_items WHERE quote_version_id = ? ORDER BY sort_order").bind(version.id).all();
+ const terms=JSON.parse(version.terms_json || "{}");
+ return json({draft:{briefRequestId:quote.brief_request_id,clientName:quote.client_name,projectName:quote.project_name,items:(rows.results||[]).map((item,index)=>({rowId:`saved-${item.id}`,catalogId:item.catalog_item_id,category:terms.itemCategories?.[index] || "",name:{ar:item.name_ar,en:item.name_en},description:{ar:item.description_ar,en:item.description_en},quantity:item.quantity,unitPrice:item.unit_price_minor/100,cost:item.cost_minor/100,discount:item.discount_minor/100,optional:Boolean(item.optional)})),taxPercent:terms.taxPercent,depositPercent:version.deposit_percent,duration:version.timeline_text,revisions:version.revisions,promoCode:terms.promoCode,discountPlan:terms.discountPlan||null,record:{id:quote.id,reference:quote.reference_code,version:quote.current_version,status:quote.status},cloudDirty:false}});
+}
+
+async function studioProjects(request, env) {
+  const auth = await authenticateStudio(request, env); if (!auth.ok) return json({ error: auth.error }, auth.status);
+  const result = await env.DB.prepare(`SELECT p.*, v.terms_json FROM commercial_projects p
+    LEFT JOIN commercial_quote_events e ON e.id = (SELECT id FROM commercial_quote_events WHERE quote_id = p.quote_id AND event_type = 'accepted' ORDER BY id DESC LIMIT 1)
+    LEFT JOIN commercial_quote_versions v ON v.id = e.quote_version_id ORDER BY p.updated_at DESC`).all();
+  return json({ projects: (result.results || []).map((item) => {
+    const terms = JSON.parse(item.terms_json || "{}");
+    const netMinor = Math.round(Number(item.contract_value_minor || 0) / (1 + Number(terms.taxPercent || 0) / 100));
+    return { id: Number(item.id), quoteId: Number(item.quote_id), reference: item.reference_code, clientName: item.client_name, projectName: item.project_name, status: item.status, contractValue: Number(item.contract_value_minor || 0) / 100, netContractValue: netMinor / 100, expectedCost: Number(item.expected_cost_minor || 0) / 100, createdAt: item.created_at, updatedAt: item.updated_at };
+  }) });
+}
+
+async function studioPayments(request, env) {
+  const auth = await authenticateStudio(request, env); if (!auth.ok) return json({ error: auth.error }, auth.status);
+  const result = await env.DB.prepare("SELECT p.*, j.reference_code, j.client_name, j.project_name FROM commercial_payments p JOIN commercial_projects j ON j.id = p.project_id ORDER BY p.created_at DESC").all();
+  return json({ payments: (result.results || []).map((item) => ({ id: Number(item.id), projectId: Number(item.project_id), reference: item.reference_code, clientName: item.client_name, projectName: item.project_name, type: item.payment_type, amount: Number(item.amount_minor || 0) / 100, status: item.status === "pending" && item.due_at && item.due_at < now() ? "overdue" : item.status, dueAt: item.due_at, paidAt: item.paid_at, createdAt: item.created_at })) });
+}
+
+async function studioPaymentUpdate(request, env, id) {
+  const auth = await authenticateStudio(request, env); if (!auth.ok) return json({ error: auth.error }, auth.status);
+  const paymentId = Number(id); if (!Number.isInteger(paymentId)) return json({ error: "Invalid payment id." }, 400);
+  let payload; try { payload = await request.json(); } catch { return json({ error: "Invalid request body." }, 400); }
+  const status = text(payload.status, 30);
+  if (!["pending", "paid", "overdue", "cancelled"].includes(status)) return json({ error: "Invalid payment status." }, 400);
+  const updatedAt = now();
+  await env.DB.prepare("UPDATE commercial_payments SET status = ?, paid_at = ?, updated_at = ? WHERE id = ?").bind(status, status === "paid" ? updatedAt : null, updatedAt, paymentId).run();
+  const item = await env.DB.prepare("SELECT p.*, j.reference_code, j.client_name, j.project_name FROM commercial_payments p JOIN commercial_projects j ON j.id = p.project_id WHERE p.id = ?").bind(paymentId).first();
+  if (!item) return json({ error: "Payment not found." }, 404);
+  await env.DB.prepare("INSERT INTO commercial_audit_log (entity_type, entity_id, action, after_json, created_at) VALUES ('payment', ?, 'status_changed', ?, ?)").bind(String(paymentId), JSON.stringify({ status }), updatedAt).run();
+  return json({ payment: { id: Number(item.id), projectId: Number(item.project_id), reference: item.reference_code, clientName: item.client_name, projectName: item.project_name, type: item.payment_type, amount: Number(item.amount_minor || 0) / 100, status: item.status, dueAt: item.due_at, paidAt: item.paid_at, createdAt: item.created_at } });
+}
+
+export async function processPaymentReminders(env) {
+  if (!env.DB || !env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) return { sent: 0, configured: false };
+  const current = now();
+  const repeatBefore = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const owner = crypto.randomUUID();
+  const lock = await env.DB.prepare(`INSERT INTO commercial_job_locks (name, owner, expires_at) VALUES ('payment-reminders', ?, ?)
+    ON CONFLICT(name) DO UPDATE SET owner=excluded.owner, expires_at=excluded.expires_at WHERE commercial_job_locks.expires_at <= ?`)
+    .bind(owner, new Date(Date.now() + 300000).toISOString(), current).run();
+  if (!lock.meta?.changes) return { sent: 0, configured: true, busy: true };
+  try {
+  const result = await env.DB.prepare(`SELECT p.id, p.amount_minor, p.payment_type, p.due_at, j.reference_code, j.client_name, j.project_name FROM commercial_payments p JOIN commercial_projects j ON j.id = p.project_id WHERE p.status IN ('pending','overdue') AND p.due_at IS NOT NULL AND p.due_at <= ? AND (p.reminder_sent_at IS NULL OR p.reminder_sent_at < ?) ORDER BY p.due_at ASC LIMIT 50`).bind(current, repeatBefore).all();
+  const rows = result.results || [];
+  if (!rows.length) return { sent: 0, configured: true };
+  for (let start = 0; start < rows.length; start += 10) {
+    const group = rows.slice(start, start + 10);
+    const lines = ["ZOOMIX / OVERDUE PAYMENTS", ...group.map((item) => `${item.reference_code} · ${String(item.client_name).slice(0, 120)}\n${item.payment_type.toUpperCase()} · ${Number(item.amount_minor) / 100} EGP · due ${String(item.due_at).slice(0, 10)}`)];
+    await notifyTelegram(env, lines);
+    await env.DB.batch(group.map((item) => env.DB.prepare("UPDATE commercial_payments SET status = 'overdue', reminder_sent_at = ?, updated_at = ? WHERE id = ? AND status IN ('pending','overdue')").bind(current, current, item.id)));
+  }
+  return { sent: rows.length, configured: true };
+  } finally {
+    await env.DB.prepare("DELETE FROM commercial_job_locks WHERE name = 'payment-reminders' AND owner = ?").bind(owner).run();
+  }
+}
+
+async function studioPaymentReminders(request, env) {
+  const auth = await authenticateStudio(request, env); if (!auth.ok) return json({ error: auth.error }, auth.status);
+  const result = await processPaymentReminders(env);
+  if (!result.configured) return json({ error: "Telegram secrets are not configured." }, 409);
+  return json({ ok: true, remindersSent: result.sent });
+}
+
+async function studioQuoteNewVersion(request, env, id) {
+  const auth = await authenticateStudio(request, env);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+  const quoteId = Number(id);
+  if (!Number.isInteger(quoteId)) return json({ error: "Invalid quote id." }, 400);
+  const quote = await env.DB.prepare("SELECT * FROM commercial_quotes WHERE id = ? LIMIT 1").bind(quoteId).first();
+  if (!quote) return json({ error: "Quote not found." }, 404);
+  if (quote.status === "accepted") return json({ error: "Accepted quotes cannot be changed. Create a new quote instead." }, 409);
+  let payload;
+  try { payload = await request.json(); } catch { return json({ error: "Invalid request body." }, 400); }
+  if (Number(payload.baseVersion) !== Number(quote.current_version)) return json({error:'This quote changed elsewhere. Reopen the latest version before saving.'},409);
+  const normalized = validateQuotePayload(payload);
+  if (normalized.error) return json({ error: normalized.error }, 400);
+  const promotion = await resolvePromotion(env, payload.promoCode, normalized.items);
+  if (promotion.error) return json({ error: promotion.error }, 400);
+  normalized.promotion = promotion.promotion;
+  normalized.calculation.allocations = promotion.allocations;
+  normalized.calculation.discountMinor = promotion.discountMinor;
+  normalized.calculation.taxMinor = Math.round((normalized.calculation.subtotalMinor - promotion.discountMinor) * (normalized.calculation.taxPercent / 100));
+  normalized.calculation.totalMinor = normalized.calculation.subtotalMinor - promotion.discountMinor + normalized.calculation.taxMinor;
+  const nextVersion = Number(quote.current_version || 0) + 1;
+  const updatedAt = now();
+  await insertQuoteVersion(env, quoteId, nextVersion, payload, normalized);
+  await env.DB.prepare("UPDATE commercial_quotes SET client_name = ?, project_name = ?, language = ?, current_version = ?, updated_at = ?, status = 'draft', public_token_hash = NULL, expires_at = NULL WHERE id = ?").bind(text(payload.clientName, 180), text(payload.projectName, 180), payload.language === "en" ? "en" : "ar", nextVersion, updatedAt, quoteId).run();
+  const updated = { ...quote, status:"draft", public_token_hash:null, expires_at:null, client_name: text(payload.clientName, 180), project_name: text(payload.projectName, 180), language: payload.language === "en" ? "en" : "ar", current_version: nextVersion, updated_at: updatedAt };
+  await env.DB.prepare("INSERT INTO commercial_audit_log (entity_type, entity_id, action, before_json, after_json, created_at) VALUES ('quote', ?, 'version_created', ?, ?, ?)").bind(String(quoteId), JSON.stringify({ version: quote.current_version }), JSON.stringify(quoteResponse(updated, nextVersion, normalized.calculation)), updatedAt).run();
+  return json({ quote: quoteResponse(updated, nextVersion, normalized.calculation) });
+}
+
+async function studioQuoteSend(request, env, ctx, id) {
+  const auth = await authenticateStudio(request, env);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+  const quoteId = Number(id);
+  if (!Number.isInteger(quoteId)) return json({ error: "Invalid quote id." }, 400);
+  const quote = await env.DB.prepare("SELECT * FROM commercial_quotes WHERE id = ? LIMIT 1").bind(quoteId).first();
+  if (!quote) return json({ error: "Quote not found." }, 404);
+  if (quote.status === "accepted") return json({ error: "Accepted quotes cannot be sent again." }, 409);
+  const token = editToken();
+  const tokenHash = await sha256(token);
+  const sentAt = now();
+  const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+  const version = await env.DB.prepare("SELECT id FROM commercial_quote_versions WHERE quote_id = ? AND version_number = ? LIMIT 1").bind(quoteId, quote.current_version).first();
+  await env.DB.batch([
+    env.DB.prepare("UPDATE commercial_quotes SET status = 'sent', public_token_hash = ?, expires_at = ?, updated_at = ? WHERE id = ?").bind(tokenHash, expiresAt, sentAt, quoteId),
+    env.DB.prepare("INSERT INTO commercial_quote_events (quote_id, quote_version_id, event_type, created_at) VALUES (?, ?, 'sent', ?)").bind(quoteId, version?.id || null, sentAt),
+    env.DB.prepare("INSERT INTO commercial_audit_log (entity_type, entity_id, action, before_json, after_json, created_at) VALUES ('quote', ?, 'sent', ?, ?, ?)").bind(String(quoteId), JSON.stringify({ status: quote.status }), JSON.stringify({ status: "sent", version: quote.current_version, expiresAt }), sentAt),
+  ]);
+  const url = new URL(request.url);
+  url.pathname = `/q/${quote.reference_code}/${token}`;
+  url.search = "";
+  url.hash = "";
+  if (ctx) ctx.waitUntil(notifyTelegram(env, ["ZOOMIX / QUOTE SENT", quote.reference_code, quote.client_name, `Version ${quote.current_version}`, url.toString()]).catch((error) => console.error(error)));
+  return json({ ok: true, reference: quote.reference_code, version: quote.current_version, clientUrl: url.toString(), expiresAt });
+}
+
+async function findPublicQuote(env, reference, token) {
+  const quote = await env.DB.prepare("SELECT * FROM commercial_quotes WHERE reference_code = ? AND public_token_hash = ? LIMIT 1").bind(reference, await sha256(token)).first();
+  if (!quote || !quote.expires_at || quote.expires_at <= now()) return null;
+  return quote;
+}
+
+async function publicQuote(request, env, ctx, reference, token) {
+  if (!env.DB) return json({ error: "Quote storage is not configured." }, 503);
+  const quote = await findPublicQuote(env, reference, token);
+  if (!quote) return json({ error: "This quote link is invalid or has expired." }, 404);
+  const version = await env.DB.prepare("SELECT * FROM commercial_quote_versions WHERE quote_id = ? AND version_number = ? LIMIT 1").bind(quote.id, quote.current_version).first();
+  if (!version) return json({ error: "Quote version not found." }, 404);
+  const itemResult = await env.DB.prepare("SELECT id, sort_order, name_ar, name_en, description_ar, description_en, quantity, unit_price_minor, discount_minor, optional FROM commercial_quote_items WHERE quote_version_id = ? ORDER BY sort_order ASC").bind(version.id).all();
+  const firstView = !["viewed", "revision_requested", "accepted"].includes(quote.status);
+  if (firstView) {
+    const viewedAt = now();
+    await env.DB.batch([
+      env.DB.prepare("UPDATE commercial_quotes SET status = 'viewed', updated_at = ? WHERE id = ?").bind(viewedAt, quote.id),
+      env.DB.prepare("INSERT INTO commercial_quote_events (quote_id, quote_version_id, event_type, created_at) VALUES (?, ?, 'viewed', ?)").bind(quote.id, version.id, viewedAt),
+    ]);
+    quote.status = "viewed";
+    if (ctx) ctx.waitUntil(notifyTelegram(env, ["ZOOMIX / QUOTE VIEWED", quote.reference_code, quote.client_name, `Version ${quote.current_version}`]).catch((error) => console.error(error)));
+  }
+  let terms = {};
+  try { terms = JSON.parse(version.terms_json || "{}"); } catch { terms = {}; }
+  return json({
+    quote: {
+      reference: quote.reference_code,
+      version: Number(quote.current_version),
+      status: quote.status,
+      clientName: quote.client_name || "",
+      projectName: quote.project_name || "",
+      language: quote.language || "ar",
+      expiresAt: quote.expires_at,
+      subtotal: Number(version.subtotal_minor || 0) / 100,
+      discount: Number(version.discount_minor || 0) / 100,
+      tax: Number(version.tax_minor || 0) / 100,
+      total: Number(version.total_minor || 0) / 100,
+      depositPercent: Number(version.deposit_percent || 0),
+      timeline: version.timeline_text || "",
+      revisions: Number(version.revisions || 0),
+      taxPercent: Number(terms.taxPercent || 0),
+      discountPlan: terms.discountPlan || null,
+      items: (itemResult.results || []).map((item) => ({ id: Number(item.id), sortOrder:Number(item.sort_order), name: { ar: item.name_ar, en: item.name_en }, description: { ar: item.description_ar, en: item.description_en }, quantity: Number(item.quantity), unitPrice: Number(item.unit_price_minor) / 100, discount: Number(item.discount_minor) / 100, optional: Boolean(item.optional) })),
+    },
+  });
+}
+
+async function publicQuoteRespond(request, env, ctx, reference, token) {
+ if (!env.DB) return json({error:"Quote storage is not configured."},503);
+ const quote=await findPublicQuote(env,reference,token);
+ if(!quote)return json({error:"This quote link is invalid or has expired."},404);
+ if(quote.status==="accepted")return json({error:"This quote has already been accepted."},409);
+ let payload; try{payload=await request.json();}catch{return json({error:"Invalid request body."},400);}
+ const action=payload.action==="accept"?"accepted":payload.action==="revision"?"revision_requested":"";
+ if(!action || (action==="accepted" && payload.termsAccepted!==true)) return json({error:"Valid action and acceptance of terms required."},400);
+ const version=await env.DB.prepare("SELECT * FROM commercial_quote_versions WHERE quote_id = ? AND version_number = ?").bind(quote.id,quote.current_version).first();
+ if(!version)return json({error:"Quote version not found."},404);
+ const respondedAt=now(), message=text(payload.message,2000);
+ const ids=Array.isArray(payload.selectedOptionalItemIds)?[...new Set(payload.selectedOptionalItemIds.map(Number).filter(Number.isInteger))].slice(0,100):[];
+ const selection=JSON.stringify({selectedOptionalItemIds:ids});
+ const statements=[];
+ if(action==="accepted") {
+   const rows=await env.DB.prepare("SELECT * FROM commercial_quote_items WHERE quote_version_id = ? ORDER BY sort_order").bind(version.id).all();
+   if(ids.some(id=>!(rows.results||[]).some(item=>Number(item.id)===id && item.optional)))return json({error:"Invalid optional item selection."},400);
+   const items=(rows.results||[]).filter(item=>!item.optional || ids.includes(Number(item.id)));
+   const terms=JSON.parse(version.terms_json||"{}");
+   const lines=items.map(item=>({sortOrder:item.sort_order,unitPrice:item.unit_price_minor/100,quantity:item.quantity,discount:item.discount_minor/100}));
+   let calc=calculateCommercial(lines,null,Number(terms.taxPercent||0),terms.discountPlan || {});
+   if(!terms.discountPlan) {const discount=Math.round(calc.subtotalMinor*(Number(version.subtotal_minor)>0?Number(version.discount_minor)/Number(version.subtotal_minor):0));const tax=Math.round((calc.subtotalMinor-discount)*Number(terms.taxPercent||0)/100);calc={...calc,discountMinor:discount,taxMinor:tax,totalMinor:calc.subtotalMinor-discount+tax};}
+   const cost=items.reduce((sum,item)=>sum+Math.round(item.cost_minor*item.quantity),0);
+   if(terms.promotionId && calc.discountMinor > 0)statements.push(env.DB.prepare("INSERT INTO commercial_promotion_redemptions (quote_id,promotion_id,redeemed_at) VALUES (?,?,?)").bind(quote.id,terms.promotionId,respondedAt));
+   statements.push(env.DB.prepare("UPDATE commercial_quotes SET status = 'accepted', updated_at = ? WHERE id = ?").bind(respondedAt,quote.id));
+   const projectReference=`PRJ-${new Date().getUTCFullYear()}-${crypto.randomUUID().slice(0,8).toUpperCase()}`;
+   statements.push(env.DB.prepare("INSERT INTO commercial_projects (quote_id,reference_code,client_name,project_name,contract_value_minor,expected_cost_minor,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)").bind(quote.id,projectReference,quote.client_name,quote.project_name,calc.totalMinor,cost,respondedAt,respondedAt));
+   const deposit=Math.round(calc.totalMinor*Number(version.deposit_percent)/100);
+   for(const [type,amount,due]of [["deposit",deposit,respondedAt],["balance",calc.totalMinor-deposit,new Date(Date.now()+30*86400000).toISOString()]])statements.push(env.DB.prepare("INSERT INTO commercial_payments (project_id,payment_type,amount_minor,status,due_at,created_at,updated_at) SELECT id,?,?, 'pending',?,?,? FROM commercial_projects WHERE quote_id = ?").bind(type,amount,due,respondedAt,respondedAt,quote.id));
+ } else statements.push(env.DB.prepare("UPDATE commercial_quotes SET status = ?, updated_at = ? WHERE id = ? AND status != 'accepted'").bind(action,respondedAt,quote.id));
+ statements.push(env.DB.prepare("INSERT INTO commercial_quote_events (quote_id,quote_version_id,event_type,message,selection_json,created_at) VALUES (?,?,?,?,?,?)").bind(quote.id,version.id,action,message,selection,respondedAt));
+ statements.push(env.DB.prepare("INSERT INTO commercial_audit_log (entity_type,entity_id,action,before_json,after_json,created_at) VALUES ('quote',?,?,?,?,?)").bind(String(quote.id),action,JSON.stringify({status:quote.status}),JSON.stringify({status:action,version:quote.current_version}),respondedAt));
+ try{await env.DB.batch(statements);}catch(error){if(/Promotion|already accepted|Quote changed|UNIQUE/i.test(String(error)))return json({error:"Quote already accepted or promotion unavailable. Ask Studio for an updated quote."},409);throw error;}
+ if(ctx)ctx.waitUntil(notifyTelegram(env,[action==="accepted"?"ZOOMIX / QUOTE ACCEPTED":"ZOOMIX / REVISION REQUESTED",quote.reference_code,quote.client_name,message]).catch(console.error));
+ return json({ok:true,status:action,respondedAt});
+}
+
 async function studioEvents(request, env) {
   const auth = await authenticateStudio(request, env);
   if (!auth.ok) return json({ error: auth.error }, auth.status);
@@ -636,12 +1309,34 @@ async function api(request, env, ctx) {
   const url = new URL(request.url);
   if (request.method === "OPTIONS") return new Response(null, { status: 204 });
   if (request.method === "POST" && url.pathname === "/api/briefs") return createBrief(request, env, ctx);
+  if (request.method === "GET" && url.pathname === "/api/catalog") return publicCatalog(env);
   const editMatch = url.pathname.match(/^\/api\/briefs\/edit\/([a-f0-9]{64})$/i);
   if (editMatch && request.method === "GET") return getBriefForEdit(request, env, editMatch[1]);
   if (editMatch && request.method === "PATCH") return updateBriefFromEdit(request, env, ctx, editMatch[1]);
+  const detailMatch = url.pathname.match(new RegExp('^/api/studio/quotes/([0-9]+)$'));
+  if(request.method === "GET" && detailMatch) return studioQuoteDetail(request,env,Number(detailMatch[1]));
   if (request.method === "POST" && url.pathname === "/api/studio/login") return studioLogin(request, env);
+  if (request.method === "GET" && url.pathname === "/api/studio/session") {
+    const auth = await authenticateStudio(request, env);
+    return json(auth.ok ? { authenticated: true } : { error: auth.error }, auth.ok ? 200 : auth.status, { "Cache-Control": "no-store" });
+  }
   if (request.method === "POST" && url.pathname === "/api/studio/logout") return studioLogout(request, env);
   if (request.method === "GET" && url.pathname === "/api/studio/requests") return studioRequests(request, env);
+  if (request.method === "GET" && url.pathname === "/api/studio/catalog") return studioCatalog(request, env);
+  if (request.method === "POST" && url.pathname === "/api/studio/catalog") return studioCatalogCreate(request, env);
+  if (request.method === "POST" && url.pathname === "/api/studio/quotes") return studioQuoteCreate(request, env);
+  if (request.method === "GET" && url.pathname === "/api/studio/quotes") return studioQuotes(request, env);
+  if (request.method === "GET" && url.pathname === "/api/studio/projects") return studioProjects(request, env);
+  if (request.method === "GET" && url.pathname === "/api/studio/payments") return studioPayments(request, env);
+  if (request.method === "GET" && url.pathname === "/api/studio/promotions") return studioPromotions(request, env);
+  if (request.method === "POST" && url.pathname === "/api/studio/promotions") return studioPromotionCreate(request, env);
+  if (request.method === "GET" && url.pathname === "/api/studio/integrations") return studioIntegrations(request, env);
+  if (request.method === "GET" && url.pathname === "/api/studio/audit") return studioAudit(request, env);
+  if (request.method === "POST" && url.pathname === "/api/studio/integrations/telegram/test") return studioTelegramTest(request, env);
+  if (request.method === "POST" && url.pathname === "/api/studio/payments/reminders") return studioPaymentReminders(request, env);
+  const publicQuoteMatch = url.pathname.match(/^\/api\/quotes\/(QT-[A-Z0-9-]+)\/([a-f0-9]{64})$/i);
+  if (request.method === "GET" && publicQuoteMatch) return publicQuote(request, env, ctx, publicQuoteMatch[1], publicQuoteMatch[2]);
+  if (request.method === "POST" && publicQuoteMatch) return publicQuoteRespond(request, env, ctx, publicQuoteMatch[1], publicQuoteMatch[2]);
   if (request.method === "GET" && url.pathname === "/api/studio/events") return studioEvents(request, env);
   if (request.method === "GET" && url.pathname === "/api/studio/insights") return studioInsights(request, env);
   if (request.method === "GET" && url.pathname === "/api/studio/export.csv") return studioExport(request, env);
@@ -649,6 +1344,16 @@ async function api(request, env, ctx) {
   if (request.method === "POST" && url.pathname === "/api/analytics/events") return analyticsEvent(request, env);
   const updateMatch = url.pathname.match(/^\/api\/studio\/requests\/(\d+)$/);
   if (request.method === "PATCH" && updateMatch) return studioRequestUpdate(request, env, updateMatch[1]);
+  const catalogMatch = url.pathname.match(/^\/api\/studio\/catalog\/([a-z0-9][a-z0-9-]{1,79})$/i);
+  if (request.method === "PATCH" && catalogMatch) return studioCatalogUpdate(request, env, catalogMatch[1]);
+  const quoteMatch = url.pathname.match(/^\/api\/studio\/quotes\/(\d+)\/versions$/);
+  if (request.method === "POST" && quoteMatch) return studioQuoteNewVersion(request, env, quoteMatch[1]);
+  const quoteSendMatch = url.pathname.match(/^\/api\/studio\/quotes\/(\d+)\/send$/);
+  if (request.method === "POST" && quoteSendMatch) return studioQuoteSend(request, env, ctx, quoteSendMatch[1]);
+  const promotionMatch = url.pathname.match(/^\/api\/studio\/promotions\/([a-z0-9-]+)$/i);
+  if (request.method === "PATCH" && promotionMatch) return studioPromotionUpdate(request, env, promotionMatch[1]);
+  const paymentMatch = url.pathname.match(/^\/api\/studio\/payments\/(\d+)$/);
+  if (request.method === "PATCH" && paymentMatch) return studioPaymentUpdate(request, env, paymentMatch[1]);
   return json({ error: "Not found." }, 404);
 }
 
@@ -739,5 +1444,8 @@ export default {
     const needsSpaFallback = asset.status === 404 || (asset.status >= 300 && asset.status < 400);
     if (!isHtmlRoute || !needsSpaFallback) return asset;
     return env.ASSETS.fetch(new Request(new URL("/", request.url), request));
+  },
+  async scheduled(controller, env, ctx) {
+    ctx.waitUntil(processPaymentReminders(env).catch((error) => console.error("Payment reminder run failed", error)));
   },
 };

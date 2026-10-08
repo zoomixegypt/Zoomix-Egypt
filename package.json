@@ -38,10 +38,13 @@
     "react-router-dom": "^7.14.1"
   },
   "scripts": {
+    "test:studio": "node scripts/test-studio.mjs && node scripts/test-commercial.mjs",
     "start": "vite --host 0.0.0.0",
     "dev": "vite --host 0.0.0.0",
     "build": "vite build && node scripts/prepare-pages-routes.mjs",
     "preview": "vite preview --host 0.0.0.0",
+    "dev:cf": "npm run build && wrangler pages dev --port 8788",
+    "db:local": "wrangler d1 migrations apply zoomix-studio --local",
     "check": "npm run build && npm audit --omit=dev",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

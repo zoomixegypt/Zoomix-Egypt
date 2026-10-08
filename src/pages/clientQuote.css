@@ -1,0 +1,259 @@
+.cq-root {
+  min-height: 100vh;
+  background: #f5f4ef;
+  color: #0a0a0a;
+  font-family: "Cairo", Tahoma, sans-serif;
+}
+.cq-top {
+  display: flex;
+  justify-content: space-between;
+  padding: 22px clamp(24px, 5vw, 72px);
+  border-bottom: 1px solid rgba(10, 10, 10, 0.18);
+  background: #0a0a0a;
+  color: #fff;
+}
+.cq-top strong {
+  color: #bbff00;
+  letter-spacing: 0.14em;
+}
+.cq-top span,
+.cq-kicker {
+  font:
+    700 11px/1.4 "JetBrains Mono",
+    monospace;
+  direction: ltr;
+  letter-spacing: 0.08em;
+}
+.cq-hero {
+  padding: clamp(64px, 9vw, 130px) clamp(24px, 8vw, 120px);
+  background: #0a0a0a;
+  color: #fff;
+}
+.cq-hero p {
+  color: #bbff00;
+  font:
+    700 11px/1.4 "JetBrains Mono",
+    monospace;
+  letter-spacing: 0.12em;
+}
+.cq-hero h1 {
+  max-width: 1000px;
+  margin: 20px 0;
+  font:
+    800 clamp(42px, 7vw, 96px)/0.96 "Cairo",
+    sans-serif;
+  letter-spacing: -0.055em;
+}
+.cq-hero span {
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 17px;
+}
+.cq-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.6fr);
+  gap: 24px;
+  max-width: 1380px;
+  margin: auto;
+  padding: clamp(36px, 6vw, 80px) clamp(24px, 4vw, 56px);
+}
+.cq-scope,
+.cq-summary {
+  border: 1px solid rgba(10, 10, 10, 0.18);
+  background: #fff;
+}
+.cq-scope > h2,
+.cq-scope > .cq-kicker {
+  margin-inline: 28px;
+}
+.cq-scope > .cq-kicker {
+  margin-top: 28px;
+}
+.cq-scope h2 {
+  margin-top: 8px;
+  margin-bottom: 22px;
+  font-size: clamp(28px, 4vw, 48px);
+}
+.cq-scope article {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  gap: 16px;
+  align-items: start;
+  padding: 24px 28px;
+  border-top: 1px solid rgba(10, 10, 10, 0.14);
+}
+.cq-scope article svg {
+  width: 18px;
+  color: #5d7f00;
+}
+.cq-scope article p {
+  margin: 5px 0;
+  color: rgba(10, 10, 10, 0.62);
+  line-height: 1.7;
+}
+.cq-scope article small {
+  color: rgba(10, 10, 10, 0.54);
+  font-family: "Space Grotesk", sans-serif;
+}
+.cq-scope article > b,
+.cq-summary dd {
+  font-family: "Space Grotesk", sans-serif;
+  direction: ltr;
+}
+.cq-summary {
+  align-self: start;
+  padding: 28px;
+  position: sticky;
+  top: 24px;
+}
+.cq-summary dl {
+  margin: 20px 0;
+}
+.cq-summary dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(10, 10, 10, 0.14);
+}
+.cq-summary dl .is-total {
+  font-size: 20px;
+  font-weight: 800;
+}
+.cq-summary ul {
+  padding-inline-start: 20px;
+  color: rgba(10, 10, 10, 0.65);
+  line-height: 2;
+}
+.cq-terms {
+  display: flex;
+  gap: 10px;
+  margin: 22px 0 14px;
+  line-height: 1.6;
+}
+.cq-summary textarea {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid rgba(10, 10, 10, 0.25);
+  font: inherit;
+  resize: vertical;
+}
+.cq-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+.cq-actions button {
+  min-height: 48px;
+  border: 1px solid #0a0a0a;
+  background: #fff;
+  color: #0a0a0a;
+  font:
+    700 13px "Cairo",
+    sans-serif;
+  cursor: pointer;
+}
+.cq-actions button svg {
+  width: 16px;
+  margin-inline-end: 6px;
+  vertical-align: middle;
+}
+.cq-actions .is-primary {
+  background: #bbff00;
+}
+.cq-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+.cq-result {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 24px;
+  padding: 18px;
+  background: #eaffad;
+}
+.cq-state {
+  display: grid;
+  min-height: 100vh;
+  place-content: center;
+  gap: 14px;
+  padding: 24px;
+  background: #0a0a0a;
+  color: #fff;
+  text-align: center;
+}
+.cq-state strong {
+  color: #bbff00;
+}
+.cq-state h1 {
+  font-size: clamp(36px, 7vw, 76px);
+}
+.cq-spin {
+  margin: auto;
+  animation: cq-spin 1s linear infinite;
+}
+.cq-state p {
+  max-width: 520px;
+  margin: 0 auto;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 16px;
+  line-height: 1.8;
+}
+.cq-retry {
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 28px;
+  border: 1px solid #bbff00;
+  background: #bbff00;
+  color: #0a0a0a;
+  font:
+    700 14px "Cairo",
+    sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.cq-retry:hover,
+.cq-retry:focus-visible {
+  background: #fff;
+  border-color: #fff;
+}
+.cq-error {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid #b42318;
+  background: #fef3f2;
+  color: #7a271a;
+  font-size: 13px;
+  line-height: 1.7;
+}
+@keyframes cq-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (max-width: 800px) {
+  .cq-layout {
+    grid-template-columns: 1fr;
+  }
+  .cq-summary {
+    position: static;
+  }
+  .cq-scope article {
+    grid-template-columns: 22px 1fr;
+    padding: 20px;
+  }
+  .cq-scope article > b {
+    grid-column: 2;
+  }
+  .cq-actions {
+    grid-template-columns: 1fr;
+  }
+  .cq-top {
+    gap: 14px;
+    font-size: 12px;
+  }
+}

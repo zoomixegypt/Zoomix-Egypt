@@ -1,0 +1,14 @@
+{
+  "name": "zoomix-payment-reminders",
+  "main": "workers/payment-reminders.js",
+  "compatibility_date": "2026-10-06",
+  "compatibility_flags": ["nodejs_compat"],
+  "triggers": { "crons": ["0 7 * * *"] },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "zoomix-studio",
+      "database_id": "436ac787-322e-41a8-974f-856e98fa89b5",
+    },
+  ],
+}

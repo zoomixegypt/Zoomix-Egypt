@@ -20,6 +20,9 @@
 .env
 .env.*
 !.env.example
+# wrangler local dev secrets (STUDIO_PASSWORD للفحص المحلي فقط — لا يُلتزم أبدًا)
+.dev.vars
+.dev.vars.*
 .vite/
 .wrangler/
 

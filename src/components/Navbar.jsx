@@ -196,7 +196,7 @@ const Navbar = memo(function Navbar() {
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
             aria-label="ZOOMIX"
-            className={`nav-logo-button group relative z-10 flex items-center px-1.5 py-1 md:px-2 md:py-1.5 transition-all duration-500 cursor-pointer ${logoOnDark ? "" : "drop-shadow-[0_2px_8px_rgba(0,0,0,0.12)]"}`}
+            className={`nav-logo-button group relative z-10 flex min-h-11 items-center px-1.5 py-1 md:px-2 md:py-1.5 transition-all duration-500 cursor-pointer ${logoOnDark ? "" : "drop-shadow-[0_2px_8px_rgba(0,0,0,0.12)]"}`}
           >
             <ZoomixLogo
               variant={logoOnDark ? "dark" : "light"}
@@ -227,130 +227,134 @@ const Navbar = memo(function Navbar() {
         createPortal(
           <GsapPresence>
             {isMenuOpen && (
-          <Gsap.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.28 }}
-            className={`fixed inset-0 z-40 pointer-events-auto lg:hidden backdrop-blur-md overflow-hidden ${isOnDarkSection ? "bg-black/72" : "bg-[#F5F4EF]/96"}`}
-            id="zoomix-mobile-menu"
-            ref={menuRef}
-            role="dialog"
-            aria-modal="true"
-            aria-label={language === "ar" ? "قائمة الموقع" : "Site menu"}
-          >
-            <div
-              className={`absolute inset-0 opacity-[0.1] pointer-events-none [background-size:28px_28px] ${isOnDarkSection ? "[background-image:linear-gradient(to_right,rgba(255,255,255,0.24)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.24)_1px,transparent_1px)]" : "[background-image:linear-gradient(to_right,rgba(0,0,0,0.16)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.16)_1px,transparent_1px)]"}`}
-            />
-            <div className="absolute -top-24 -right-16 w-72 h-72 rounded-full bg-[#BBFF00]/15 blur-3xl pointer-events-none" />
-            <div
-              className={`absolute -bottom-24 -left-10 w-64 h-64 rounded-full blur-3xl pointer-events-none ${isOnDarkSection ? "bg-white/12" : "bg-white/40"}`}
-            />
-            <div
-              className={`absolute inset-0 pointer-events-none ${isOnDarkSection ? "bg-[radial-gradient(circle_at_15%_5%,rgba(255,255,255,0.14),rgba(0,0,0,0)_48%)]" : "bg-[radial-gradient(circle_at_15%_5%,rgba(255,255,255,0.7),rgba(245,244,239,0)_48%)]"}`}
-            />
-
-            <Gsap.div
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 14 }}
-              transition={{ duration: 0.34, ease: [0.16, 1, 0.3, 1] }}
-              className="relative z-10 h-full w-full px-6 pt-24 pb-8 flex flex-col"
-            >
-              <div
-                className={`w-full max-w-md mx-auto pb-4 border-b flex items-center justify-between ${isOnDarkSection ? "border-white/20" : "border-black/15"}`}
+              <Gsap.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.28 }}
+                className={`fixed inset-0 z-40 pointer-events-auto lg:hidden backdrop-blur-md overflow-hidden ${isOnDarkSection ? "bg-black/72" : "bg-[#F5F4EF]/96"}`}
+                id="zoomix-mobile-menu"
+                ref={menuRef}
+                role="dialog"
+                aria-modal="true"
+                aria-label={language === "ar" ? "قائمة الموقع" : "Site menu"}
               >
-                <span
-                  className={`font-mono text-[10px] uppercase tracking-[0.22em] ${isOnDarkSection ? "text-white/65" : "text-black/45"}`}
+                <div
+                  className={`absolute inset-0 opacity-[0.1] pointer-events-none [background-size:28px_28px] ${isOnDarkSection ? "[background-image:linear-gradient(to_right,rgba(255,255,255,0.24)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.24)_1px,transparent_1px)]" : "[background-image:linear-gradient(to_right,rgba(0,0,0,0.16)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.16)_1px,transparent_1px)]"}`}
+                />
+                <div className="absolute -top-24 -right-16 w-72 h-72 rounded-full bg-[#BBFF00]/15 blur-3xl pointer-events-none" />
+                <div
+                  className={`absolute -bottom-24 -left-10 w-64 h-64 rounded-full blur-3xl pointer-events-none ${isOnDarkSection ? "bg-white/12" : "bg-white/40"}`}
+                />
+                <div
+                  className={`absolute inset-0 pointer-events-none ${isOnDarkSection ? "bg-[radial-gradient(circle_at_15%_5%,rgba(255,255,255,0.14),rgba(0,0,0,0)_48%)]" : "bg-[radial-gradient(circle_at_15%_5%,rgba(255,255,255,0.7),rgba(245,244,239,0)_48%)]"}`}
+                />
+
+                <Gsap.div
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 14 }}
+                  transition={{ duration: 0.34, ease: [0.16, 1, 0.3, 1] }}
+                  className="relative z-10 h-full w-full px-6 pt-24 pb-8 flex flex-col"
                 >
-                  Navigation Matrix
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#BBFF00]" />
-                  <span
-                    className={`font-mono text-[10px] tracking-[0.14em] ${isOnDarkSection ? "text-white/55" : "text-black/35"}`}
+                  <div
+                    className={`w-full max-w-md mx-auto pb-4 border-b flex items-center justify-between ${isOnDarkSection ? "border-white/20" : "border-black/15"}`}
                   >
-                    MOBILE
-                  </span>
+                    <span
+                      className={`font-mono text-[10px] uppercase tracking-[0.22em] ${isOnDarkSection ? "text-white/65" : "text-black/45"}`}
+                    >
+                      Navigation Matrix
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#BBFF00]" />
+                      <span
+                        className={`font-mono text-[10px] tracking-[0.14em] ${isOnDarkSection ? "text-white/55" : "text-black/35"}`}
+                      >
+                        MOBILE
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setLanguage(language === "ar" ? "en" : "ar")}
+                        aria-label="Switch language"
+                        className={`ml-2 px-2 py-1 border rounded-full font-mono text-[10px] ${isOnDarkSection ? "border-white/25 text-white" : "border-black/15 text-black"}`}
+                      >
+                        {t("nav", "language")}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="w-full max-w-md mx-auto mt-6 flex-1 flex flex-col">
+                    {NAV_ITEMS.map((item, i) => (
+                      <Gsap.button
+                        key={item.sectionId}
+                        onClick={() => scrollTo(item.sectionId)}
+                        initial={{ opacity: 0, x: -14 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{
+                          duration: 0.28,
+                          delay: 0.05 + i * 0.04,
+                          ease: [0.16, 1, 0.3, 1],
+                        }}
+                        className={`w-full border-b last:border-b-0 py-4 flex items-center justify-between text-left active:translate-x-0.5 transition-transform ${isOnDarkSection ? "border-white/20 active:bg-white/5" : "border-black/15 active:bg-black/5"}`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <span
+                            className={`text-[11px] font-mono font-bold tracking-[0.14em] ${isOnDarkSection ? "text-white/50" : "text-black/35"}`}
+                          >
+                            {String(i + 1).padStart(2, "0")}
+                          </span>
+                          <span
+                            className={`text-[30px] leading-none font-black uppercase tracking-tight ${isOnDarkSection ? "text-white" : "text-black/90"}`}
+                          >
+                            {item.label}
+                          </span>
+                        </div>
+                        <span
+                          className={`w-8 h-8 rounded-full border flex items-center justify-center ${isOnDarkSection ? "border-white/20" : "border-black/15"}`}
+                        >
+                          <ArrowUpRight
+                            size={15}
+                            className={`${isOnDarkSection ? "text-white/70" : "text-black/45"} ${language === "ar" ? "rotate-180" : ""}`}
+                          />
+                        </span>
+                      </Gsap.button>
+                    ))}
+                  </div>
+
+                  <Gsap.button
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.28 }}
+                    onClick={openRouteFinder}
+                    className={`w-full max-w-md mx-auto mt-6 h-12 rounded-full text-xs font-bold uppercase tracking-[0.16em] flex items-center justify-center gap-2 shadow-[0_10px_24px_rgba(0,0,0,0.16)] ${isOnDarkSection ? "bg-white text-black" : "bg-black text-white"}`}
+                  >
+                    {language === "ar" ? "اختيار سريع" : "QUICK MATCH"}
+                    <ArrowUpRight size={14} className={language === "ar" ? "rotate-180" : ""} />
+                  </Gsap.button>
                   <button
                     type="button"
-                    onClick={() => setLanguage(language === "ar" ? "en" : "ar")}
-                    aria-label="Switch language"
-                    className={`ml-2 px-2 py-1 border rounded-full font-mono text-[10px] ${isOnDarkSection ? "border-white/25 text-white" : "border-black/15 text-black"}`}
+                    onClick={() => scrollTo("contact-section")}
+                    className={`mx-auto mt-3 block text-xs font-bold underline decoration-current/30 underline-offset-4 ${isOnDarkSection ? "text-white/65" : "text-black/55"}`}
                   >
-                    {t("nav", "language")}
+                    {language === "ar" ? "أو ابدأ بالبريف مباشرة" : "Or start with a direct brief"}
                   </button>
-                </div>
-              </div>
 
-              <div className="w-full max-w-md mx-auto mt-6 flex-1 flex flex-col">
-                {NAV_ITEMS.map((item, i) => (
-                  <Gsap.button
-                    key={item.sectionId}
-                    onClick={() => scrollTo(item.sectionId)}
-                    initial={{ opacity: 0, x: -14 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.28, delay: 0.05 + i * 0.04, ease: [0.16, 1, 0.3, 1] }}
-                    className={`w-full border-b last:border-b-0 py-4 flex items-center justify-between text-left active:translate-x-0.5 transition-transform ${isOnDarkSection ? "border-white/20 active:bg-white/5" : "border-black/15 active:bg-black/5"}`}
+                  <div
+                    className={`w-full max-w-md mx-auto mt-5 pt-4 border-t flex items-center justify-between ${isOnDarkSection ? "border-white/15" : "border-black/10"}`}
                   >
-                    <div className="flex items-center gap-4">
-                      <span
-                        className={`text-[11px] font-mono font-bold tracking-[0.14em] ${isOnDarkSection ? "text-white/50" : "text-black/35"}`}
-                      >
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
-                      <span
-                        className={`text-[30px] leading-none font-black uppercase tracking-tight ${isOnDarkSection ? "text-white" : "text-black/90"}`}
-                      >
-                        {item.label}
-                      </span>
-                    </div>
                     <span
-                      className={`w-8 h-8 rounded-full border flex items-center justify-center ${isOnDarkSection ? "border-white/20" : "border-black/15"}`}
+                      className={`font-mono text-[10px] tracking-[0.14em] ${isOnDarkSection ? "text-white/55" : "text-black/35"}`}
                     >
-                      <ArrowUpRight
-                        size={15}
-                        className={`${isOnDarkSection ? "text-white/70" : "text-black/45"} ${language === "ar" ? "rotate-180" : ""}`}
-                      />
+                      Select Section
                     </span>
-                  </Gsap.button>
-                ))}
-              </div>
-
-              <Gsap.button
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.28 }}
-                onClick={openRouteFinder}
-                className={`w-full max-w-md mx-auto mt-6 h-12 rounded-full text-xs font-bold uppercase tracking-[0.16em] flex items-center justify-center gap-2 shadow-[0_10px_24px_rgba(0,0,0,0.16)] ${isOnDarkSection ? "bg-white text-black" : "bg-black text-white"}`}
-              >
-                {language === "ar" ? "اختيار سريع" : "QUICK MATCH"}
-                <ArrowUpRight size={14} className={language === "ar" ? "rotate-180" : ""} />
-              </Gsap.button>
-              <button
-                type="button"
-                onClick={() => scrollTo("contact-section")}
-                className={`mx-auto mt-3 block text-xs font-bold underline decoration-current/30 underline-offset-4 ${isOnDarkSection ? "text-white/65" : "text-black/55"}`}
-              >
-                {language === "ar" ? "أو ابدأ بالبريف مباشرة" : "Or start with a direct brief"}
-              </button>
-
-              <div
-                className={`w-full max-w-md mx-auto mt-5 pt-4 border-t flex items-center justify-between ${isOnDarkSection ? "border-white/15" : "border-black/10"}`}
-              >
-                <span
-                  className={`font-mono text-[10px] tracking-[0.14em] ${isOnDarkSection ? "text-white/55" : "text-black/35"}`}
-                >
-                  Select Section
-                </span>
-                <span
-                  className={`font-mono text-[10px] tracking-[0.14em] ${isOnDarkSection ? "text-white/55" : "text-black/35"}`}
-                >
-                  Tap To Navigate
-                </span>
-              </div>
-            </Gsap.div>
-          </Gsap.div>
+                    <span
+                      className={`font-mono text-[10px] tracking-[0.14em] ${isOnDarkSection ? "text-white/55" : "text-black/35"}`}
+                    >
+                      Tap To Navigate
+                    </span>
+                  </div>
+                </Gsap.div>
+              </Gsap.div>
             )}
           </GsapPresence>,
           document.body,
