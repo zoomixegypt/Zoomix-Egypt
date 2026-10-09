@@ -543,7 +543,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
         type={type}
         value={form[key]}
         onChange={(event) => updateField(key, event.target.value)}
-        className={`min-w-0 w-full border bg-white px-4 py-3.5 outline-none transition-colors focus:border-[#6b8d00] focus:ring-2 focus:ring-[#BBFF00]/35 ${errors[key] ? "border-red-500" : "border-black/25"}`}
+        className={`min-w-0 w-full border bg-white px-4 py-3.5 outline-hidden transition-colors focus:border-[#6b8d00] focus:ring-2 focus:ring-[#BBFF00]/35 ${errors[key] ? "border-red-500" : "border-black/25"}`}
         aria-invalid={Boolean(errors[key])}
         aria-describedby={errors[key] ? `brief-${key}-error` : undefined}
         required={required}
@@ -584,7 +584,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
         id={`brief-${key}`}
         value={form[key]}
         onChange={(event) => updateField(key, event.target.value)}
-        className={`min-w-0 w-full border bg-white px-4 py-3.5 outline-none transition-colors focus:border-[#6b8d00] focus:ring-2 focus:ring-[#BBFF00]/35 ${errors[key] ? "border-red-500" : "border-black/25"}`}
+        className={`min-w-0 w-full border bg-white px-4 py-3.5 outline-hidden transition-colors focus:border-[#6b8d00] focus:ring-2 focus:ring-[#BBFF00]/35 ${errors[key] ? "border-red-500" : "border-black/25"}`}
         aria-invalid={Boolean(errors[key])}
         aria-describedby={errors[key] ? `brief-${key}-error` : undefined}
         required={required}
@@ -926,7 +926,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                         "مثال: عاوز نطلع بهوية أو محتوى يخلي المشروع جاهز للظهور.",
                         "Example: I want a clear identity or content system that makes the project ready to show up.",
                       )}
-                      className={`min-h-36 min-w-0 w-full resize-y border bg-white px-4 py-3.5 outline-none transition-colors focus:border-[#6b8d00] focus:ring-2 focus:ring-[#BBFF00]/35 ${errors.description ? "border-red-500" : "border-black/25"}`}
+                      className={`min-h-36 min-w-0 w-full resize-y border bg-white px-4 py-3.5 outline-hidden transition-colors focus:border-[#6b8d00] focus:ring-2 focus:ring-[#BBFF00]/35 ${errors.description ? "border-red-500" : "border-black/25"}`}
                       aria-invalid={Boolean(errors.description)}
                       aria-describedby={errors.description ? "brief-description-error" : undefined}
                       required

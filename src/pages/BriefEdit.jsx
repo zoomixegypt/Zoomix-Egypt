@@ -187,7 +187,7 @@ export default function BriefEdit() {
     form?.showType === "events" ||
     (normalizeRoute(form?.route) === "show" && Boolean(form?.eventDate));
   const inputClass =
-    "min-w-0 w-full border border-black/20 bg-white px-4 py-3.5 outline-none transition-colors focus:border-[#6b8d00] focus:ring-2 focus:ring-[#BBFF00]/35";
+    "min-w-0 w-full border border-black/20 bg-white px-4 py-3.5 outline-hidden transition-colors focus:border-[#6b8d00] focus:ring-2 focus:ring-[#BBFF00]/35";
 
   const field = (key, fieldLabel, type = "text") => (
     <label className="block">

@@ -166,7 +166,7 @@ export default function ZoomixCaseStudy() {
       </div>
       <nav
         aria-label={language === "ar" ? "مراحل دراسة الحالة" : "Case study stages"}
-        className="sticky top-0 z-20 flex gap-2 overflow-x-auto border-b border-black/15 bg-[#F5F4EF]/95 px-5 py-3 backdrop-blur-sm md:px-8"
+        className="sticky top-0 z-20 flex gap-2 overflow-x-auto border-b border-black/15 bg-[#F5F4EF]/95 px-5 py-3 backdrop-blur-xs md:px-8"
       >
         {[
           ["case-study-need", language === "ar" ? "01 الاحتياج" : "01 NEED"],

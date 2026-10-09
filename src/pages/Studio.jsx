@@ -263,7 +263,7 @@ export default function Studio() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder={label("كلمة مرور الاستوديو", "Studio password")}
-                className="min-h-12 min-w-0 flex-1 border border-white/20 bg-white/5 px-4 text-white outline-none placeholder:text-white/35 focus:border-[#BBFF00]"
+                className="min-h-12 min-w-0 flex-1 border border-white/20 bg-white/5 px-4 text-white outline-hidden placeholder:text-white/35 focus:border-[#BBFF00]"
                 required
                 autoComplete="current-password"
               />
@@ -392,7 +392,7 @@ export default function Studio() {
           </div>
           <label className="flex min-w-0 items-center gap-2 border border-black/20 bg-white px-3 py-2 md:w-72">
             <Search size={16} className="shrink-0 text-black/45" />
-            <input value={search} onChange={(event) => setSearch(event.target.value)} className="min-w-0 flex-1 bg-transparent text-sm outline-none" placeholder={label("ابحث في الطلبات", "Search requests")} />
+            <input value={search} onChange={(event) => setSearch(event.target.value)} className="min-w-0 flex-1 bg-transparent text-sm outline-hidden" placeholder={label("ابحث في الطلبات", "Search requests")} />
           </label>
         </div>
 
@@ -476,7 +476,7 @@ export default function Studio() {
                 </div>
                 <div className="mt-7 border-t border-white/15 pt-5">
                   <label className="block font-mono text-[10px] tracking-[0.14em] text-white/45">{label("الحالة", "STATUS")}</label>
-                  <select value={selected.status} onChange={(event) => updateStatus(selected.id, event.target.value)} disabled={saving} className="mt-3 w-full border border-white/20 bg-white/5 px-3 py-3 text-white outline-none focus:border-[#BBFF00]">
+                  <select value={selected.status} onChange={(event) => updateStatus(selected.id, event.target.value)} disabled={saving} className="mt-3 w-full border border-white/20 bg-white/5 px-3 py-3 text-white outline-hidden focus:border-[#BBFF00]">
                     {STATUS_OPTIONS.map((status) => <option key={status.value} value={status.value} className="bg-[#0A0A0A]">{status[language]}</option>)}
                   </select>
                 </div>
@@ -489,7 +489,7 @@ export default function Studio() {
                     rows={4}
                     maxLength={4000}
                     placeholder={label("اكتب الخطوة الجاية أو آخر تواصل...", "Write the next move or last contact...")}
-                    className="mt-3 w-full resize-y border border-white/20 bg-white/5 px-3 py-3 text-sm leading-6 text-white outline-none placeholder:text-white/30 focus:border-[#BBFF00]"
+                    className="mt-3 w-full resize-y border border-white/20 bg-white/5 px-3 py-3 text-sm leading-6 text-white outline-hidden placeholder:text-white/30 focus:border-[#BBFF00]"
                   />
                   <button type="button" onClick={saveNotes} disabled={saving} className="mt-3 inline-flex items-center gap-2 border border-[#BBFF00] px-4 py-2 text-xs font-bold text-[#BBFF00] transition-colors hover:bg-[#BBFF00] hover:text-[#0A0A0A] disabled:opacity-50">
                     <Save size={14} />

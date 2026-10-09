@@ -60,8 +60,8 @@ const MarqueeBanner = memo(function MarqueeBanner() {
           </div>
 
           {/* Edge Fades */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-black to-transparent sm:w-16 md:w-32" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-black to-transparent sm:w-16 md:w-32" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-linear-to-r/srgb from-black to-transparent sm:w-16 md:w-32" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-linear-to-l/srgb from-black to-transparent sm:w-16 md:w-32" />
         </div>
 
         {/* ── Row 2: Green background, scrolling right ── */}
@@ -94,8 +94,8 @@ const MarqueeBanner = memo(function MarqueeBanner() {
           </div>
 
           {/* Edge Fades */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-gradient-to-r from-[#BBFF00] to-transparent sm:w-12 md:w-24" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l from-[#BBFF00] to-transparent sm:w-12 md:w-24" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-linear-to-r/srgb from-[#BBFF00] to-transparent sm:w-12 md:w-24" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-linear-to-l/srgb from-[#BBFF00] to-transparent sm:w-12 md:w-24" />
         </div>
       </div>
     </div>

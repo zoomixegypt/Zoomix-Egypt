@@ -482,7 +482,7 @@ export default function ProjectGallery({ onOpenProject }) {
               </div>
 
               {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/65 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t/srgb from-black via-black/65 to-transparent" />
 
               {/* Number badge */}
               <div className="absolute top-4 right-4 z-10">
@@ -631,7 +631,7 @@ export default function ProjectGallery({ onOpenProject }) {
               </div>
 
               {/* Premium dark gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent opacity-95 transition-opacity duration-500" />
+              <div className="absolute inset-0 bg-linear-to-t/srgb from-black via-black/55 to-transparent opacity-95 transition-opacity duration-500" />
 
               {/* Info panel */}
               <div
