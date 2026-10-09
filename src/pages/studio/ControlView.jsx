@@ -1,4 +1,5 @@
 import { BarChart3, ChevronRight, FileText, Plus, Users } from "lucide-react";
+import { DueFollowUps } from "./BusinessWorkspace";
 import {} from "../../data/commercialStudioPrototype";
 
 import { money, margin, StatusChip, Metric } from "./shared";
@@ -61,6 +62,7 @@ export default function ControlView({
   const pendingNote = isArabic ? "بانتظار الربط" : "Awaiting setup";
   return (
     <div className="csp-view-enter">
+      {storageMode === "cloud" && <DueFollowUps language={language} requests={requests || []} />}
       <header className="csp-page-head">
         <div>
           <p className="csp-kicker">TODAY / COMMERCIAL PULSE</p>

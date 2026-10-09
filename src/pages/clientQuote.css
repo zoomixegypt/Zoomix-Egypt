@@ -257,3 +257,37 @@
     font-size: 12px;
   }
 }
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm;
+  }
+  .cq-actions,
+  .cq-terms,
+  .cq-summary textarea,
+  .cq-error,
+  .cq-no-print {
+    display: none !important;
+  }
+  .cq-root {
+    background: white !important;
+    color: black !important;
+  }
+  .cq-layout {
+    display: block !important;
+  }
+  .cq-summary {
+    position: static !important;
+    width: auto !important;
+  }
+  .cq-scope article,
+  .cq-summary dl div {
+    break-inside: avoid;
+  }
+  .cq-hero {
+    padding: 20px 0 !important;
+  }
+  .cq-hero h1 {
+    font-size: 26px !important;
+  }
+}

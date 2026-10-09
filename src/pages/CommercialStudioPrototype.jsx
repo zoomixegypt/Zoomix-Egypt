@@ -733,7 +733,9 @@ export default function CommercialStudioPrototype({ demo = false }) {
                 storageMode={storageMode}
               />
             )}
-            {page === "projects" && <ProjectsView language={language} projects={projects} />}
+            {page === "projects" && (
+              <ProjectsView language={language} projects={projects} storageMode={storageMode} />
+            )}
             {page === "payments" && (
               <PaymentsView
                 language={language}
@@ -744,6 +746,7 @@ export default function CommercialStudioPrototype({ demo = false }) {
             )}
             {page === "reports" && (
               <ReportsView
+                storageMode={storageMode}
                 language={language}
                 quotes={quotes}
                 projects={projects}

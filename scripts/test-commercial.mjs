@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import { DatabaseSync } from "node:sqlite";
 import vm from "node:vm";
+import { businessOperations, quoteCommercialTerms, instalments, limitedJson } from '../public/business-operations.js';
 import { webcrypto } from "node:crypto";
 import { calculateCommercial, promotionError } from "../public/commercial-rules.js";
 import { writeDraft, readDrafts } from "../src/pages/studio/drafts.js";
@@ -101,6 +102,7 @@ source = source
   .replace("export class StudioLiveUpdates", "class StudioLiveUpdates")
   .replace("export default {", "const worker = {");
 const context = vm.createContext({
+  businessOperations, quoteCommercialTerms, instalments, limitedJson,
   calculateCommercial,
   promotionError,
   DurableObject: class {},
@@ -116,6 +118,12 @@ const context = vm.createContext({
   AbortSignal,
 });
 vm.runInContext(source, context);
+const rawSend=context.studioQuoteSend;
+context.studioQuoteSend=async(request,environment,ctx,id)=>{
+ const q=db.prepare('SELECT current_version FROM commercial_quotes WHERE id=?').get(id);
+ if(q)await context.studioPricingApproval(new Request(request.url,{method:'POST',headers:request.headers,body:JSON.stringify({baseVersion:q.current_version,reason:'Isolated commercial QA fixture approval'})}),environment,id);
+ return rawSend(request,environment,ctx,id);
+};
 const login = await context.studioLogin(
   new Request("http://test/api/studio/login", {
     method: "POST",

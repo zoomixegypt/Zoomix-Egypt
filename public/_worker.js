@@ -1,4 +1,5 @@
 import { calculateCommercial, promotionError } from "./commercial-rules.js";
+import { businessOperations, quoteCommercialTerms, instalments, limitedJson } from "./business-operations.js";
 import { DurableObject } from "cloudflare:workers";
 
 const JSON_HEADERS = {
@@ -548,6 +549,8 @@ function catalogItem(row) {
     description: { ar: row.description_ar || "", en: row.description_en || "" },
     price: Number(row.price_minor || 0) / 100,
     cost: Number(row.cost_minor || 0) / 100,
+    costPending: row.cost_reviewed === 0,
+    costReviewed: row.cost_reviewed !== 0,
     minimumPrice: Number(row.minimum_price_minor || 0) / 100,
     currency: row.currency || "EGP",
     unit: row.unit || "project",
@@ -577,11 +580,13 @@ async function studioCatalog(request, env) {
 async function publicCatalog(env) {
   if (!env.DB) return json({ error: "Catalog storage is not configured." }, 503);
   const result = await env.DB.prepare("SELECT * FROM commercial_catalog_items WHERE published_snapshot_json IS NOT NULL AND status != 'archived' ORDER BY sort_order ASC").all();
-  return json({ items: (result.results || []).map(row => {
+  const items=(result.results || []).map(row => {
     const snapshot = JSON.parse(row.published_snapshot_json);
     const item = snapshot.name ? snapshot : catalogItem(snapshot);
     return { id:item.id,type:item.type,category:item.category,name:item.name,description:item.description,price:item.price,currency:item.currency,unit:item.unit,visible:item.visible,featured:item.featured,included:item.included,exclusions:item.exclusions,duration:item.duration,revisions:item.revisions,sortOrder:item.sortOrder,updatedAt:item.updatedAt };
-  }).filter(item=>item.visible) });
+  });
+  const archived=(await env.DB.prepare("SELECT id FROM commercial_catalog_items WHERE status='archived' AND visible_on_site=1").all()).results||[];
+  return json({items:items.filter(item=>item.visible),unavailableIds:[...new Set([...items.filter(item=>!item.visible).map(item=>item.id),...archived.map(item=>item.id)])]});
 }
 
 async function studioCatalogCreate(request, env) {
@@ -664,6 +669,7 @@ async function studioCatalogUpdate(request, env, id) {
 
   const current = await env.DB.prepare("SELECT * FROM commercial_catalog_items WHERE id = ? LIMIT 1").bind(id).first();
   if (!current) return json({ error: "Catalog item not found." }, 404);
+  if((payload.publish===true || payload.status==='published') && !(payload.costReviewed===undefined ? current.cost_reviewed : payload.costReviewed===true))return json({error:'Review and confirm the internal cost before publication.'},400);
 
   const type = text(payload.type ?? current.item_type, 30);
   const requestedStatus = text(payload.status ?? current.status, 30);
@@ -687,6 +693,7 @@ async function studioCatalogUpdate(request, env, id) {
   const updatedAt = now();
   const next = {
     id,
+    cost_reviewed: payload.costReviewed===undefined ? current.cost_reviewed : payload.costReviewed===true ? 1 : 0,
     item_type: type,
     category: text(payload.category ?? current.category, 80),
     name_ar: nameAr,
@@ -717,6 +724,7 @@ async function studioCatalogUpdate(request, env, id) {
   const changeType = status === "published" ? "published" : status === "archived" ? "archived" : "draft_saved";
 
   await env.DB.batch([
+    env.DB.prepare('UPDATE commercial_catalog_items SET cost_reviewed=? WHERE id=?').bind(next.cost_reviewed,id),
     env.DB.prepare("UPDATE commercial_catalog_items SET published_snapshot_json = ? WHERE id = ?").bind(next.published_snapshot_json, id),
     env.DB.prepare(`UPDATE commercial_catalog_items SET item_type = ?, category = ?, name_ar = ?, name_en = ?, description_ar = ?, description_en = ?, price_minor = ?, cost_minor = ?, minimum_price_minor = ?, unit = ?, status = ?, visible_on_site = ?, featured = ?, sort_order = ?, included_json = ?, exclusions_ar = ?, exclusions_en = ?, duration_ar = ?, duration_en = ?, revisions = ?, updated_at = ?, published_at = ? WHERE id = ?`).bind(type, next.category, nameAr, nameEn, next.description_ar, next.description_en, priceMinor, costMinor, minimumPriceMinor, next.unit, status, next.visible_on_site, next.featured, next.sort_order, next.included_json, next.exclusions_ar, next.exclusions_en, next.duration_ar, next.duration_en, next.revisions, updatedAt, next.published_at, id),
     env.DB.prepare("INSERT INTO commercial_catalog_versions (catalog_item_id, version_number, snapshot_json, change_type, created_at) VALUES (?, ?, ?, ?, ?)").bind(id, Number(version?.next_version || 1), snapshot, changeType, updatedAt),
@@ -881,7 +889,7 @@ async function studioPromotionUpdate(request, env, id) {
 }
 
 async function requestObject(request) {
-  const payload = await request.json();
+  const payload = await limitedJson(request);
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Invalid request body.");
   return payload;
 }
@@ -889,6 +897,7 @@ async function requestObject(request) {
 function validateQuotePayload(payload) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) return { error: "Invalid request body." };
   if (!text(payload.clientName, 180) || !text(payload.projectName, 180) || !text(payload.timeline, 240)) return { error: "Client, project and duration are required." };
+  try { quoteCommercialTerms(payload); } catch(error) { return {error:error.message}; }
   const taxPercent=Number(payload.taxPercent || 0);
   if(!Number.isFinite(taxPercent) || taxPercent < 0 || taxPercent > 100) return {error:'Tax must be between 0 and 100.'};
   if (!Array.isArray(payload.items) || !payload.items.length || payload.items.length > 100) return { error: "A quote must include between 1 and 100 items." };
@@ -905,6 +914,7 @@ function validateQuotePayload(payload) {
 function quoteVersionStatements(env, reference, versionNumber, payload, normalized) {
   const createdAt = now();
   const terms = JSON.stringify({
+    ...quoteCommercialTerms(payload),
     taxPercent: normalized.calculation.taxPercent,
     promoCode: text(payload.promoCode, 80),
     notes: text(payload.notes, 5000),
@@ -1006,8 +1016,10 @@ async function studioQuoteDetail(request,env,id) {
  if(!version)return json({error:"Quote version not found."},404);
  const rows=await env.DB.prepare("SELECT * FROM commercial_quote_items WHERE quote_version_id = ? ORDER BY sort_order").bind(version.id).all();
  const terms=JSON.parse(version.terms_json || "{}");
+ const commercial=quoteCommercialTerms(terms);
  const revision = await env.DB.prepare("SELECT message,created_at FROM commercial_quote_events WHERE quote_id=? AND event_type='revision_requested' ORDER BY id DESC LIMIT 1").bind(id).first();
- return json({draft:{revisionRequest:revision || null,briefRequestId:quote.brief_request_id,clientName:quote.client_name,projectName:quote.project_name,items:(rows.results||[]).map((item,index)=>({rowId:`saved-${item.id}`,catalogId:item.catalog_item_id,category:terms.itemCategories?.[index] || "",name:{ar:item.name_ar,en:item.name_en},description:{ar:item.description_ar,en:item.description_en},quantity:item.quantity,unitPrice:item.unit_price_minor/100,cost:item.cost_minor/100,discount:item.discount_minor/100,optional:Boolean(item.optional)})),taxPercent:terms.taxPercent,depositPercent:version.deposit_percent,duration:version.timeline_text,revisions:version.revisions,promoCode:terms.promoCode,discountPlan:terms.discountPlan||null,record:{id:quote.id,isTest:Boolean(quote.is_test),reference:quote.reference_code,version:quote.current_version,status:quote.status},cloudDirty:false}});
+ const rejection = await env.DB.prepare('SELECT reason,created_at FROM commercial_quote_rejections WHERE quote_id=?').bind(id).first();
+ return json({draft:{commercial,rejection,revisionRequest:revision || null,briefRequestId:quote.brief_request_id,clientName:quote.client_name,projectName:quote.project_name,items:(rows.results||[]).map((item,index)=>({rowId:`saved-${item.id}`,catalogId:item.catalog_item_id,category:terms.itemCategories?.[index] || "",name:{ar:item.name_ar,en:item.name_en},description:{ar:item.description_ar,en:item.description_en},quantity:item.quantity,unitPrice:item.unit_price_minor/100,cost:item.cost_minor/100,discount:item.discount_minor/100,optional:Boolean(item.optional)})),taxPercent:terms.taxPercent,depositPercent:version.deposit_percent,duration:version.timeline_text,revisions:version.revisions,promoCode:terms.promoCode,discountPlan:terms.discountPlan||null,record:{id:quote.id,isTest:Boolean(quote.is_test),reference:quote.reference_code,version:quote.current_version,status:quote.status},cloudDirty:false}});
 }
 
 async function studioProjects(request, env) {
@@ -1120,11 +1132,14 @@ async function studioQuoteSend(request, env, ctx, id) {
   const quote = await env.DB.prepare("SELECT * FROM commercial_quotes WHERE id = ? LIMIT 1").bind(quoteId).first();
   if (!quote) return json({ error: "Quote not found." }, 404);
   if (quote.status === "accepted") return json({ error: "Accepted quotes cannot be sent again." }, 409);
+  if(quote.status==='cancelled')return json({error:'Create a new version before sending a declined quote.'},409);
+  const pricing=await quotePricingWarnings(env,quote);
+  if(pricing.length && quote.pricing_approved_version!==quote.current_version)return json({error:'Pricing approval required: '+pricing.join('; ')},409);
   const token = editToken();
   const tokenHash = await sha256(token);
   const sentAt = now();
-  const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
-  const version = await env.DB.prepare("SELECT id FROM commercial_quote_versions WHERE quote_id = ? AND version_number = ? LIMIT 1").bind(quoteId, quote.current_version).first();
+  const version = await env.DB.prepare("SELECT id,terms_json FROM commercial_quote_versions WHERE quote_id = ? AND version_number = ? LIMIT 1").bind(quoteId, quote.current_version).first();
+  const expiresAt = new Date(Date.now() + (JSON.parse(version?.terms_json || '{}').expiryDays || 14) * 86400000).toISOString();
   if(!version)return json({error:"Quote version not found."},409);
   try { const sent = await env.DB.batch([
     env.DB.prepare("UPDATE commercial_quotes SET status = 'sent', public_token_hash = ?, expires_at = ?, updated_at = ? WHERE id = ? AND current_version=? AND status!='accepted'").bind(tokenHash, expiresAt, sentAt, quoteId,quote.current_version),
@@ -1139,6 +1154,42 @@ async function studioQuoteSend(request, env, ctx, id) {
   url.hash = "";
   if (ctx) ctx.waitUntil(notifyTelegram(env, ["ZOOMIX / QUOTE SENT", quote.reference_code, quote.client_name, `Version ${quote.current_version}`, url.toString()]).catch((error) => console.error(error)));
   return json({ ok: true, reference: quote.reference_code, version: quote.current_version, clientUrl: url.toString(), expiresAt });
+}
+
+async function quotePricingWarnings(env,quote) {
+ const version=await env.DB.prepare('SELECT * FROM commercial_quote_versions WHERE quote_id=? AND version_number=?').bind(quote.id,quote.current_version).first();
+ if(!version)return ['Missing quote version'];
+ const rows=(await env.DB.prepare('SELECT i.*,c.minimum_price_minor FROM commercial_quote_items i LEFT JOIN commercial_catalog_items c ON c.id=i.catalog_item_id WHERE i.quote_version_id=? ORDER BY i.sort_order').bind(version.id).all()).results||[];
+ const terms=JSON.parse(version.terms_json||'{}');const warnings=[];
+ for(const row of rows) { const allocation=Number(terms.discountPlan?.[row.sort_order]||0);const net=Math.max(0,Math.round(row.unit_price_minor*row.quantity)-row.discount_minor-allocation);if(net<Number(row.minimum_price_minor||0)*row.quantity)warnings.push(`${row.name_en}: below minimum price`); }
+ const discounts=Number(version.discount_minor)+rows.reduce((sum,row)=>sum+Number(row.discount_minor),0);
+ const gross=rows.reduce((sum,row)=>sum+Math.round(row.unit_price_minor*row.quantity),0);
+ if(gross>0 && discounts/gross>0.2)warnings.push('Total discount exceeds 20%');
+ return warnings;
+}
+
+async function studioPricingApproval(request,env,id) {
+ const auth=await authenticateStudio(request,env);if(!auth.ok)return json({error:auth.error},auth.status);
+ let payload;try{payload=await requestObject(request);}catch{return json({error:'Invalid body.'},400);}
+ const quote=await env.DB.prepare('SELECT * FROM commercial_quotes WHERE id=?').bind(id).first();
+ if(!quote)return json({error:'Quote not found.'},404);
+ if(quote.status==='accepted'||Number(payload.baseVersion)!==quote.current_version)return json({error:'Quote changed or accepted.'},409);
+ const reason=text(payload.reason,2000);if(!reason)return json({error:'Approval reason required.'},400);
+ const at=now();const result=await env.DB.batch([
+ env.DB.prepare("UPDATE commercial_quotes SET pricing_approved_version=?,pricing_approval_reason=? WHERE id=? AND current_version=? AND status!='accepted'").bind(quote.current_version,reason,id,quote.current_version),
+ env.DB.prepare("INSERT INTO commercial_audit_log(entity_type,entity_id,action,after_json,created_at) SELECT 'quote',?,'pricing_approved',?,? WHERE changes()>0").bind(String(id),JSON.stringify({version:quote.current_version,reason}),at)]);
+ return result[0]?.meta?.changes?json({ok:true}):json({error:'Quote changed.'},409);
+}
+
+async function studioCatalogHistory(request,env,id) {
+ const auth=await authenticateStudio(request,env);if(!auth.ok)return json({error:auth.error},auth.status);
+ if(request.method==='GET') {const rows=(await env.DB.prepare('SELECT * FROM commercial_catalog_versions WHERE catalog_item_id=? ORDER BY version_number DESC').bind(id).all()).results||[];return json({versions:rows.map(row=>({...row,snapshot:JSON.parse(row.snapshot_json)}))});}
+ let payload;try{payload=await requestObject(request);}catch{return json({error:'Invalid body.'},400);}
+ const version=await env.DB.prepare('SELECT * FROM commercial_catalog_versions WHERE catalog_item_id=? AND version_number=?').bind(id,Number(payload.version)).first();
+ if(!version)return json({error:'Version not found.'},404);
+ const snapshot=JSON.parse(version.snapshot_json);const restored=snapshot.name?snapshot:catalogItem(snapshot);
+ const update=new Request(request.url,{method:'PATCH',headers:request.headers,body:JSON.stringify({...restored,status:'draft',publish:false})});
+ return studioCatalogUpdate(update,env,id);
 }
 
 async function findPublicQuote(env, reference, token) {
@@ -1189,6 +1240,9 @@ async function publicQuote(request, env, ctx, reference, token) {
       revisions: Number(version.revisions || 0),
       taxPercent: Number(terms.taxPercent || 0),
       discountPlan: terms.discountPlan || null,
+      conditions: terms.conditions || '',
+      exclusions: terms.exclusions || '',
+      paymentSchedule: terms.paymentSchedule || [],
       items: (itemResult.results || []).map((item) => ({ id: Number(item.id), sortOrder:Number(item.sort_order), name: { ar: item.name_ar, en: item.name_en }, description: { ar: item.description_ar, en: item.description_en }, quantity: Number(item.quantity), unitPrice: Number(item.unit_price_minor) / 100, discount: Number(item.discount_minor) / 100, optional: Boolean(item.optional) })),
     },
   });
@@ -1199,8 +1253,19 @@ async function publicQuoteRespond(request, env, ctx, reference, token) {
  const quote=await findPublicQuote(env,reference,token);
  if(!quote)return json({error:"This quote link is invalid or has expired."},404);
  if(quote.status==="accepted")return json({error:"This quote has already been accepted."},409);
+ if(quote.status==="cancelled")return json({error:"This quote has been declined."},409);
  let payload; try{payload=await requestObject(request);}catch{return json({error:"Invalid request body."},400);}
  if(!payload || typeof payload!=="object" || Array.isArray(payload))return json({error:"Invalid request body."},400);
+ if(payload.action==='reject') {
+   const reason=text(payload.message,2000);if(!reason)return json({error:'A rejection reason is required.'},400);
+   try { const rejected=await env.DB.batch([
+     env.DB.prepare("UPDATE commercial_quotes SET status='cancelled',updated_at=? WHERE id=? AND current_version=? AND status NOT IN ('accepted','cancelled')").bind(now(),quote.id,quote.current_version),
+     env.DB.prepare("INSERT INTO commercial_quote_rejections(quote_id,version_number,reason,created_at) SELECT ?,?,?,? WHERE changes()>0 ON CONFLICT(quote_id) DO UPDATE SET version_number=excluded.version_number,reason=excluded.reason,created_at=excluded.created_at").bind(quote.id,quote.current_version,reason,now()),
+     env.DB.prepare("INSERT INTO commercial_audit_log(entity_type,entity_id,action,after_json,created_at) SELECT 'quote',?,'client_rejected',?,? WHERE changes()>0").bind(String(quote.id),JSON.stringify({reason,version:quote.current_version}),now()),
+   ]);if(!rejected[0]?.meta?.changes)return json({error:'Quote changed. Reload.'},409); }catch{return json({error:'Quote changed. Reload.'},409);}
+   if(ctx)ctx.waitUntil(notifyTelegram(env,['ZOOMIX / QUOTE DECLINED',quote.reference_code,reason]).catch(console.error));
+   return json({status:'cancelled'});
+ }
  const action=payload.action==="accept"?"accepted":payload.action==="revision"?"revision_requested":"";
  if(!action || (action==="accepted" && payload.termsAccepted!==true)) return json({error:"Valid action and acceptance of terms required."},400);
  const version=await env.DB.prepare("SELECT * FROM commercial_quote_versions WHERE quote_id = ? AND version_number = ?").bind(quote.id,quote.current_version).first();
@@ -1224,9 +1289,7 @@ async function publicQuoteRespond(request, env, ctx, reference, token) {
    if(quote.brief_request_id)statements.push(env.DB.prepare("UPDATE brief_requests SET status = 'won', updated_at = ? WHERE id = ?").bind(respondedAt,quote.brief_request_id));
    const projectReference=`PRJ-${new Date().getUTCFullYear()}-${crypto.randomUUID().slice(0,8).toUpperCase()}`;
    statements.push(env.DB.prepare("INSERT INTO commercial_projects (quote_id,reference_code,client_name,project_name,contract_value_minor,expected_cost_minor,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)").bind(quote.id,projectReference,quote.client_name,quote.project_name,calc.totalMinor,cost,respondedAt,respondedAt));
-   const deposit=Math.round(calc.totalMinor*Number(version.deposit_percent)/100);
-   const depositDue = new Date(respondedAt); depositDue.setUTCHours(23,59,59,999);
-   for(const [type,amount,due]of [["deposit",deposit,depositDue.toISOString()],["balance",calc.totalMinor-deposit,new Date(Date.now()+30*86400000).toISOString()]])statements.push(env.DB.prepare("INSERT INTO commercial_payments (project_id,payment_type,amount_minor,status,due_at,created_at,updated_at) SELECT id,?,?, 'pending',?,?,? FROM commercial_projects WHERE quote_id = ?").bind(type,amount,due,respondedAt,respondedAt,quote.id));
+   for(const row of instalments(calc.totalMinor,terms,Number(version.deposit_percent),respondedAt))statements.push(env.DB.prepare("INSERT INTO commercial_payments (project_id,payment_type,amount_minor,status,due_at,label,created_at,updated_at) SELECT id,?,?, 'pending',?,?,?,? FROM commercial_projects WHERE quote_id = ?").bind(row.type,row.amount,row.due,row.label,respondedAt,respondedAt,quote.id));
  } else statements.push(env.DB.prepare("UPDATE commercial_quotes SET status = ?, updated_at = ? WHERE id = ? AND status != 'accepted'").bind(action,respondedAt,quote.id));
  statements.push(env.DB.prepare("INSERT INTO commercial_quote_events (quote_id,quote_version_id,event_type,message,selection_json,created_at) VALUES (?,?,?,?,?,?)").bind(quote.id,version.id,action,message,selection,respondedAt));
  statements.push(env.DB.prepare("INSERT INTO commercial_audit_log (entity_type,entity_id,action,before_json,after_json,created_at) VALUES ('quote',?,?,?,?,?)").bind(String(quote.id),action,JSON.stringify({status:quote.status}),JSON.stringify({status:action,version:quote.current_version}),respondedAt));
@@ -1320,7 +1383,7 @@ async function studioExport(request, env) {
 async function studioBackup(request, env) {
   const auth = await authenticateStudio(request, env);
   if (!auth.ok) return json({ error: auth.error }, auth.status);
-  const tables = ["brief_requests", "analytics_events", "commercial_catalog_items", "commercial_catalog_versions", "commercial_quotes", "commercial_quote_versions", "commercial_quote_items", "commercial_quote_events", "commercial_promotions", "commercial_promotion_redemptions", "commercial_projects", "commercial_payments", "commercial_audit_log"];
+  const tables = ["brief_requests", "analytics_events", "commercial_catalog_items", "commercial_catalog_versions", "commercial_quotes", "commercial_quote_versions", "commercial_quote_items", "commercial_quote_events", "commercial_promotions", "commercial_promotion_redemptions", "commercial_projects", "commercial_payments", "commercial_audit_log", "commercial_lead_operations", "commercial_project_entries", "commercial_documents", "commercial_quote_rejections", "commercial_attachments"];
   // D1 batch provides one consistent transaction rather than independent reads.
   const snapshots = await env.DB.batch(tables.map(table => env.DB.prepare(`SELECT * FROM ${table}`)));
   const payload = {
@@ -1375,6 +1438,16 @@ async function studioRequestUpdate(request, env, id) {
 async function api(request, env, ctx) {
   const url = new URL(request.url);
   if (request.method === "OPTIONS") return new Response(null, { status: 204 });
+  if(['POST','PATCH','PUT','DELETE'].includes(request.method)) {
+    const origin=request.headers.get('Origin');
+    if(origin&&origin!==url.origin)return json({error:'Cross-origin writes are not allowed.'},403);
+    if(Number(request.headers.get('Content-Length')||0)>1048576)return json({error:'Request too large.'},413);
+  }
+  const history=url.pathname.match(/^\/api\/studio\/catalog\/([a-z0-9-]+)\/history$/i);
+  if(history&&['GET','POST'].includes(request.method))return studioCatalogHistory(request,env,history[1]);
+  const approval=url.pathname.match(/^\/api\/studio\/quotes\/(\d+)\/pricing-approval$/);
+  if(approval&&request.method==='POST')return studioPricingApproval(request,env,approval[1]);
+  const operation=await businessOperations(request,env,authenticateStudio);if(operation)return operation;
   if (request.method === "POST" && url.pathname === "/api/briefs") return createBrief(request, env, ctx);
   if (request.method === "GET" && url.pathname === "/api/catalog") return publicCatalog(env);
   const editMatch = url.pathname.match(/^\/api\/briefs\/edit\/([a-f0-9]{64})$/i);
@@ -1502,7 +1575,10 @@ export class StudioLiveUpdates extends DurableObject {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    if (url.pathname.startsWith("/api/")) return api(request, env, ctx);
+    if (url.pathname.startsWith("/api/")) {
+      try { return await api(request, env, ctx); }
+      catch(error) { console.error('API request failed', error?.name || 'Error');return json({error:'The operation could not be completed. Please retry.'},500); }
+    }
     const isHtmlRoute = request.method === "GET" && !url.pathname.includes(".");
     if (isHtmlRoute && url.pathname !== "/") {
       // Pages normalizes /index.html to / with a 308. Fetch the root asset

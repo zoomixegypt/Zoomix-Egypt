@@ -39,17 +39,35 @@
   grid-column: 1 / -1;
   max-width: 240px;
 }
-.csp-client-scope small { white-space: pre-line; line-height: 1.8; }
-.csp-client-page h1 { overflow-wrap: anywhere; }
-.csp-root .csp-quote-row .csp-row-actions { grid-column: -2 / -1; grid-row: 1; }
+.csp-client-scope small {
+  white-space: pre-line;
+  line-height: 1.8;
+}
+.csp-client-page h1 {
+  overflow-wrap: anywhere;
+}
+.csp-root .csp-quote-row .csp-row-actions {
+  grid-column: -2 / -1;
+  grid-row: 1;
+}
 /* Legacy generic table rules hid the fifth column, including mobile actions. */
 @media (max-width: 900px) {
   .csp-root .csp-leads-row > *,
   .csp-root .csp-projects-row > *,
-  .csp-root .csp-payments-row > * { display: block; grid-column: 1 / -1; grid-row: auto; }
+  .csp-root .csp-payments-row > * {
+    display: block;
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
   .csp-root .csp-leads-row > .csp-button,
-  .csp-root .csp-payments-row > .csp-button { display: inline-flex; justify-content: center; min-height: 44px; }
-  .csp-root .csp-lead-strip > div { display: block; }
+  .csp-root .csp-payments-row > .csp-button {
+    display: inline-flex;
+    justify-content: center;
+    min-height: 44px;
+  }
+  .csp-root .csp-lead-strip > div {
+    display: block;
+  }
 }
 .csp-brief-filters {
   display: flex;
@@ -230,4 +248,68 @@
   .csp-session-strip {
     flex-wrap: wrap;
   }
+}
+.csp-operation-panel {
+  padding: 20px;
+  margin-block: 16px;
+}
+.csp-operation-panel label {
+  display: grid;
+  gap: 8px;
+  margin-block: 12px;
+  font-size: 15px;
+}
+.csp-operation-panel :is(input, textarea, select) {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 10px;
+  border: 1px solid #b9b9b9;
+  background: #fff;
+  color: #151515;
+  font: inherit;
+}
+.csp-operation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+.csp-operation-row {
+  display: grid;
+  gap: 8px;
+  padding-block: 16px;
+  border-bottom: 1px solid #ddd;
+}
+.csp-operation-panel p {
+  overflow-wrap: anywhere;
+}
+@media print {
+  body:has(.csp-print-document) * {
+    visibility: hidden;
+  }
+  .csp-print-document,
+  .csp-print-document * {
+    visibility: visible !important;
+  }
+  .csp-print-document {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    background: white;
+    color: black;
+    border: 0;
+  }
+  .csp-no-print {
+    display: none !important;
+  }
+}
+.csp-kanban {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.csp-operation-panel input[type="number"] {
+  font-family: Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
 }

@@ -21,6 +21,18 @@ try{
  await check('public catalog contains no internal costs',false,()=>catalog.items.some(r=>'cost' in r || 'minimumPrice' in r));
  const projects=(await(await call('/api/studio/projects')).json()).projects;
  const payments=(await(await call('/api/studio/payments')).json()).payments;
+ const qaProject=projects.find(p=>p.quoteId===2);
+ if(!qaProject)throw new Error('Known QA project unavailable');
+ const qaPayment=payments.find(p=>p.projectId===qaProject.id);
+ if(!qaPayment)throw new Error('Known QA payment unavailable');
+ for(const path of ['lead-operations','business-report',`project-workspace/${qaProject.id}`,`attachments/${qaProject.id}`,`payment-details/${qaPayment.id}`]){
+  await check(`new business protected read:${path}`,200,async()=> (await call(`/api/studio/${path}`)).status);
+  await check(`new business anonymous denied:${path}`,401,async()=> (await call(`/api/studio/${path}`,{},false)).status);
+ }
+ for(const path of [`lead-operations/10`,`project-workspace/${qaProject.id}`,`attachments/${qaProject.id}`,`payment-details/${qaPayment.id}`,`documents/${qaProject.id}`])await check(`new business anonymous write denied:${path}`,401,async()=> (await call(`/api/studio/${path}`,{method:'POST',body:'{}'},false)).status);
+ await check('cross-origin business write denied',403,async()=> (await call('/api/studio/lead-operations/10',{method:'POST',body:'{}',headers:{Origin:'https://example.com'}})).status);
+ const allCatalog=(await(await call('/api/studio/catalog')).json()).items;
+ await check('catalog contains cost-review drafts',true,()=>allCatalog.some(item=>item.costPending && item.status==='draft'));
  await check('QA06 exactly one project',1,()=>projects.filter(p=>p.quoteId===2).length);
  await check('QA06 two payments',2,()=>payments.filter(p=>projects.some(j=>j.quoteId===2 && j.id===p.projectId)).length);
  await check('QA06 no recorded collections',0,()=>payments.filter(p=>p.status==='paid' && projects.some(j=>j.quoteId===2 && j.id===p.projectId)).length);
@@ -41,7 +53,7 @@ try{
  }
  const backupResponse=await call('/api/studio/backup.json');
  const backup=JSON.parse((await backupResponse.text()).replace(/^\uFEFF/,''));
- await check('backup business table coverage',13,()=>Object.keys(backup.tables||{}).length);
+ await check('backup business table coverage',18,()=>Object.keys(backup.tables||{}).length);
  await check('backup excludes sessions',false,()=> 'studio_sessions' in (backup.tables||{}));
  await check('null quote body rejected safely',400,async()=> (await call('/api/studio/quotes',{method:'POST',body:'null'})).status);
  const detail=(await(await call('/api/studio/quotes/3')).json()).draft;

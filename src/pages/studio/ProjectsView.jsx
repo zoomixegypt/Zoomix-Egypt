@@ -1,8 +1,10 @@
 import { FolderKanban } from "lucide-react";
+import { ProjectWorkspace, WorkspaceDisclosure } from "./BusinessWorkspace";
+import { Fragment } from "react";
 import {} from "../../data/commercialStudioPrototype";
 
 import { money, margin, StatusChip, Metric } from "./shared";
-export default function ProjectsView({ language, projects }) {
+export default function ProjectsView({ language, projects, storageMode }) {
   const isArabic = language === "ar";
   const rows = Array.isArray(projects) ? projects : null;
   const list = rows || [];
@@ -67,23 +69,32 @@ export default function ProjectsView({ language, projects }) {
           <span>{isArabic ? "الحالة" : "Status"}</span>
         </div>
         {list.map((project) => (
-          <div
-            id={`studio-record-${project.id}`}
-            className="csp-table-row csp-projects-row"
-            key={project.id}
-          >
-            <span className="csp-item-name">
-              <strong>{project.projectName}</strong>
-              <small>{project.reference}</small>
-              {project.isTest && <StatusChip>{isArabic ? "اختبار QA" : "TEST QA"}</StatusChip>}
-            </span>
-            <span>{project.clientName}</span>
-            <b className="csp-sensitive-number">{money(project.contractValue)} EGP</b>
-            <span className="csp-sensitive-number">
-              {margin(project.netContractValue ?? project.contractValue, project.expectedCost)}%
-            </span>
-            <StatusChip accent>{project.status}</StatusChip>
-          </div>
+          <Fragment key={project.id}>
+            <div
+              id={`studio-record-${project.id}`}
+              className="csp-table-row csp-projects-row"
+              key={project.id}
+            >
+              <span className="csp-item-name">
+                <strong>{project.projectName}</strong>
+                <small>{project.reference}</small>
+                {project.isTest && <StatusChip>{isArabic ? "اختبار QA" : "TEST QA"}</StatusChip>}
+              </span>
+              <span>{project.clientName}</span>
+              <b className="csp-sensitive-number">{money(project.contractValue)} EGP</b>
+              <span className="csp-sensitive-number">
+                {margin(project.netContractValue ?? project.contractValue, project.expectedCost)}%
+              </span>
+              <StatusChip accent>{project.status}</StatusChip>
+            </div>
+            {storageMode === "cloud" && (
+              <WorkspaceDisclosure
+                label={`${isArabic ? "فتح مساحة التنفيذ والمستندات" : "Open delivery & documents"} · ${project.reference}`}
+              >
+                <ProjectWorkspace id={project.id} language={language} />
+              </WorkspaceDisclosure>
+            )}
+          </Fragment>
         ))}
         {rows && !rows.length && (
           <div className="csp-empty-state">

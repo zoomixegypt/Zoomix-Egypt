@@ -1,6 +1,7 @@
 import { studioFetch } from "./api";
 import { WalletCards } from "lucide-react";
-import { useState } from "react";
+import { useState, Fragment } from "react";
+import { PaymentDetails, WorkspaceDisclosure } from "./BusinessWorkspace";
 import {} from "../../data/commercialStudioPrototype";
 
 import { money, StatusChip, Metric } from "./shared";
@@ -86,7 +87,11 @@ export default function PaymentsView({ language, payments, onPaymentUpdated, sto
         />
         <Metric
           label={isArabic ? "دفعات متأخرة" : "OVERDUE"}
-          value={waiting ? "—" : String(list.filter((item) => item.status === "overdue").length)}
+          value={
+            waiting
+              ? "—"
+              : String(list.filter((item) => !item.isTest && item.status === "overdue").length)
+          }
           note={isArabic ? "تحتاج متابعة" : "Need follow-up"}
         />
       </section>
@@ -99,49 +104,58 @@ export default function PaymentsView({ language, payments, onPaymentUpdated, sto
           <span>{isArabic ? "الإجراء" : "Action"}</span>
         </div>
         {list.map((payment) => (
-          <div
-            id={`studio-record-${payment.id}`}
-            className="csp-table-row csp-payments-row"
-            key={payment.id}
-          >
-            <span className="csp-item-name">
-              <strong>{payment.projectName}</strong>
-              <small>
-                {payment.reference} · {payment.clientName}
-                {payment.isTest && <StatusChip>{isArabic ? "اختبار QA" : "TEST QA"}</StatusChip>}
-                {payment.dueAt
-                  ? ` · ${isArabic ? "استحقاق" : "Due"} ${new Date(payment.dueAt).toLocaleDateString("en-GB")}`
-                  : ""}
-              </small>
-            </span>
-            <span>
-              {payment.type === "deposit"
-                ? isArabic
-                  ? "المقدم"
-                  : "Deposit"
-                : isArabic
-                  ? "باقي الرصيد"
-                  : "Balance"}
-            </span>
-            <b className="csp-sensitive-number">{money(payment.amount)} EGP</b>
-            <StatusChip accent={payment.status === "paid"} warning={payment.status === "overdue"}>
-              {payment.status}
-            </StatusChip>
-            <button
-              type="button"
-              className="csp-button"
-              disabled={busyId !== null}
-              onClick={() => update(payment)}
+          <Fragment key={payment.id}>
+            <div
+              id={`studio-record-${payment.id}`}
+              className="csp-table-row csp-payments-row"
+              key={payment.id}
             >
-              {payment.status === "paid"
-                ? isArabic
-                  ? "إلغاء التسجيل"
-                  : "Mark pending"
-                : isArabic
-                  ? "تسجيل كمُسددة"
-                  : "Mark paid"}
-            </button>
-          </div>
+              <span className="csp-item-name">
+                <strong>{payment.projectName}</strong>
+                <small>
+                  {payment.reference} · {payment.clientName}
+                  {payment.isTest && <StatusChip>{isArabic ? "اختبار QA" : "TEST QA"}</StatusChip>}
+                  {payment.dueAt
+                    ? ` · ${isArabic ? "استحقاق" : "Due"} ${new Date(payment.dueAt).toLocaleDateString("en-GB")}`
+                    : ""}
+                </small>
+              </span>
+              <span>
+                {payment.type === "deposit"
+                  ? isArabic
+                    ? "المقدم"
+                    : "Deposit"
+                  : isArabic
+                    ? "باقي الرصيد"
+                    : "Balance"}
+              </span>
+              <b className="csp-sensitive-number">{money(payment.amount)} EGP</b>
+              <StatusChip accent={payment.status === "paid"} warning={payment.status === "overdue"}>
+                {payment.status}
+              </StatusChip>
+              <button
+                type="button"
+                className="csp-button"
+                disabled={busyId !== null}
+                onClick={() => update(payment)}
+              >
+                {payment.status === "paid"
+                  ? isArabic
+                    ? "إلغاء التسجيل"
+                    : "Mark pending"
+                  : isArabic
+                    ? "تسجيل كمُسددة"
+                    : "Mark paid"}
+              </button>
+            </div>
+            {storageMode === "cloud" && (
+              <WorkspaceDisclosure
+                label={isArabic ? "بيانات التحصيل والإيصال" : "Collection details & receipt"}
+              >
+                <PaymentDetails payment={payment} language={language} />
+              </WorkspaceDisclosure>
+            )}
+          </Fragment>
         ))}
         {rows && !rows.length && (
           <div className="csp-empty-state">

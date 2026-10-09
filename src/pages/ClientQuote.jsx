@@ -1,4 +1,6 @@
 import { calculateCommercial } from "../../public/commercial-rules";
+import { instalments } from "../../public/business-operations";
+import { printDocument } from "./studio/printDocument";
 import { useEffect, useMemo, useState } from "react";
 import { Check, LoaderCircle, MessageSquareText } from "lucide-react";
 import { useParams } from "react-router-dom";
@@ -38,7 +40,9 @@ export default function ClientQuote() {
           fail(response.status >= 400 && response.status < 500 ? "invalid" : "network");
         if (!payload || !payload.quote || !Array.isArray(payload.quote.items)) fail("network");
         setQuote(payload.quote);
-        setResult(payload.quote.status === "accepted" ? "accepted" : "");
+        setResult(
+          ["accepted", "cancelled"].includes(payload.quote.status) ? payload.quote.status : "",
+        );
         setSelected(
           payload.quote.status === "accepted"
             ? payload.quote.selectedOptionalItemIds || []
@@ -169,6 +173,18 @@ export default function ClientQuote() {
           {quote.reference} · V{quote.version}
         </span>
       </header>
+      <div className="cq-actions cq-no-print">
+        <button
+          onClick={() => {
+            if (!printDocument(document.querySelector(".cq-root"))) setError({ kind: "network" });
+          }}
+        >
+          {isArabic ? "طباعة / حفظ PDF" : "Print / Save PDF"}
+        </button>
+        <a href="https://wa.me/201555451535" target="_blank" rel="noreferrer">
+          {isArabic ? "تواصل على واتساب" : "Contact on WhatsApp"}
+        </a>
+      </div>
       <section className="cq-hero">
         <p>PROPOSAL / {quote.clientName}</p>
         <h1>{isArabic ? "عرض واضح، ونطاق جاهز للتنفيذ." : "A CLEAR SCOPE, READY TO MOVE."}</h1>
@@ -176,6 +192,18 @@ export default function ClientQuote() {
       </section>
       <section className="cq-layout">
         <div className="cq-scope">
+          {quote.conditions && (
+            <section>
+              <h2>{isArabic ? "الشروط" : "Conditions"}</h2>
+              <p style={{ whiteSpace: "pre-wrap" }}>{quote.conditions}</p>
+            </section>
+          )}
+          {quote.exclusions && (
+            <section>
+              <h2>{isArabic ? "الاستبعادات" : "Exclusions"}</h2>
+              <p style={{ whiteSpace: "pre-wrap" }}>{quote.exclusions}</p>
+            </section>
+          )}
           <p className="cq-kicker">SCOPE / DELIVERABLES</p>
           <h2>{isArabic ? "نطاق العمل" : "Project scope"}</h2>
           {quote.items.map((item) => (
@@ -233,14 +261,32 @@ export default function ClientQuote() {
             </div>
           </dl>
           <ul>
-            <li>
-              {quote.depositPercent}% {isArabic ? "مقدم" : "deposit"}
-              {` · ${money(Math.round(selectedTotal * quote.depositPercent) / 100)} EGP`}
-            </li>
-            <li>
-              {isArabic ? "المتبقي" : "Balance"}:{" "}
-              {money(selectedTotal - Math.round(selectedTotal * quote.depositPercent) / 100)} EGP
-            </li>
+            {quote.paymentSchedule?.map((row, index) => (
+              <li key={index}>
+                {row.label}: {row.percent}% ·{" "}
+                {money(
+                  instalments(
+                    Math.round(selectedTotal * 100),
+                    quote,
+                    quote.depositPercent,
+                    "2026-01-01T00:00:00Z",
+                  )[index].amount / 100,
+                )}{" "}
+                EGP · {row.days} {isArabic ? "يوم من القبول" : "days from acceptance"}
+              </li>
+            ))}
+            {!quote.paymentSchedule?.length && (
+              <li>
+                {quote.depositPercent}% {isArabic ? "مقدم" : "deposit"}
+                {` · ${money(Math.round(selectedTotal * quote.depositPercent) / 100)} EGP`}
+              </li>
+            )}
+            {!quote.paymentSchedule?.length && (
+              <li>
+                {isArabic ? "المتبقي" : "Balance"}:{" "}
+                {money(selectedTotal - Math.round(selectedTotal * quote.depositPercent) / 100)} EGP
+              </li>
+            )}
             <li>
               {isArabic ? "صالح حتى" : "Valid until"}:{" "}
               {new Date(quote.expiresAt).toLocaleDateString("en-GB")}
@@ -254,13 +300,17 @@ export default function ClientQuote() {
             <div className="cq-result">
               <Check />
               <strong>
-                {result === "accepted"
+                {result === "cancelled"
                   ? isArabic
-                    ? "تم قبول العرض بنجاح"
-                    : "Quote accepted"
-                  : isArabic
-                    ? "تم إرسال طلب التعديل"
-                    : "Revision request sent"}
+                    ? "تم تسجيل رفض العرض"
+                    : "Quote declined"
+                  : result === "accepted"
+                    ? isArabic
+                      ? "تم قبول العرض بنجاح"
+                      : "Quote accepted"
+                    : isArabic
+                      ? "تم إرسال طلب التعديل"
+                      : "Revision request sent"}
               </strong>
             </div>
           ) : (
@@ -292,6 +342,13 @@ export default function ClientQuote() {
                 </p>
               )}
               <div className="cq-actions">
+                <button
+                  type="button"
+                  onClick={() => respond("reject")}
+                  disabled={submitting || !message.trim()}
+                >
+                  {isArabic ? "رفض مع السبب" : "Decline with reason"}
+                </button>
                 <button
                   type="button"
                   onClick={() => respond("revision")}

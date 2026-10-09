@@ -1,8 +1,9 @@
 import { BarChart3 } from "lucide-react";
+import { BusinessReport } from "./BusinessWorkspace";
 import {} from "../../data/commercialStudioPrototype";
 
 import { money, StatusChip, Metric } from "./shared";
-export default function ReportsView({ language, quotes, projects, payments }) {
+export default function ReportsView({ language, quotes, projects, payments, storageMode }) {
   const isArabic = language === "ar";
   const quoteRows = Array.isArray(quotes) ? quotes : null;
   const projectRows = Array.isArray(projects) ? projects : null;
@@ -35,6 +36,7 @@ export default function ReportsView({ language, quotes, projects, payments }) {
   );
   return (
     <div className="csp-view-enter">
+      {!waiting && storageMode === "cloud" && <BusinessReport language={language} />}
       <header className="csp-page-head">
         <div>
           <p className="csp-kicker">BUSINESS / INSIGHT</p>

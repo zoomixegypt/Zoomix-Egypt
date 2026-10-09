@@ -1,4 +1,5 @@
 import { readDrafts, writeDraft, removeDraft } from "./drafts";
+import CatalogHistory from "./CatalogHistory";
 import { studioFetch } from "./api";
 import { useUnsavedChanges, confirmLeave } from "./unsaved";
 import { useEffect, useState } from "react";
@@ -361,6 +362,32 @@ export default function CatalogView({
               <div>
                 <p className="csp-kicker">CATALOG / EDIT</p>
                 <h2>{draft.name[language]}</h2>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(draft.costReviewed ?? !draft.costPending)}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        costReviewed: e.target.checked,
+                        costPending: !e.target.checked,
+                      })
+                    }
+                  />
+                  {isArabic
+                    ? "راجعت التكلفة الداخلية وأعتمدها"
+                    : "I reviewed and approve the internal cost"}
+                </label>
+                {storageMode === "cloud" && (
+                  <CatalogHistory
+                    id={editingId}
+                    language={language}
+                    onRestored={(item) => {
+                      setCatalog((rows) => rows.map((row) => (row.id === item.id ? item : row)));
+                      setDraft(item);
+                    }}
+                  />
+                )}
                 <span className={`csp-save-state ${dirty ? "is-dirty" : ""}`}>
                   {dirty
                     ? isArabic

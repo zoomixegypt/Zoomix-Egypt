@@ -173,7 +173,11 @@ const PackagesSection = memo(function PackagesSection() {
       .then(async (response) => {
         if (!response.ok) throw new Error(String(response.status));
         const payload = await response.json();
-        if (Array.isArray(payload.items)) setCatalogItems(payload.items);
+        if (Array.isArray(payload.items))
+          setCatalogItems([
+            ...payload.items,
+            ...(payload.unavailableIds || []).map((id) => ({ id, visible: false })),
+          ]);
       })
       .catch(() => {});
     return () => controller.abort();

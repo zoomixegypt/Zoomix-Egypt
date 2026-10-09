@@ -1,4 +1,5 @@
 import { writeDraft, readDrafts, removeDraft } from "./drafts";
+import CommercialTermsEditor, { emptyTerms } from "./CommercialTermsEditor";
 import { useUnsavedChanges } from "./unsaved";
 import { calculateCommercial, promotionError } from "../../../public/commercial-rules";
 import { studioRequest } from "./api";
@@ -79,6 +80,9 @@ export default function QuoteView({
   const [saveState, setSaveState] = useState("draft");
   const [quoteRecord, setQuoteRecord] = useState(null);
   const [revisionRequest, setRevisionRequest] = useState(null);
+  const [commercial, setCommercial] = useState(emptyTerms);
+  const [rejection, setRejection] = useState(null);
+  const [approvalReason, setApprovalReason] = useState("");
   const [testModeBusy, setTestModeBusy] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [clientName, setClientName] = useState(lead?.name || "");
@@ -114,6 +118,8 @@ export default function QuoteView({
     let failed = false;
     let fetchingQuote = false;
     const restore = (saved) => {
+      setCommercial({ ...emptyTerms, ...saved.commercial });
+      setRejection(saved.rejection || null);
       setItems(saved.items || []);
       setClientExtras(
         Object.fromEntries(
@@ -152,6 +158,10 @@ export default function QuoteView({
             // Keep unsaved item edits, but never hide new client responses or an acceptance lock.
             const latest = await studioRequest(`/api/studio/quotes/${cloudId}`);
             if (active) {
+              if (latest.draft.record.status === "accepted") {
+                restore(latest.draft);
+                return;
+              }
               setRevisionRequest(latest.draft.revisionRequest || null);
               setQuoteRecord((current) =>
                 current
@@ -189,6 +199,7 @@ export default function QuoteView({
     try {
       const saved = writeDraft(storageKey, {
         kind: "quote",
+        commercial,
         items,
         taxPercent,
         depositPercent,
@@ -221,6 +232,7 @@ export default function QuoteView({
     duration,
     revisions,
     appliedPromo,
+    commercial,
     promoMessage,
     clientName,
     projectName,
@@ -417,6 +429,7 @@ export default function QuoteView({
     setSaveState("saving");
     setSaveError("");
     const payload = {
+      ...commercial,
       briefRequestId,
       baseVersion: quoteRecord?.version,
       clientName,
@@ -455,6 +468,7 @@ export default function QuoteView({
           total,
         };
         writeDraft(storageKey, {
+          commercial,
           items,
           taxPercent,
           depositPercent,
@@ -1271,6 +1285,57 @@ export default function QuoteView({
             </div>
           </aside>
         </div>
+        <CommercialTermsEditor
+          language={language}
+          value={commercial}
+          onChange={(value) => {
+            setCommercial(value);
+            markDirty();
+          }}
+        />
+        {rejection && (
+          <p role="status">
+            {isArabic ? "سبب رفض العميل" : "Client rejection reason"}: {rejection.reason}
+          </p>
+        )}
+        {storageMode === "cloud" && quoteRecord && (
+          <section className="csp-panel csp-operation-panel">
+            <h2>{isArabic ? "اعتماد استثناء التسعير" : "Pricing exception approval"}</h2>
+            <p>
+              {isArabic
+                ? "الإرسال تحت الحد الأدنى أو بخصم إجمالي يتجاوز 20% يحتاج اعتمادًا صريحًا لهذا الإصدار مع سبب مسجل."
+                : "Sending below the minimum or with over 20% total discount requires explicit approval for this version with an audited reason."}
+            </p>
+            <label>
+              {isArabic ? "سبب الاعتماد" : "Approval reason"}
+              <textarea
+                value={approvalReason}
+                onChange={(e) => setApprovalReason(e.target.value)}
+              />
+            </label>
+            <button
+              className="csp-button"
+              type="button"
+              disabled={!approvalReason.trim() || saveState !== "saved"}
+              onClick={async () => {
+                try {
+                  await studioRequest(`/api/studio/quotes/${quoteRecord.id}/pricing-approval`, {
+                    method: "POST",
+                    body: JSON.stringify({
+                      baseVersion: quoteRecord.version,
+                      reason: approvalReason,
+                    }),
+                  });
+                  setSaveError(isArabic ? "تم اعتماد الإصدار الحالي" : "Current version approved");
+                } catch (e) {
+                  setSaveError(e.message);
+                }
+              }}
+            >
+              {isArabic ? "اعتماد الاستثناء للإصدار المحفوظ" : "Approve saved version exception"}
+            </button>
+          </section>
+        )}
       </fieldset>
       {sendOpen && (
         <div className="csp-modal-backdrop">
@@ -1343,6 +1408,22 @@ export default function QuoteView({
           {sent.clientUrl && (
             <a href={sent.clientUrl} target="_blank" rel="noreferrer">
               {isArabic ? "فتح العرض" : "Open quote"}
+            </a>
+          )}
+          {sent.clientUrl && sendChannel === "whatsapp" && (
+            <a
+              target="_blank"
+              rel="noreferrer"
+              href={`https://wa.me/?text=${encodeURIComponent(`${quoteReferenceLabel}\n${sent.clientUrl}`)}`}
+            >
+              {isArabic ? "مشاركة عبر واتساب" : "Share via WhatsApp"}
+            </a>
+          )}
+          {sent.clientUrl && sendChannel === "email" && (
+            <a
+              href={`mailto:?subject=${encodeURIComponent(quoteReferenceLabel)}&body=${encodeURIComponent(sent.clientUrl)}`}
+            >
+              {isArabic ? "فتح رسالة بريد" : "Compose email"}
             </a>
           )}
           <button type="button" onClick={() => setSent(null)}>
