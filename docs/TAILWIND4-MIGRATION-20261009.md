@@ -30,3 +30,12 @@ This change upgrades frontend tooling only. It does not change D1 schemas, custo
 ## Limitations
 
 Safari and Firefox were not independently exercised. The browser review is a focused migration regression check, not a fresh exhaustive verification of every business operation. Production deployment and post-deployment smoke verification must be recorded after they actually succeed.
+
+## Release verification
+
+- Implementation commit `c7c843e` pushed to `main`.
+- Cloudflare Pages deployment completed: https://91652129.zoomix-egypt.pages.dev.
+- The custom domain https://zoomixegypt.com loads the new `/assets/index-BSWvEun0.css` bundle.
+- A tab opened before deployment completion failed to import an old JavaScript chunk. Reloading after deployment restored the page; the new page loaded its sections, including full package lists.
+- Production language switching reached Arabic; computed heading font is Cairo. Production desktop page width and scroll width both measured 1280px.
+- Production screenshot: parent workspace `tailwind4-production-ar.png`. Local authenticated Studio and mobile checks above remain local checks, not production business-operation tests.
