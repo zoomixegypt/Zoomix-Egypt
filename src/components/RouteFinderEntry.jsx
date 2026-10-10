@@ -35,7 +35,7 @@ export default function RouteFinderEntry() {
                 <span className="quick-match-badge">{isArabic ? "الأسرع" : "FASTEST"}</span>
                 <a href="/route-finder" className="zoomix-button quick-match-primary gap-3 bg-[#BBFF00] text-black shadow-[0_10px_24px_rgba(187,255,0,0.16)] hover:bg-[#0A0A0A] hover:text-white">
                   <span className="quick-match-pulse-dot" aria-hidden="true" />
-                  <span>{isArabic ? "حدد خطوتك — 3 أسئلة" : "Find your next move — 3 questions"}</span>
+                  <span>{isArabic ? "حدد خطوتك — أسئلة قصيرة" : "Find your next move — short questions"}</span>
                   <ActionArrow className="quick-match-arrow" size={18} aria-hidden="true" />
                 </a>
               </div>

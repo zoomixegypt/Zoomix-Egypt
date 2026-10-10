@@ -1,4 +1,5 @@
 import { useState, memo, useEffect, useRef } from "react";
+import "../public-site.css";
 import { createPortal } from "react-dom";
 import { Gsap, GsapPresence } from "../utils/gsapAnimate";
 import { Menu, X, ArrowUpRight, Crosshair } from "lucide-react";
@@ -23,7 +24,7 @@ const Navbar = memo(function Navbar() {
     { label: t("nav", "contact"), sectionId: "contact-section" },
   ];
   const DESKTOP_NAV_ITEMS = NAV_ITEMS.filter(({ sectionId }) =>
-    ["about-section", "services-section", "project-section", "contact-section"].includes(sectionId),
+    ["about-section", "services-section", "project-section", "packages-section", "contact-section"].includes(sectionId),
   );
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -109,6 +110,7 @@ const Navbar = memo(function Navbar() {
       'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
     const focusTimer = window.setTimeout(() => {
+      menuRef.current?.focus();
       menuRef.current?.querySelector(focusableSelector)?.focus();
     }, 0);
 
@@ -119,12 +121,16 @@ const Navbar = memo(function Navbar() {
       }
       if (event.key !== "Tab") return;
 
-      const focusable = menuRef.current?.querySelectorAll(focusableSelector);
+      const focusable = Array.from(menuRef.current?.querySelectorAll(focusableSelector) || [])
+        .filter((element) => element.getClientRects().length && !element.closest("[inert]"));
       if (!focusable?.length) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
 
-      if (event.shiftKey && document.activeElement === first) {
+      if (!menuRef.current?.contains(document.activeElement) || document.activeElement === menuRef.current) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
         last.focus();
       } else if (!event.shiftKey && document.activeElement === last) {
@@ -236,6 +242,7 @@ const Navbar = memo(function Navbar() {
                 id="zoomix-mobile-menu"
                 ref={menuRef}
                 role="dialog"
+                tabIndex={-1}
                 aria-modal="true"
                 aria-label={language === "ar" ? "قائمة الموقع" : "Site menu"}
               >
@@ -263,14 +270,14 @@ const Navbar = memo(function Navbar() {
                     <span
                       className={`font-mono text-[10px] uppercase tracking-[0.22em] ${isOnDarkSection ? "text-white/65" : "text-black/45"}`}
                     >
-                      Navigation Matrix
+                      {language === "ar" ? "أقسام الموقع" : "Site navigation"}
                     </span>
                     <div className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#BBFF00]" />
                       <span
                         className={`font-mono text-[10px] tracking-[0.14em] ${isOnDarkSection ? "text-white/55" : "text-black/35"}`}
                       >
-                        MOBILE
+                        {language === "ar" ? "الموبايل" : "MOBILE"}
                       </span>
                       <button
                         type="button"
@@ -345,12 +352,12 @@ const Navbar = memo(function Navbar() {
                     <span
                       className={`font-mono text-[10px] tracking-[0.14em] ${isOnDarkSection ? "text-white/55" : "text-black/35"}`}
                     >
-                      Select Section
+                      {language === "ar" ? "اختار القسم" : "Select Section"}
                     </span>
                     <span
                       className={`font-mono text-[10px] tracking-[0.14em] ${isOnDarkSection ? "text-white/55" : "text-black/35"}`}
                     >
-                      Tap To Navigate
+                      {language === "ar" ? "اضغط للانتقال" : "Tap To Navigate"}
                     </span>
                   </div>
                 </Gsap.div>

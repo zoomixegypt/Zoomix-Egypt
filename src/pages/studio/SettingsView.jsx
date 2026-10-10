@@ -84,7 +84,7 @@ export default function SettingsView({ language, storageMode }) {
   const auditDetail = (row) => {
     if (!row.entity) return row.detail || "—";
     const entity = AUDIT_ENTITIES[row.entity] || { ar: row.entity, en: row.entity };
-    return `${entity[isArabic ? "ar" : "en"]} · ${row.entityId ?? "—"}`;
+    return `${entity[isArabic ? "ar" : "en"]} · ${row.entityId ?? "—"}${row.reason ? ` · ${isArabic ? "السبب" : "Reason"}: ${row.reason}` : ""}`;
   };
   const auditTime = (at) => {
     const date = new Date(at);

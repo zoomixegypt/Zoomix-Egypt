@@ -1,3 +1,4 @@
+import { readBrowserValue, writeBrowserValue } from "./browserStorage";
 const CONSENT_KEY = "zoomix-analytics-consent";
 const GOOGLE_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || "G-XWCZXLJ14C";
 let googleAnalyticsReady = false;
@@ -28,12 +29,12 @@ function loadGoogleAnalytics() {
 
 export function getAnalyticsConsent() {
   if (typeof window === "undefined") return "declined";
-  return window.localStorage.getItem(CONSENT_KEY) || "unknown";
+  return readBrowserValue(CONSENT_KEY, "unknown");
 }
 
 export function setAnalyticsConsent(value) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(CONSENT_KEY, value === "accepted" ? "accepted" : "declined");
+  writeBrowserValue(CONSENT_KEY, value === "accepted" ? "accepted" : "declined");
   if (value === "accepted") {
     loadGoogleAnalytics();
     window.gtag?.("consent", "update", {
@@ -65,8 +66,9 @@ export function trackEvent(eventName, properties = {}) {
   }).catch(() => {});
 }
 
-export function trackPageView(path = window.location.pathname + window.location.search) {
+export function trackPageView(path) {
   if (getAnalyticsConsent() !== "accepted" || typeof window === "undefined") return;
+  path ??= window.location.pathname + window.location.search;
   loadGoogleAnalytics();
   if (typeof window.gtag === "function") {
     window.gtag("event", "page_view", {

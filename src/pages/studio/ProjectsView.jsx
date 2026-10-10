@@ -4,6 +4,7 @@ import { Fragment } from "react";
 import {} from "../../data/commercialStudioPrototype";
 
 import { money, margin, StatusChip, Metric } from "./shared";
+import { studioLabel, qaMetricsNote } from "./labels";
 export default function ProjectsView({ language, projects, storageMode }) {
   const isArabic = language === "ar";
   const rows = Array.isArray(projects) ? projects : null;
@@ -30,10 +31,11 @@ export default function ProjectsView({ language, projects, storageMode }) {
             : "Numbers become available after the database is connected."}
         </p>
       )}
+      <p className="csp-mode-note">{qaMetricsNote(language)}</p>
       <section className="csp-metrics-grid">
         <Metric
           label={isArabic ? "مشروعات نشطة" : "ACTIVE PROJECTS"}
-          value={waiting ? "—" : String(businessList.length)}
+          value={waiting ? "—" : String(businessList.filter(item => !['closed', 'delivered'].includes(item.status)).length)}
           note={isArabic ? "من عروض مقبولة" : "From accepted quotes"}
         />
         <Metric
@@ -85,7 +87,7 @@ export default function ProjectsView({ language, projects, storageMode }) {
               <span className="csp-sensitive-number">
                 {margin(project.netContractValue ?? project.contractValue, project.expectedCost)}%
               </span>
-              <StatusChip accent>{project.status}</StatusChip>
+              <StatusChip accent>{studioLabel(project.status, language)}</StatusChip>
             </div>
             {storageMode === "cloud" && (
               <WorkspaceDisclosure

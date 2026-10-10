@@ -23,7 +23,7 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
             {t("hero", "eyebrow")}
           </p>
           <h1
-            className={`${language === "ar" ? "font-arabic tracking-normal leading-[1.12]" : "font-display tracking-[-.06em] leading-[.98]"} text-[clamp(2.75rem,12vw,8.7rem)] sm:text-[clamp(3.6rem,9vw,8.7rem)] font-extrabold max-w-4xl break-words`}
+            className={`${language === "ar" ? "font-arabic tracking-normal leading-[1.12]" : "font-display tracking-[-.06em] leading-[.98]"} text-[clamp(2.75rem,12vw,8.7rem)] sm:text-[clamp(3.6rem,9vw,8.7rem)] lg:text-[clamp(3.5rem,5.2vw,5.4rem)] font-extrabold max-w-4xl break-words`}
           >
             {t("hero", "titleA")} <span className="text-[#BBFF00]">{t("hero", "titleAccent")}</span>
             <br />
@@ -38,7 +38,10 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
             {t("hero", "partnerLine")}
           </p>
           <div className="hero-cta-group zoomix-reveal zoomix-reveal-delay-3 relative z-10 -mx-2 mt-9 flex w-fit flex-wrap items-center gap-3 rounded-full bg-[#0A0A0A]/85 px-2 py-2">
-            <a href="/route-finder" className="hero-cta-primary zoomix-button bg-[#BBFF00] text-black">
+            <a
+              href="/route-finder"
+              className="hero-cta-primary zoomix-button bg-[#BBFF00] text-black"
+            >
               <Compass className="hero-start-icon" size={18} aria-hidden="true" />
               {language === "ar" ? "حدد خطوتك" : "FIND YOUR NEXT MOVE"} <ActionArrow size={20} />
             </a>

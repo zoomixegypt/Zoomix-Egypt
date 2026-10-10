@@ -35,7 +35,7 @@ export default function RouteFinder() {
                 <span className="block text-[#789900]">{isArabic ? "خلينا نحددها سوا." : "Let us find it together."}</span>
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-7 text-black/60 md:text-lg">
-                {isArabic ? "3 أسئلة قصيرة توصلك للمسار والخدمة أو الباقة الأقرب لمشروعك." : "Three short questions take you to the route, service or package closest to your project."}
+                {isArabic ? "أسئلة قصيرة توصلك للمسار والخدمة أو الباقة الأقرب لمشروعك." : "A few short questions take you to the route, service or package closest to your project."}
               </p>
             </div>
             <a href="/" className="inline-flex min-h-11 shrink-0 items-center py-2 font-mono text-[10px] uppercase tracking-[0.18em] text-black/55 transition-colors hover:text-black">
@@ -65,7 +65,7 @@ export default function RouteFinder() {
             <div>
               <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#BBFF00]">04 / {isArabic ? "الخطوة التالية" : "NEXT STEP"}</span>
               <h2 className={`${isArabic ? "font-arabic" : "font-display tracking-[-0.05em]"} mt-5 max-w-3xl text-5xl font-black leading-[0.92] md:text-8xl`}>
-                {isArabic ? "دلوقتي عرفت خطوتك الجاية." : "Now you know your next move."}
+                {isArabic ? "جاهز نحدد خطوتك الجاية؟" : "Ready to plan your next move?"}
               </h2>
               <p className="mt-6 max-w-xl text-base leading-7 text-white/55 md:text-lg">
               {isArabic ? "ابعت لنا تفاصيل مشروعك، وخلي الترشيح يتحول لخطة تنفيذ واضحة." : "Send us the project details and turn the route into a clear execution plan."}

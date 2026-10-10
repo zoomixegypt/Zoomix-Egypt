@@ -1,0 +1,44 @@
+/* Public-site typography only: never changes the administration workspace. */
+.public-case-study[dir="rtl"] :is(h1,h2,h3,h4,p,li,a,button,strong),
+#footer-section[dir="rtl"] :is(h2,p,a,button,strong) {
+  font-family: var(--font-arabic);
+  letter-spacing: normal;
+}
+:is(#hero-section,#about-section,#packages-section,#process-section,#contact-section,#selected-work-references,#offer-path-section,.route-finder-conclusion,#next-move-quick-match,#zoomix-mobile-menu)[dir="rtl"]
+ :is(h1,h2,h3,h4,h5,h6,strong,button,a,label,summary) {
+  font-family: var(--font-arabic);
+  letter-spacing: normal;
+}
+:is(#hero-section,#about-section,#packages-section,#process-section,#contact-section,#selected-work-references,#offer-path-section)[dir="rtl"] :is(p,li) {
+  font-family: var(--font-arabic);
+  font-weight: 400;
+}
+.public-number {
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: normal;
+  unicode-bidi: isolate;
+}
+.public-rail-controls {display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap;}
+.public-rail-controls button {min-height:44px;min-width:44px;border:1px solid #ffffff66;padding:.5rem .75rem;color:#fff;}
+.public-rail-controls button:disabled {opacity:.4;cursor:default;}
+.public-rail-controls span {color:#fff;}
+.public-comparison {max-width:100%;overflow-x:auto;margin-top:1rem;border:1px solid #ffffff44;}
+.public-comparison table {width:100%;min-width:28rem;border-collapse:collapse;text-align:start;font-size:14px;line-height:1.8;}
+.public-comparison caption {padding:1rem;color:#ffffffcc;}
+.public-comparison th,.public-comparison td {padding:1rem;border-bottom:1px solid #ffffff33;vertical-align:top;}
+.public-comparison th {width:30%;}
+.public-comparison ul {padding-inline-start:1rem;list-style:disc;}
+.public-brief-review {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin-top:1rem;}
+.public-brief-review dt {font-weight:700;font-size:13px;color:#444;}
+.public-brief-review dd {font-size:15px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;margin:0;}
+:is(.public-rail-controls,.public-comparison,.public-brief-review,#contact-section,#zoomix-mobile-menu) :focus-visible {outline:3px solid #bbff00;outline-offset:3px;box-shadow:0 0 0 5px #0a0a0a;}
+@media(max-width:767px) {
+  .public-brief-review {grid-template-columns:1fr;}
+  #contact-section :is(input:not([type="checkbox"]),select,textarea) {font-size:16px;}
+  #contact-section label {font-size:14px;line-height:1.8;}
+}
+@media(min-width:1024px) {
+  #hero-section {padding-top:7rem;padding-bottom:5rem;}
+  #hero-section h1 {font-size:clamp(3.25rem,4.4vw,4.75rem);}
+}

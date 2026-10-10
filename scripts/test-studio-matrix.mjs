@@ -2,7 +2,12 @@
 import { readFile, readdir } from "node:fs/promises";
 import { DatabaseSync } from "node:sqlite";
 import vm from "node:vm";
-import { businessOperations, quoteCommercialTerms, instalments, limitedJson } from '../public/business-operations.js';
+import {
+  businessOperations,
+  quoteCommercialTerms,
+  instalments,
+  limitedJson,
+} from "../public/business-operations.js";
 import { webcrypto } from "node:crypto";
 import { calculateCommercial, promotionError } from "../public/commercial-rules.js";
 
@@ -56,7 +61,10 @@ const source = (await readFile("public/_worker.js", "utf8"))
   .replace("export class StudioLiveUpdates", "class StudioLiveUpdates")
   .replace("export default {", "const worker = {");
 const c = vm.createContext({
-  businessOperations, quoteCommercialTerms, instalments, limitedJson,
+  businessOperations,
+  quoteCommercialTerms,
+  instalments,
+  limitedJson,
   calculateCommercial,
   promotionError,
   DurableObject: class {},
@@ -75,11 +83,23 @@ const c = vm.createContext({
 vm.runInContext(source, c);
 // Legacy matrix fixtures intentionally use very low prices. Approvals are explicit,
 // audited fixture setup, not an application bypass. New pricing tests call rawSend.
-const rawSend=c.studioQuoteSend;
-c.studioQuoteSend=async(request,environment,ctx,id)=>{
- const q=db.prepare('SELECT current_version FROM commercial_quotes WHERE id=?').get(id);
- if(q)await c.studioPricingApproval(new Request(request.url,{method:'POST',headers:request.headers,body:JSON.stringify({baseVersion:q.current_version,reason:'Isolated legacy QA fixture approval'})}),environment,id);
- return rawSend(request,environment,ctx,id);
+const rawSend = c.studioQuoteSend;
+c.studioQuoteSend = async (request, environment, ctx, id) => {
+  const q = db.prepare("SELECT current_version FROM commercial_quotes WHERE id=?").get(id);
+  if (q)
+    await c.studioPricingApproval(
+      new Request(request.url, {
+        method: "POST",
+        headers: request.headers,
+        body: JSON.stringify({
+          baseVersion: q.current_version,
+          reason: "Isolated legacy QA fixture approval",
+        }),
+      }),
+      environment,
+      id,
+    );
+  return rawSend(request, environment, ctx, id);
 };
 const login = await c.studioLogin(
   new Request("https://test/api/studio/login", {
@@ -329,8 +349,20 @@ for (const [name, patch] of [
     }),
   );
 const beforeOrphan = Number(db.prepare("SELECT COUNT(*) n FROM commercial_quotes").get().n);
-await check("brief rejects alphabetic phone",true,()=>Boolean(c.validateBrief(c.briefFromPayload({...validBrief,phone:"not-a-phone"},"QA"),validBrief)));
-for(const eventDate of ["not-a-date","2026-02-30","2026-13-01"])await check(`brief rejects invalid event date:${eventDate}`,true,()=>Boolean(c.validateBrief(c.briefFromPayload({...validBrief,route:"show",showType:"events",eventDate},"QA"),validBrief)));
+await check("brief rejects alphabetic phone", true, () =>
+  Boolean(
+    c.validateBrief(c.briefFromPayload({ ...validBrief, phone: "not-a-phone" }, "QA"), validBrief),
+  ),
+);
+for (const eventDate of ["not-a-date", "2026-02-30", "2026-13-01"])
+  await check(`brief rejects invalid event date:${eventDate}`, true, () =>
+    Boolean(
+      c.validateBrief(
+        c.briefFromPayload({ ...validBrief, route: "show", showType: "events", eventDate }, "QA"),
+        validBrief,
+      ),
+    ),
+  );
 try {
   await c.studioQuoteCreate(
     req({ ...valid, items: [{ ...line, catalogId: "not-existing" }] }),
@@ -505,86 +537,439 @@ await check(
     (await (await c.studioQuoteDetail(req(), env, draft.id)).json()).draft.revisionRequest.message,
 );
 // Expanded commercial workflows are isolated; no real contracts or messages.
-const op=(path,data,authenticated=true)=>businessOperations(new Request(`https://test/api/studio/${path}`,{method:data===undefined?'GET':'POST',headers:authenticated?{Cookie:cookie}:{},...(data===undefined?{}:{body:JSON.stringify(data)})}),env,c.authenticateStudio);
-for(const path of ['lead-operations','project-workspace/1','payment-details/1','documents/1'])await check(`business auth:${path}`,401,()=>op(path,undefined,false));
-for(const patch of [{expiryDays:0},{expiryDays:91},{paymentSchedule:[{label:'A',percent:90,days:0}]},{paymentSchedule:[{label:'A',percent:100,days:-1}]},{paymentSchedule:null}])await check(`commercial terms reject:${JSON.stringify(patch)}`,400,()=>c.studioQuoteCreate(req({...valid,...patch}),env));
-const scopedQuote=(await(await c.studioQuoteCreate(req({...valid,conditions:'QA public conditions',exclusions:'QA exclusions',internalNotes:'DO NOT SHARE INTERNAL SECRET',expiryDays:7,paymentSchedule:[{label:'First',percent:33.33,days:0},{label:'Second',percent:33.33,days:10},{label:'Final',percent:33.34,days:20}]}),env)).json()).quote;
-await check('minimum price sending blocked',409,()=>rawSend(req(),env,null,scopedQuote.id));
-await check('pricing approval missing reason',400,()=>c.studioPricingApproval(req({baseVersion:scopedQuote.version,reason:''}),env,scopedQuote.id));
-await check('pricing approval stale version',409,()=>c.studioPricingApproval(req({baseVersion:999,reason:'QA'}),env,scopedQuote.id));
-await check('pricing approval explicit reason',200,()=>c.studioPricingApproval(req({baseVersion:scopedQuote.version,reason:'QA isolated min price exception'}),env,scopedQuote.id));
-const scopedSent=(await(await rawSend(req(),env,null,scopedQuote.id)).json());const scopedToken=new URL(scopedSent.clientUrl).pathname.split('/').pop();
-await check('configurable seven day expiry',true,()=>Math.abs(Date.parse(scopedSent.expiresAt)-Date.now()-7*86400000)<10000);
-const scopedRead=await(await c.publicQuote(req(),env,null,scopedQuote.reference,scopedToken)).json();
-await check('public terms visible','QA public conditions',()=>scopedRead.quote.conditions);
-await check('public internal notes never leaked',false,()=>JSON.stringify(scopedRead).includes('DO NOT SHARE INTERNAL SECRET'));
-await check('custom instalment acceptance',200,()=>c.publicQuoteRespond(req({action:'accept',termsAccepted:true}),env,null,scopedQuote.reference,scopedToken));
-const scopedProject=db.prepare('SELECT * FROM commercial_projects WHERE quote_id=?').get(scopedQuote.id);
-await check('attachment auth protected',401,()=>op(`attachments/${scopedProject.id}`,undefined,false));
-await check('unsafe attachment rejected',400,()=>op(`attachments/${scopedProject.id}`,{filename:'evil.html',contentBase64:btoa('<script>alert(1)</script>')}));
-await check('oversized attachment rejected',413,()=>op(`attachments/${scopedProject.id}`,{filename:'huge.pdf',contentBase64:'A'.repeat(700001)}));
-await check('invalid attachment base64 rejected',400,()=>op(`attachments/${scopedProject.id}`,{filename:'bad.pdf',contentBase64:'@@invalid@@'}));
-const pngFixture='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX9sAAAAASUVORK5CYII=';
-await check('private image attachment stored',201,()=>op(`attachments/${scopedProject.id}`,{filename:'qa.png',contentBase64:pngFixture}));
-const attachment=db.prepare('SELECT id FROM commercial_attachments WHERE project_id=?').get(scopedProject.id);
-await check('attachment list excludes bytes',false,async()=>JSON.stringify(await(await op(`attachments/${scopedProject.id}`)).json()).includes('content_base64'));
-const download=await businessOperations(new Request(`https://test/api/studio/attachments/${attachment.id}?download=1`,{headers:{Cookie:cookie}}),env,c.authenticateStudio);
-await check('attachment download is forced',true,()=>download.headers.get('Content-Disposition').startsWith('attachment;'));
-await check('attachment bytes match',pngFixture,async()=>Buffer.from(await download.arrayBuffer()).toString('base64'));
-await check('cross-origin write rejected',403,()=>c.api(new Request('https://test/api/studio/lead-operations/1',{method:'POST',headers:{Cookie:cookie,Origin:'https://evil.test'},body:'{}'}),env,null));
-await check('large request rejected before parsing',413,()=>c.api(new Request('https://test/api/studio/lead-operations/1',{method:'POST',headers:{Cookie:cookie,'Content-Length':'1048577'},body:'{}'}),env,null));
-await check('tiny amount schedule has no negative rounding',true,()=>instalments(1,{paymentSchedule:Array.from({length:10},(_,i)=>({label:String(i),percent:10,days:i}))},0,'2026-01-01T00:00:00Z').every(row=>row.amount>=0));
-const scopedPayments=db.prepare('SELECT * FROM commercial_payments WHERE project_id=? ORDER BY id').all(scopedProject.id);
-await check('three instalments created',3,()=>scopedPayments.length);
-await check('instalments exact amount conservation',scopedProject.contract_value_minor,()=>scopedPayments.reduce((sum,row)=>sum+row.amount_minor,0));
-await check('zero negative instalments',0,()=>scopedPayments.filter(row=>row.amount_minor<0).length);
-await check('payment unsafe receipt URL rejected',400,()=>op(`payment-details/${scopedPayments[0].id}`,{receiptUrl:'javascript:alert(1)'}));
-await check('payment metadata save',200,()=>op(`payment-details/${scopedPayments[0].id}`,{method:'QA cash',reference:'QA-001',receiptUrl:'https://example.com/qa-receipt'}));
-await check('receipt cannot precede payment',409,()=>op(`documents/${scopedProject.id}`,{type:'receipt',paymentId:scopedPayments[0].id}));
-await check('invoice generated',201,()=>op(`documents/${scopedProject.id}`,{type:'invoice'}));
-await check('contract draft generated',201,()=>op(`documents/${scopedProject.id}`,{type:'contract'}));
-await check('documents exclude internal costs and notes',false,()=>db.prepare('SELECT snapshot_json FROM commercial_documents WHERE project_id=?').all(scopedProject.id).some(row=>/DO NOT SHARE|expected_cost|internalNotes|public_token/.test(row.snapshot_json)));
-await check('project invalid phase rejected',400,()=>op(`project-workspace/${scopedProject.id}`,{projectStatus:'fake'}));
-await check('project production phase',200,()=>op(`project-workspace/${scopedProject.id}`,{projectStatus:'production'}));
-for(const type of ['task','team','expense'])await check(`project add:${type}`,201,()=>op(`project-workspace/${scopedProject.id}`,{type,title:`QA ${type}`,owner:'QA owner',detail:'QA only',amount:55.5}));
-await check('project file unsafe link denied',400,()=>op(`project-workspace/${scopedProject.id}`,{type:'file',title:'QA unsafe',detail:'http://example.com'}));
-await check('project file safe link',201,()=>op(`project-workspace/${scopedProject.id}`,{type:'file',title:'QA file',detail:'https://example.com/qa'}));
-const task=db.prepare("SELECT id FROM commercial_project_entries WHERE project_id=? AND entry_type='task'").get(scopedProject.id);
-await check('project task completes',200,()=>op(`project-workspace/${scopedProject.id}`,{entryId:task.id,status:'done'}));
-await check('project foreign entry mutation denied',404,()=>op('project-workspace/1',{entryId:task.id,status:'cancelled'}));
-await check('project expense precision',5550,()=>db.prepare("SELECT amount_minor FROM commercial_project_entries WHERE project_id=? AND entry_type='expense'").get(scopedProject.id).amount_minor);
-await c.studioPaymentUpdate(req({status:'paid'}),env,scopedPayments[0].id);
-await check('paid receipt generated',201,()=>op(`documents/${scopedProject.id}`,{type:'receipt',paymentId:scopedPayments[0].id}));
-const declineQuote=(await(await c.studioQuoteCreate(req(valid),env)).json()).quote;
-const declineSent=await(await c.studioQuoteSend(req(),env,null,declineQuote.id)).json();const declineToken=new URL(declineSent.clientUrl).pathname.split('/').pop();
-await check('decline requires reason',400,()=>c.publicQuoteRespond(req({action:'reject',message:''}),env,null,declineQuote.reference,declineToken));
-await check('decline with reason',200,()=>c.publicQuoteRespond(req({action:'reject',message:'QA too expensive'}),env,null,declineQuote.reference,declineToken));
-await check('declined quote cannot accept',409,()=>c.publicQuoteRespond(req({action:'accept',termsAccepted:true}),env,null,declineQuote.reference,declineToken));
-await check('declined quote cannot resend',409,()=>rawSend(req(),env,null,declineQuote.id));
-await check('decline creates no project',0,()=>db.prepare('SELECT COUNT(*) AS n FROM commercial_projects WHERE quote_id=?').get(declineQuote.id).n);
-await check('decline reason visible to admin','QA too expensive',async()=> (await(await c.studioQuoteDetail(req(),env,declineQuote.id)).json()).draft.rejection.reason);
-await check('declined version can become new draft',200,()=>c.studioQuoteNewVersion(req({...valid,baseVersion:1}),env,declineQuote.id));
-await check('previous approval not reusable after version',409,()=>rawSend(req(),env,null,declineQuote.id));
-await check('new catalog costs require review',400,()=>c.studioCatalogUpdate(req({publish:true}),env,'content-start'));
-await check('new catalog public details preserved',true,()=>JSON.parse(db.prepare("SELECT included_json FROM commercial_catalog_items WHERE id='content-start'").get().included_json).ar.length>0);
-await check('catalog version history protected',401,()=>c.studioCatalogHistory(req({},false),env,'presence'));
-await check('catalog history missing version',404,()=>c.studioCatalogHistory(req({version:999999}),env,'presence'));
-await check('catalog reviewed publication',200,()=>c.studioCatalogUpdate(req({publish:true,costReviewed:true,cost:1000,price:5000,visible:true}),env,'content-start'));
-await check('catalog second draft',200,()=>c.studioCatalogUpdate(req({status:'draft',price:6000}),env,'content-start'));
-const priorPublication=db.prepare("SELECT published_snapshot_json FROM commercial_catalog_items WHERE id='content-start'").get().published_snapshot_json;
-await check('catalog history restore creates draft',200,()=>c.studioCatalogHistory(req({version:1}),env,'content-start'));
-await check('catalog history preserves publication',priorPublication,()=>db.prepare("SELECT published_snapshot_json FROM commercial_catalog_items WHERE id='content-start'").get().published_snapshot_json);
-await check('catalog restore does not publish','draft',()=>db.prepare("SELECT status FROM commercial_catalog_items WHERE id='content-start'").get().status);
-await check('catalog archive action',200,()=>c.studioCatalogUpdate(req({status:'archived'}),env,'content-start'));
-await check('catalog archived offering unavailable',true,async()=> (await(await c.publicCatalog(env)).json()).unavailableIds.includes('content-start'));
-db.prepare("INSERT INTO brief_requests(reference_code,name,contact_preference,service,description,is_test,created_at,updated_at) VALUES('QA-FOLLOWUP','QA Follow-up','email','QA','QA only',1,?,?)").run(new Date().toISOString(),new Date().toISOString());
-const followBrief=db.prepare("SELECT id FROM brief_requests WHERE reference_code='QA-FOLLOWUP'").get().id;
-await check('lead follow-up save',200,()=>op(`lead-operations/${followBrief}`,{owner:'QA owner',followUpAt:'2026-10-10T12:00:00Z',lossReason:'QA reason'}));
-await check('lead follow-up read',true,async()=> (await(await op('lead-operations')).json()).rows.some(row=>row.brief_id===followBrief&&row.owner==='QA owner'));
-await check('lead invalid follow-up date',400,()=>op(`lead-operations/${followBrief}`,{followUpAt:'invalid'}));
-await check('business report private access',401,()=>op('business-report',undefined,false));
-await check('QA lead excluded from loss analysis',false,async()=> (await(await op('business-report')).json()).losses.some(row=>row.loss_reason==='QA reason'));
-await check('chunked large body rejected',400,()=>op(`lead-operations/${followBrief}`,{owner:'x'.repeat(1048577)}));
+const op = (path, data, authenticated = true) =>
+  businessOperations(
+    new Request(`https://test/api/studio/${path}`, {
+      method: data === undefined ? "GET" : "POST",
+      headers: authenticated ? { Cookie: cookie } : {},
+      ...(data === undefined ? {} : { body: JSON.stringify(data) }),
+    }),
+    env,
+    c.authenticateStudio,
+  );
+for (const path of ["lead-operations", "project-workspace/1", "payment-details/1", "documents/1"])
+  await check(`business auth:${path}`, 401, () => op(path, undefined, false));
+for (const patch of [
+  { expiryDays: 0 },
+  { expiryDays: 91 },
+  { paymentSchedule: [{ label: "A", percent: 90, days: 0 }] },
+  { paymentSchedule: [{ label: "A", percent: 100, days: -1 }] },
+  { paymentSchedule: null },
+])
+  await check(`commercial terms reject:${JSON.stringify(patch)}`, 400, () =>
+    c.studioQuoteCreate(req({ ...valid, ...patch }), env),
+  );
+const scopedQuote = (
+  await (
+    await c.studioQuoteCreate(
+      req({
+        ...valid,
+        conditions: "QA public conditions",
+        exclusions: "QA exclusions",
+        internalNotes: "DO NOT SHARE INTERNAL SECRET",
+        expiryDays: 7,
+        paymentSchedule: [
+          { label: "First", percent: 33.33, days: 0 },
+          { label: "Second", percent: 33.33, days: 10 },
+          { label: "Final", percent: 33.34, days: 20 },
+        ],
+      }),
+      env,
+    )
+  ).json()
+).quote;
+await check("minimum price sending blocked", 409, () => rawSend(req(), env, null, scopedQuote.id));
+await check("pricing approval missing reason", 400, () =>
+  c.studioPricingApproval(
+    req({ baseVersion: scopedQuote.version, reason: "" }),
+    env,
+    scopedQuote.id,
+  ),
+);
+await check("pricing approval stale version", 409, () =>
+  c.studioPricingApproval(req({ baseVersion: 999, reason: "QA" }), env, scopedQuote.id),
+);
+await check("pricing approval explicit reason", 200, () =>
+  c.studioPricingApproval(
+    req({ baseVersion: scopedQuote.version, reason: "QA isolated min price exception" }),
+    env,
+    scopedQuote.id,
+  ),
+);
+const scopedSent = await (await rawSend(req(), env, null, scopedQuote.id)).json();
+const scopedToken = new URL(scopedSent.clientUrl).pathname.split("/").pop();
+await check(
+  "configurable seven day expiry",
+  true,
+  () => Math.abs(Date.parse(scopedSent.expiresAt) - Date.now() - 7 * 86400000) < 10000,
+);
+const scopedRead = await (
+  await c.publicQuote(req(), env, null, scopedQuote.reference, scopedToken)
+).json();
+await check("public terms visible", "QA public conditions", () => scopedRead.quote.conditions);
+await check("public internal notes never leaked", false, () =>
+  JSON.stringify(scopedRead).includes("DO NOT SHARE INTERNAL SECRET"),
+);
+await check("custom instalment acceptance", 200, () =>
+  c.publicQuoteRespond(
+    req({ action: "accept", termsAccepted: true }),
+    env,
+    null,
+    scopedQuote.reference,
+    scopedToken,
+  ),
+);
+const scopedProject = db
+  .prepare("SELECT * FROM commercial_projects WHERE quote_id=?")
+  .get(scopedQuote.id);
+await check("attachment auth protected", 401, () =>
+  op(`attachments/${scopedProject.id}`, undefined, false),
+);
+await check("unsafe attachment rejected", 400, () =>
+  op(`attachments/${scopedProject.id}`, {
+    filename: "evil.html",
+    contentBase64: btoa("<script>alert(1)</script>"),
+  }),
+);
+await check("oversized attachment rejected", 413, () =>
+  op(`attachments/${scopedProject.id}`, {
+    filename: "huge.pdf",
+    contentBase64: "A".repeat(700001),
+  }),
+);
+await check("invalid attachment base64 rejected", 400, () =>
+  op(`attachments/${scopedProject.id}`, { filename: "bad.pdf", contentBase64: "@@invalid@@" }),
+);
+const pngFixture =
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX9sAAAAASUVORK5CYII=";
+await check("private image attachment stored", 201, () =>
+  op(`attachments/${scopedProject.id}`, { filename: "qa.png", contentBase64: pngFixture }),
+);
+const attachment = db
+  .prepare("SELECT id FROM commercial_attachments WHERE project_id=?")
+  .get(scopedProject.id);
+await check("attachment list excludes bytes", false, async () =>
+  JSON.stringify(await (await op(`attachments/${scopedProject.id}`)).json()).includes(
+    "content_base64",
+  ),
+);
+const download = await businessOperations(
+  new Request(`https://test/api/studio/attachments/${attachment.id}?download=1`, {
+    headers: { Cookie: cookie },
+  }),
+  env,
+  c.authenticateStudio,
+);
+await check("attachment download is forced", true, () =>
+  download.headers.get("Content-Disposition").startsWith("attachment;"),
+);
+await check("attachment bytes match", pngFixture, async () =>
+  Buffer.from(await download.arrayBuffer()).toString("base64"),
+);
+await check("cross-origin write rejected", 403, () =>
+  c.api(
+    new Request("https://test/api/studio/lead-operations/1", {
+      method: "POST",
+      headers: { Cookie: cookie, Origin: "https://evil.test" },
+      body: "{}",
+    }),
+    env,
+    null,
+  ),
+);
+await check("large request rejected before parsing", 413, () =>
+  c.api(
+    new Request("https://test/api/studio/lead-operations/1", {
+      method: "POST",
+      headers: { Cookie: cookie, "Content-Length": "1048577" },
+      body: "{}",
+    }),
+    env,
+    null,
+  ),
+);
+await check("tiny amount schedule has no negative rounding", true, () =>
+  instalments(
+    1,
+    {
+      paymentSchedule: Array.from({ length: 10 }, (_, i) => ({
+        label: String(i),
+        percent: 10,
+        days: i,
+      })),
+    },
+    0,
+    "2026-01-01T00:00:00Z",
+  ).every((row) => row.amount >= 0),
+);
+const scopedPayments = db
+  .prepare("SELECT * FROM commercial_payments WHERE project_id=? ORDER BY id")
+  .all(scopedProject.id);
+await check("three instalments created", 3, () => scopedPayments.length);
+await check("instalments exact amount conservation", scopedProject.contract_value_minor, () =>
+  scopedPayments.reduce((sum, row) => sum + row.amount_minor, 0),
+);
+await check(
+  "zero negative instalments",
+  0,
+  () => scopedPayments.filter((row) => row.amount_minor < 0).length,
+);
+await check("payment unsafe receipt URL rejected", 400, () =>
+  op(`payment-details/${scopedPayments[0].id}`, { receiptUrl: "javascript:alert(1)" }),
+);
+await check("payment metadata save", 200, () =>
+  op(`payment-details/${scopedPayments[0].id}`, {
+    method: "QA cash",
+    reference: "QA-001",
+    receiptUrl: "https://example.com/qa-receipt",
+  }),
+);
+await check("receipt cannot precede payment", 409, () =>
+  op(`documents/${scopedProject.id}`, { type: "receipt", paymentId: scopedPayments[0].id }),
+);
+await check("invoice generated", 201, () =>
+  op(`documents/${scopedProject.id}`, { type: "invoice" }),
+);
+await check("contract draft generated", 201, () =>
+  op(`documents/${scopedProject.id}`, { type: "contract" }),
+);
+await check("documents exclude internal costs and notes", false, () =>
+  db
+    .prepare("SELECT snapshot_json FROM commercial_documents WHERE project_id=?")
+    .all(scopedProject.id)
+    .some((row) => /DO NOT SHARE|expected_cost|internalNotes|public_token/.test(row.snapshot_json)),
+);
+await check("project invalid phase rejected", 400, () =>
+  op(`project-workspace/${scopedProject.id}`, { projectStatus: "fake" }),
+);
+await check("project production phase", 200, () =>
+  op(`project-workspace/${scopedProject.id}`, { projectStatus: "production" }),
+);
+for (const type of ["task", "team", "expense"])
+  await check(`project add:${type}`, 201, () =>
+    op(`project-workspace/${scopedProject.id}`, {
+      type,
+      title: `QA ${type}`,
+      owner: "QA owner",
+      detail: "QA only",
+      amount: 55.5,
+    }),
+  );
+await check("project file unsafe link denied", 400, () =>
+  op(`project-workspace/${scopedProject.id}`, {
+    type: "file",
+    title: "QA unsafe",
+    detail: "http://example.com",
+  }),
+);
+await check("project file safe link", 201, () =>
+  op(`project-workspace/${scopedProject.id}`, {
+    type: "file",
+    title: "QA file",
+    detail: "https://example.com/qa",
+  }),
+);
+const task = db
+  .prepare("SELECT id FROM commercial_project_entries WHERE project_id=? AND entry_type='task'")
+  .get(scopedProject.id);
+await check("project task completes", 200, () =>
+  op(`project-workspace/${scopedProject.id}`, { entryId: task.id, status: "done" }),
+);
+await check("project foreign entry mutation denied", 404, () =>
+  op("project-workspace/1", { entryId: task.id, status: "cancelled" }),
+);
+await check(
+  "project expense precision",
+  5550,
+  () =>
+    db
+      .prepare(
+        "SELECT amount_minor FROM commercial_project_entries WHERE project_id=? AND entry_type='expense'",
+      )
+      .get(scopedProject.id).amount_minor,
+);
+await c.studioPaymentUpdate(req({ status: "paid" }), env, scopedPayments[0].id);
+await check("paid receipt generated", 201, () =>
+  op(`documents/${scopedProject.id}`, { type: "receipt", paymentId: scopedPayments[0].id }),
+);
+await check("collection reversal requires reason", 400, () =>
+  c.studioPaymentUpdate(req({ status: "pending" }), env, scopedPayments[0].id),
+);
+await check(
+  "rejected reversal preserves payment",
+  "paid",
+  () =>
+    db.prepare("SELECT status FROM commercial_payments WHERE id=?").get(scopedPayments[0].id)
+      .status,
+);
+await check("collection reversal records reason", 200, () =>
+  c.studioPaymentUpdate(
+    req({ status: "pending", reason: "QA incorrect collection" }),
+    env,
+    scopedPayments[0].id,
+  ),
+);
+await check(
+  "collection reversal reason audited",
+  "QA incorrect collection",
+  () =>
+    JSON.parse(
+      db
+        .prepare(
+          "SELECT after_json FROM commercial_audit_log WHERE entity_type='payment' AND entity_id=? ORDER BY id DESC LIMIT 1",
+        )
+        .get(String(scopedPayments[0].id)).after_json,
+    ).reason,
+);
+await check(
+  "reversal preserves historical receipt",
+  1,
+  () =>
+    db
+      .prepare(
+        "SELECT COUNT(*) AS n FROM commercial_documents WHERE payment_id=? AND document_type='receipt'",
+      )
+      .get(scopedPayments[0].id).n,
+);
+await c.studioPaymentUpdate(req({ status: "paid" }), env, scopedPayments[0].id);
+const declineQuote = (await (await c.studioQuoteCreate(req(valid), env)).json()).quote;
+const declineSent = await (await c.studioQuoteSend(req(), env, null, declineQuote.id)).json();
+const declineToken = new URL(declineSent.clientUrl).pathname.split("/").pop();
+await check("decline requires reason", 400, () =>
+  c.publicQuoteRespond(
+    req({ action: "reject", message: "" }),
+    env,
+    null,
+    declineQuote.reference,
+    declineToken,
+  ),
+);
+await check("decline with reason", 200, () =>
+  c.publicQuoteRespond(
+    req({ action: "reject", message: "QA too expensive" }),
+    env,
+    null,
+    declineQuote.reference,
+    declineToken,
+  ),
+);
+await check("declined quote cannot accept", 409, () =>
+  c.publicQuoteRespond(
+    req({ action: "accept", termsAccepted: true }),
+    env,
+    null,
+    declineQuote.reference,
+    declineToken,
+  ),
+);
+await check("declined quote cannot resend", 409, () => rawSend(req(), env, null, declineQuote.id));
+await check(
+  "decline creates no project",
+  0,
+  () =>
+    db
+      .prepare("SELECT COUNT(*) AS n FROM commercial_projects WHERE quote_id=?")
+      .get(declineQuote.id).n,
+);
+await check(
+  "decline reason visible to admin",
+  "QA too expensive",
+  async () =>
+    (await (await c.studioQuoteDetail(req(), env, declineQuote.id)).json()).draft.rejection.reason,
+);
+await check("declined version can become new draft", 200, () =>
+  c.studioQuoteNewVersion(req({ ...valid, baseVersion: 1 }), env, declineQuote.id),
+);
+await check("previous approval not reusable after version", 409, () =>
+  rawSend(req(), env, null, declineQuote.id),
+);
+await check("new catalog costs require review", 400, () =>
+  c.studioCatalogUpdate(req({ publish: true }), env, "content-start"),
+);
+await check(
+  "new catalog public details preserved",
+  true,
+  () =>
+    JSON.parse(
+      db
+        .prepare("SELECT included_json FROM commercial_catalog_items WHERE id='content-start'")
+        .get().included_json,
+    ).ar.length > 0,
+);
+await check("catalog version history protected", 401, () =>
+  c.studioCatalogHistory(req({}, false), env, "presence"),
+);
+await check("catalog history missing version", 404, () =>
+  c.studioCatalogHistory(req({ version: 999999 }), env, "presence"),
+);
+await check("catalog reviewed publication", 200, () =>
+  c.studioCatalogUpdate(
+    req({ publish: true, costReviewed: true, cost: 1000, price: 5000, visible: true }),
+    env,
+    "content-start",
+  ),
+);
+await check("catalog second draft", 200, () =>
+  c.studioCatalogUpdate(req({ status: "draft", price: 6000 }), env, "content-start"),
+);
+const priorPublication = db
+  .prepare("SELECT published_snapshot_json FROM commercial_catalog_items WHERE id='content-start'")
+  .get().published_snapshot_json;
+await check("catalog history restore creates draft", 200, () =>
+  c.studioCatalogHistory(req({ version: 1 }), env, "content-start"),
+);
+await check(
+  "catalog history preserves publication",
+  priorPublication,
+  () =>
+    db
+      .prepare(
+        "SELECT published_snapshot_json FROM commercial_catalog_items WHERE id='content-start'",
+      )
+      .get().published_snapshot_json,
+);
+await check(
+  "catalog restore does not publish",
+  "draft",
+  () =>
+    db.prepare("SELECT status FROM commercial_catalog_items WHERE id='content-start'").get().status,
+);
+await check("catalog archive action", 200, () =>
+  c.studioCatalogUpdate(req({ status: "archived" }), env, "content-start"),
+);
+await check("catalog archived offering unavailable", true, async () =>
+  (await (await c.publicCatalog(env)).json()).unavailableIds.includes("content-start"),
+);
+db.prepare(
+  "INSERT INTO brief_requests(reference_code,name,contact_preference,service,description,is_test,created_at,updated_at) VALUES('QA-FOLLOWUP','QA Follow-up','email','QA','QA only',1,?,?)",
+).run(new Date().toISOString(), new Date().toISOString());
+const followBrief = db
+  .prepare("SELECT id FROM brief_requests WHERE reference_code='QA-FOLLOWUP'")
+  .get().id;
+await check("lead follow-up save", 200, () =>
+  op(`lead-operations/${followBrief}`, {
+    owner: "QA owner",
+    followUpAt: "2026-10-10T12:00:00Z",
+    lossReason: "QA reason",
+  }),
+);
+await check("lead follow-up read", true, async () =>
+  (await (await op("lead-operations")).json()).rows.some(
+    (row) => row.brief_id === followBrief && row.owner === "QA owner",
+  ),
+);
+await check("lead invalid follow-up date", 400, () =>
+  op(`lead-operations/${followBrief}`, { followUpAt: "invalid" }),
+);
+await check("business report private access", 401, () => op("business-report", undefined, false));
+await check("QA lead excluded from loss analysis", false, async () =>
+  (await (await op("business-report")).json()).losses.some(
+    (row) => row.loss_reason === "QA reason",
+  ),
+);
+await check("chunked large body rejected", 400, () =>
+  op(`lead-operations/${followBrief}`, { owner: "x".repeat(1048577) }),
+);
 const backup = JSON.parse((await (await c.studioBackup(req(), env)).text()).replace(/^\uFEFF/, ""));
 await check("QA overdue reminders excluded", 0, async () => {
   db.prepare(
@@ -599,13 +984,22 @@ await check("QA overdue reminders excluded", 0, async () => {
   ).sent;
 });
 const paymentId = Number(db.prepare("SELECT id FROM commercial_payments LIMIT 1").get().id);
-db.prepare("UPDATE commercial_payments SET due_at='2000-01-01T00:00:00Z' WHERE id=?").run(paymentId);
+db.prepare("UPDATE commercial_payments SET due_at='2000-01-01T00:00:00Z' WHERE id=?").run(
+  paymentId,
+);
 await check(
   "pending response matches overdue list",
   "overdue",
   async () =>
-    (await (await c.studioPaymentUpdate(req({ status: "pending" }), env, paymentId)).json()).payment
-      .status,
+    (
+      await (
+        await c.studioPaymentUpdate(
+          req({ status: "pending", reason: "QA reversal" }),
+          env,
+          paymentId,
+        )
+      ).json()
+    ).payment.status,
 );
 db.prepare(
   "INSERT INTO brief_requests (reference_code,name,service,contact_preference,description,created_at,updated_at) VALUES ('QA-linked','QA','QA','call','QA',?,?)",
@@ -655,17 +1049,72 @@ await check("brief invalid test marker", 400, () =>
 await check("backup covers business tables", 18, () => Object.keys(backup.tables).length);
 await check("backup excludes auth sessions", false, () => "studio_sessions" in backup.tables);
 const restored = new DatabaseSync(":memory:");
-const raceQuote=(await(await c.studioQuoteCreate(req(valid),env)).json()).quote;
-let raceOnce=true;
-const raceEnv={...env,DB:{...env.DB,batch:async(statements)=>{if(raceOnce){raceOnce=false;await c.studioQuoteNewVersion(req({...valid,baseVersion:1}),env,raceQuote.id);}return env.DB.batch(statements);}}};
-await check("send rejects interleaved version change",409,()=>c.studioQuoteSend(req(),raceEnv,null,raceQuote.id));
-await check("stale send creates no sent event",0,()=>Number(db.prepare("SELECT COUNT(*) n FROM commercial_quote_events WHERE quote_id=? AND event_type='sent'").get(raceQuote.id).n));
-const viewRace=(await(await c.studioQuoteCreate(req(valid),env)).json()).quote;
-const viewIssued=await(await c.studioQuoteSend(req(),env,null,viewRace.id)).json();
-const viewToken=new URL(viewIssued.clientUrl).pathname.split('/').pop();
-let viewOnce=true;
-const viewEnv={...env,DB:{...env.DB,batch:async(statements)=>{if(viewOnce){viewOnce=false;await c.publicQuoteRespond(req({action:'accept',termsAccepted:true}),env,null,viewRace.reference,viewToken);}return env.DB.batch(statements);}}};
-await check("view race preserves accepted status","accepted",async()=> (await(await c.publicQuote(new Request('https://test'),viewEnv,null,viewRace.reference,viewToken)).json()).quote.status);
+const raceQuote = (await (await c.studioQuoteCreate(req(valid), env)).json()).quote;
+let raceOnce = true;
+const raceEnv = {
+  ...env,
+  DB: {
+    ...env.DB,
+    batch: async (statements) => {
+      if (raceOnce) {
+        raceOnce = false;
+        await c.studioQuoteNewVersion(req({ ...valid, baseVersion: 1 }), env, raceQuote.id);
+      }
+      return env.DB.batch(statements);
+    },
+  },
+};
+await check("send rejects interleaved version change", 409, () =>
+  c.studioQuoteSend(req(), raceEnv, null, raceQuote.id),
+);
+await check("stale send creates no sent event", 0, () =>
+  Number(
+    db
+      .prepare(
+        "SELECT COUNT(*) n FROM commercial_quote_events WHERE quote_id=? AND event_type='sent'",
+      )
+      .get(raceQuote.id).n,
+  ),
+);
+const viewRace = (await (await c.studioQuoteCreate(req(valid), env)).json()).quote;
+const viewIssued = await (await c.studioQuoteSend(req(), env, null, viewRace.id)).json();
+const viewToken = new URL(viewIssued.clientUrl).pathname.split("/").pop();
+let viewOnce = true;
+const viewEnv = {
+  ...env,
+  DB: {
+    ...env.DB,
+    batch: async (statements) => {
+      if (viewOnce) {
+        viewOnce = false;
+        await c.publicQuoteRespond(
+          req({ action: "accept", termsAccepted: true }),
+          env,
+          null,
+          viewRace.reference,
+          viewToken,
+        );
+      }
+      return env.DB.batch(statements);
+    },
+  },
+};
+await check(
+  "view race preserves accepted status",
+  "accepted",
+  async () =>
+    (
+      await (
+        await c.publicQuote(
+          new Request("https://test"),
+          viewEnv,
+          null,
+          viewRace.reference,
+          viewToken,
+        )
+      ).json()
+    ).quote.status,
+);
 restored.exec("PRAGMA foreign_keys=ON");
 for (const name of (await readdir("migrations")).filter((n) => n.endsWith(".sql")).sort())
   restored.exec(await readFile(`migrations/${name}`, "utf8"));

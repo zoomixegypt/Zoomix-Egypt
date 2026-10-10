@@ -49,7 +49,9 @@ function ProjectSystem({ project, language, text }) {
           eyebrow={language === "ar" ? "الاتجاه" : "DIRECTION"}
           title={language === "ar" ? "من الاحتياج إلى قرار بصري." : "From need to visual decision."}
         >
-          <p>{text("direction")}</p>
+          <a href="#case-study-direction" className="font-bold underline underline-offset-4">
+            {language === "ar" ? "راجع القرار الإبداعي وأسبابه" : "Review the creative decision and its rationale"}
+          </a>
           <div className="mt-6 h-2 w-full bg-[#0A0A0A]">
             <div className="h-full w-2/3 bg-[#BBFF00]" />
           </div>
@@ -60,14 +62,10 @@ function ProjectSystem({ project, language, text }) {
           eyebrow={language === "ar" ? "المكونات" : "COMPONENTS"}
           title={language === "ar" ? "نظام يشتغل عبر أكثر من نقطة." : "A system that works across touchpoints."}
         >
-          <ul className="space-y-2">
-            {services.map((service) => (
-              <li key={service} className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#BBFF00]" />
-                <span>{service}</span>
-              </li>
-            ))}
-          </ul>
+          <p><b className="public-number">{services.length}</b> {language === "ar" ? "مجالات عمل مترابطة في هذا التصور." : "connected disciplines in this concept."}</p>
+          <a href="#case-study-services" className="mt-4 inline-block font-bold underline underline-offset-4">
+            {language === "ar" ? "راجع الخدمات كاملة" : "Review all services"}
+          </a>
         </SystemCard>
 
         <SystemCard
@@ -75,13 +73,10 @@ function ProjectSystem({ project, language, text }) {
           eyebrow={language === "ar" ? "المخرجات" : "OUTPUTS"}
           title={language === "ar" ? "مخرجات جاهزة للاستخدام." : "Outputs ready to use."}
         >
-          <ul className="space-y-2">
-            {deliverables.slice(0, 4).map((deliverable) => (
-              <li key={deliverable} className="border-b border-black/10 pb-2 last:border-0">
-                {deliverable}
-              </li>
-            ))}
-          </ul>
+          <p><b className="public-number">{deliverables.length}</b> {language === "ar" ? "أنواع مخرجات موضحة في نطاق المشروع أعلاه." : "deliverable types described in the scope above."}</p>
+          <a href="#case-study-deliverables" className="mt-4 inline-block font-bold underline underline-offset-4">
+            {language === "ar" ? "راجع قائمة المخرجات كاملة" : "Review the complete deliverables"}
+          </a>
         </SystemCard>
       </div>
 
@@ -130,7 +125,7 @@ export default function ZoomixCaseStudy() {
   const ActionArrow = language === "ar" ? ArrowUpLeft : ArrowUpRight;
 
   return (
-    <article className="bg-[#F5F4EF] text-[#0A0A0A]" dir={language === "ar" ? "rtl" : "ltr"}>
+    <article className="public-case-study bg-[#F5F4EF] text-[#0A0A0A]" dir={language === "ar" ? "rtl" : "ltr"}>
       <ProjectSeo project={{ ...project, slug }} />
       <div className="flex items-center justify-between gap-4 p-5 md:p-8 border-b border-black/15">
         <span className="font-mono text-xs tracking-[0.16em] text-black/50">

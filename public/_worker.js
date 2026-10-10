@@ -819,8 +819,14 @@ async function studioIntegrations(request, env) {
 
 async function studioAudit(request, env) {
   const auth = await authenticateStudio(request, env); if (!auth.ok) return json({ error: auth.error }, auth.status);
-  const result = await env.DB.prepare("SELECT entity_type, entity_id, action, created_at FROM commercial_audit_log ORDER BY created_at DESC LIMIT 50").all();
-  return json({ entries: (result.results || []).map((item) => ({ entity: item.entity_type, entityId: item.entity_id, action: item.action, at: item.created_at })) });
+  const result = await env.DB.prepare("SELECT entity_type, entity_id, action, after_json, created_at FROM commercial_audit_log ORDER BY created_at DESC LIMIT 50").all();
+  return json({ entries: (result.results || []).map((item) => {
+    let reason = "";
+    if (item.entity_type === "payment" && item.action === "status_changed") {
+      try { reason = text(JSON.parse(item.after_json || "{}").reason, 1000); } catch { /* Historical entries may have no details. */ }
+    }
+    return { entity: item.entity_type, entityId: item.entity_id, action: item.action, at: item.created_at, ...(reason ? {reason} : {}) };
+  }) });
 }
 
 async function studioTelegramTest(request, env) {
@@ -1038,7 +1044,7 @@ async function studioProjects(request, env) {
 async function studioPayments(request, env) {
   const auth = await authenticateStudio(request, env); if (!auth.ok) return json({ error: auth.error }, auth.status);
   const result = await env.DB.prepare("SELECT p.*, q.is_test, j.reference_code, j.client_name, j.project_name FROM commercial_payments p JOIN commercial_projects j ON j.id = p.project_id JOIN commercial_quotes q ON q.id=j.quote_id ORDER BY p.created_at DESC").all();
-  return json({ payments: (result.results || []).map((item) => ({ isTest: Boolean(item.is_test), id: Number(item.id), projectId: Number(item.project_id), reference: item.reference_code, clientName: item.client_name, projectName: item.project_name, type: item.payment_type, amount: Number(item.amount_minor || 0) / 100, status: item.status === "pending" && item.due_at && item.due_at < now() ? "overdue" : item.status, dueAt: item.due_at, paidAt: item.paid_at, createdAt: item.created_at })) });
+  return json({ payments: (result.results || []).map((item) => ({ isTest: Boolean(item.is_test), id: Number(item.id), projectId: Number(item.project_id), reference: item.reference_code, clientName: item.client_name, projectName: item.project_name, type: item.payment_type, label: item.label || "", amount: Number(item.amount_minor || 0) / 100, status: item.status === "pending" && item.due_at && item.due_at < now() ? "overdue" : item.status, dueAt: item.due_at, paidAt: item.paid_at, createdAt: item.created_at })) });
 }
 
 async function studioPaymentUpdate(request, env, id) {
@@ -1049,14 +1055,16 @@ async function studioPaymentUpdate(request, env, id) {
   if (!["pending", "paid", "overdue", "cancelled"].includes(status)) return json({ error: "Invalid payment status." }, 400);
   const before = await env.DB.prepare("SELECT * FROM commercial_payments WHERE id=?").bind(paymentId).first();
   if(!before)return json({error:"Payment not found."},404);
+  const reason = text(payload.reason, 1000);
+  if (before.status === "paid" && status !== "paid" && !reason) return json({error:"A reason is required to reverse collection."},400);
   const updatedAt = now();
   await env.DB.batch([
     env.DB.prepare("UPDATE commercial_payments SET status = ?, paid_at = ?, updated_at = ? WHERE id = ?").bind(status, status === "paid" ? updatedAt : null, updatedAt, paymentId),
-    env.DB.prepare("INSERT INTO commercial_audit_log (entity_type,entity_id,action,before_json,after_json,created_at) VALUES ('payment',?,'status_changed',?,?,?)").bind(String(paymentId),JSON.stringify({status:before.status}),JSON.stringify({status}),updatedAt),
+    env.DB.prepare("INSERT INTO commercial_audit_log (entity_type,entity_id,action,before_json,after_json,created_at) VALUES ('payment',?,'status_changed',?,?,?)").bind(String(paymentId),JSON.stringify({status:before.status}),JSON.stringify({status, ...(reason ? {reason} : {})}),updatedAt),
   ]);
   const item = await env.DB.prepare("SELECT p.*, q.is_test, j.reference_code, j.client_name, j.project_name FROM commercial_payments p JOIN commercial_projects j ON j.id = p.project_id JOIN commercial_quotes q ON q.id=j.quote_id WHERE p.id = ?").bind(paymentId).first();
   if (!item) return json({ error: "Payment not found." }, 404);
-  return json({ payment: { isTest: Boolean(item.is_test), id: Number(item.id), projectId: Number(item.project_id), reference: item.reference_code, clientName: item.client_name, projectName: item.project_name, type: item.payment_type, amount: Number(item.amount_minor || 0) / 100, status: item.status === "pending" && item.due_at && item.due_at < now() ? "overdue" : item.status, dueAt: item.due_at, paidAt: item.paid_at, createdAt: item.created_at } });
+  return json({ payment: { isTest: Boolean(item.is_test), id: Number(item.id), projectId: Number(item.project_id), reference: item.reference_code, clientName: item.client_name, projectName: item.project_name, type: item.payment_type, label: item.label || "", amount: Number(item.amount_minor || 0) / 100, status: item.status === "pending" && item.due_at && item.due_at < now() ? "overdue" : item.status, dueAt: item.due_at, paidAt: item.paid_at, createdAt: item.created_at } });
 }
 
 export async function processPaymentReminders(env) {

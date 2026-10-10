@@ -3,6 +3,7 @@ import { DueFollowUps } from "./BusinessWorkspace";
 import {} from "../../data/commercialStudioPrototype";
 
 import { money, margin, StatusChip, Metric } from "./shared";
+import { qaMetricsNote } from "./labels";
 export default function ControlView({
   language,
   onNavigate,
@@ -129,11 +130,18 @@ export default function ControlView({
           className="csp-button csp-button--primary"
           onClick={() => (priorityQuote ? onOpenQuote?.(priorityQuote.id) : onNavigate("quotes"))}
         >
-          {isArabic ? "افتح العرض" : "Open quote"}
+          {priorityQuote
+            ? isArabic
+              ? "افتح العرض"
+              : "Open quote"
+            : isArabic
+              ? "ابدأ عرض سعر"
+              : "Create a quote"}
           <ChevronRight size={16} />
         </button>
       </section>
 
+      <p className="csp-mode-note">{qaMetricsNote(language)}</p>
       <section className="csp-metrics-grid">
         <Metric
           label={isArabic ? "طلبات جديدة" : "NEW LEADS"}

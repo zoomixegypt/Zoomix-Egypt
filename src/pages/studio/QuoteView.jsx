@@ -23,6 +23,7 @@ import {
 
 import { money, margin, StatusChip, logAudit, useEscape, shortTime } from "./shared";
 import { briefLabel, resolveLeadOffer } from "./briefs";
+import { catalogDescription, catalogTerms, reviewedCost } from "./catalogDefaults";
 export default function QuoteView({
   language,
   catalog,
@@ -48,11 +49,11 @@ export default function QuoteView({
             catalogId: matchedCatalogItem.id,
             category: matchedCatalogItem.category,
             name: matchedCatalogItem.name,
-            description: matchedCatalogItem.description,
+            description: catalogDescription(matchedCatalogItem),
             quantity: 1,
             unitPrice: matchedCatalogItem.price,
             cost: matchedCatalogItem.cost,
-            costPending: Boolean(matchedCatalogItem.costPending),
+            costPending: !reviewedCost(matchedCatalogItem),
             discount: 0,
             optional: false,
           },
@@ -65,7 +66,7 @@ export default function QuoteView({
   const [taxPercent, setTaxPercent] = useState(0);
   const [depositPercent, setDepositPercent] = useState(60);
   const [duration, setDuration] = useState(matchedCatalogItem?.duration?.[language] || "");
-  const [revisions, setRevisions] = useState(2);
+  const [revisions, setRevisions] = useState(matchedCatalogItem?.revisions ?? 2);
   const [preview, setPreview] = useState(false);
   const [clientExtras, setClientExtras] = useState({ "row-2": true });
   const [clientNotice, setClientNotice] = useState("");
@@ -80,7 +81,7 @@ export default function QuoteView({
   const [saveState, setSaveState] = useState("draft");
   const [quoteRecord, setQuoteRecord] = useState(null);
   const [revisionRequest, setRevisionRequest] = useState(null);
-  const [commercial, setCommercial] = useState(emptyTerms);
+  const [commercial, setCommercial] = useState(() => catalogTerms(matchedCatalogItem, language));
   const [rejection, setRejection] = useState(null);
   const [approvalReason, setApprovalReason] = useState("");
   const [testModeBusy, setTestModeBusy] = useState(false);
@@ -313,14 +314,21 @@ export default function QuoteView({
         catalogId,
         category: item.category,
         name: item.name,
-        description: item.description,
+        description: catalogDescription(item),
         quantity: 1,
         unitPrice: item.price,
         cost: item.cost,
+        costPending: !reviewedCost(item),
         discount: 0,
         optional: false,
       },
     ]);
+    const terms = catalogTerms(item, language);
+    setCommercial((current) => ({
+      ...current,
+      conditions: [...new Set([current.conditions, terms.conditions].filter(Boolean))].join("\n"),
+      exclusions: [...new Set([current.exclusions, terms.exclusions].filter(Boolean))].join("\n"),
+    }));
     markDirty();
   };
   const addCustomItem = () => {
@@ -641,32 +649,36 @@ export default function QuoteView({
                 ))}
             </div>
           </section>
-          <section className="csp-client-addons">
-            <p className="csp-kicker">OPTIONAL / YOUR CHOICE</p>
-            <h2>{isArabic ? "إضافات اختيارية" : "Optional additions"}</h2>
-            {items
-              .filter((row) => row.optional)
-              .map((row) => (
-                <label key={row.rowId}>
-                  <input
-                    type="checkbox"
-                    checked={Boolean(clientExtras[row.rowId])}
-                    onChange={(event) => changeExtra(row, event.target.checked)}
-                  />
-                  <span>
-                    <strong>{row.name[language]}</strong>
-                    <small>
-                      {row.quantity} × {money(row.unitPrice, language)} {isArabic ? "جنيه" : "EGP"}
-                    </small>
-                  </span>
-                </label>
-              ))}
-            {clientNotice && (
-              <p className="csp-client-notice" aria-live="polite">
-                {clientNotice}
-              </p>
-            )}
-          </section>
+          {items.some((row) => row.optional) && (
+            <section className="csp-client-addons">
+              <p className="csp-kicker">OPTIONAL / YOUR CHOICE</p>
+              <h2>{isArabic ? "إضافات اختيارية" : "Optional additions"}</h2>
+              {items
+                .filter((row) => row.optional)
+                .map((row) => (
+                  <label key={row.rowId}>
+                    <input
+                      type="checkbox"
+                      disabled={accepted || quoteRecord?.status === "accepted"}
+                      checked={Boolean(clientExtras[row.rowId])}
+                      onChange={(event) => changeExtra(row, event.target.checked)}
+                    />
+                    <span>
+                      <strong>{row.name[language]}</strong>
+                      <small>
+                        {row.quantity} × {money(row.unitPrice, language)}{" "}
+                        {isArabic ? "جنيه" : "EGP"}
+                      </small>
+                    </span>
+                  </label>
+                ))}
+              {clientNotice && (
+                <p className="csp-client-notice" aria-live="polite">
+                  {clientNotice}
+                </p>
+              )}
+            </section>
+          )}
           <section className="csp-client-selection-summary">
             <p className="csp-kicker">FINAL SELECTION</p>
             {selectedRows.map((row) => (
@@ -682,17 +694,55 @@ export default function QuoteView({
           </section>
           <section className="csp-client-total">
             <div>
-              <p>{isArabic ? "الإجمالي بعد الخصم" : "TOTAL AFTER DISCOUNT"}</p>
+              <p>
+                {taxPercent > 0
+                  ? isArabic
+                    ? "الإجمالي شامل الضريبة"
+                    : "TOTAL INCLUDING TAX"
+                  : isArabic
+                    ? "الإجمالي النهائي"
+                    : "FINAL TOTAL"}
+              </p>
               <strong key={clientTotal}>
                 {money(clientTotal, language)} <small>{isArabic ? "جنيه" : "EGP"}</small>
               </strong>
+              <p>
+                {isArabic ? "قبل الضريبة" : "Before tax"}:{" "}
+                <span className="csp-sensitive-number">
+                  {money(clientSubtotal - clientDiscount, language)}
+                </span>{" "}
+                {isArabic ? "جنيه" : "EGP"} · {isArabic ? "الضريبة" : "Tax"}:{" "}
+                <span className="csp-sensitive-number">{money(clientTax, language)}</span>{" "}
+                {isArabic ? "جنيه" : "EGP"}
+              </p>
               <span>
                 {isArabic
-                  ? `${depositPercent}% مقدم · ${duration} · ${revisions} مراجعات · العرض صالح لمدة 14 يومًا`
-                  : `${depositPercent}% deposit · ${duration} · ${revisions} revisions · valid for 14 days`}
+                  ? `${depositPercent}% مقدم · ${duration} · ${revisions} مراجعات · العرض صالح لمدة ${commercial.expiryDays ?? 14} يومًا`
+                  : `${depositPercent}% deposit · ${duration} · ${revisions} revisions · valid for ${commercial.expiryDays ?? 14} days`}
               </span>
+              {commercial.paymentSchedule?.map((row, index) => (
+                <p key={index}>
+                  {row.label} · <span className="csp-sensitive-number">{row.percent}%</span> ·{" "}
+                  {isArabic ? `بعد ${row.days} يوم` : `After ${row.days} days`}
+                </p>
+              ))}
+              {commercial.conditions && (
+                <div>
+                  <h3>{isArabic ? "الشروط" : "Conditions"}</h3>
+                  <p style={{ whiteSpace: "pre-wrap" }}>{commercial.conditions}</p>
+                </div>
+              )}
+              {commercial.exclusions && (
+                <div>
+                  <h3>{isArabic ? "الاستبعادات" : "Exclusions"}</h3>
+                  <p style={{ whiteSpace: "pre-wrap" }}>{commercial.exclusions}</p>
+                </div>
+              )}
             </div>
-            <div className="csp-client-actions">
+            <div
+              className="csp-client-actions"
+              inert={accepted || quoteRecord?.status === "accepted"}
+            >
               <button type="button" onClick={() => setChangeRequested(true)}>
                 {isArabic ? "طلب تعديل" : "Request a change"}
               </button>
@@ -718,7 +768,11 @@ export default function QuoteView({
               {money(clientTotal, language)} {isArabic ? "جنيه" : "EGP"}
             </strong>
           </span>
-          <button type="button" onClick={() => setAcceptOpen(true)}>
+          <button
+            type="button"
+            disabled={accepted || quoteRecord?.status === "accepted"}
+            onClick={() => setAcceptOpen(true)}
+          >
             {isArabic ? "مراجعة وقبول" : "Review & accept"}
           </button>
         </div>
@@ -800,7 +854,15 @@ export default function QuoteView({
       <header className="csp-page-head">
         <div>
           <p className="csp-kicker">QUOTE / NEW FROM BRIEF</p>
-          <h1>{isArabic ? "إنشاء عرض سعر" : "QUOTE BUILDER"}</h1>
+          <h1>
+            {quoteRecord?.status === "accepted"
+              ? isArabic
+                ? "عرض سعر مقبول"
+                : "ACCEPTED QUOTE"
+              : isArabic
+                ? "إنشاء عرض سعر"
+                : "QUOTE BUILDER"}
+          </h1>
           <p className="csp-page-description">
             {isArabic
               ? "كوّن النطاق، راقب الهامش، ثم راجع العرض قبل إرساله."
@@ -1278,7 +1340,15 @@ export default function QuoteView({
                 <MessageCircle size={18} />
                 <span>TELEGRAM / PREVIEW</span>
               </div>
-              <strong>{isArabic ? "عرض جديد جاهز للمراجعة" : "New quote ready for review"}</strong>
+              <strong>
+                {quoteRecord?.status === "accepted"
+                  ? isArabic
+                    ? "تم قبول العرض"
+                    : "Quote accepted"
+                  : isArabic
+                    ? "معاينة محتوى التنبيه — ليست رسالة مرسلة"
+                    : "Alert content preview — not a sent message"}
+              </strong>
               <p>
                 {quoteReferenceLabel} · {money(total, language)} {isArabic ? "جنيه" : "EGP"}
               </p>
@@ -1361,8 +1431,8 @@ export default function QuoteView({
             <p className="csp-modal-copy">
               {storageMode === "cloud"
                 ? isArabic
-                  ? "سيتم حفظ أحدث إصدار وإصدار رابط آمن صالح لمدة 14 يومًا."
-                  : "The latest version will be saved and a secure 14-day link will be issued."
+                  ? `سيتم حفظ أحدث إصدار وإصدار رابط آمن صالح لمدة ${commercial.expiryDays ?? 14} يومًا.`
+                  : `The latest version will be saved and a secure ${commercial.expiryDays ?? 14}-day link will be issued.`
                 : isArabic
                   ? "أنت في الوضع المحلي التجريبي؛ لن يصدر رابط حقيقي."
                   : "Local demo mode is active; no real link will be issued."}

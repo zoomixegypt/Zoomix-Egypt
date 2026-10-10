@@ -4,12 +4,14 @@ import { useLanguage } from "../i18n";
 import { Gsap } from "../utils/gsapAnimate";
 import { ZOOMIX_PACKAGES } from "../data/zoomixPackages";
 import { trackEvent } from "../utils/analytics";
-import { SITE_CONTACT } from "../data/siteSettings";
+import { SITE_CONTACT, PAYMENT_TERMS } from "../data/siteSettings";
+import PackageRail from "./PackageRail";
 import {
   ZOOMIX_CONTENT_PACKAGES,
   ZOOMIX_EVENT_PACKAGES,
   ZOOMIX_ONE_OFF_SERVICES,
   ZOOMIX_PARTNER_PACKAGES,
+  contentProductionLines,
 } from "../data/zoomixOfferings";
 
 const labelFor = (value, language) => value?.[language] || value || "";
@@ -29,13 +31,15 @@ function applyCatalogToOffers(offers, catalogItems) {
         description:
           item.description?.ar && item.description?.en ? item.description : offer.description,
         tagline: item.description?.ar && item.description?.en ? item.description : offer.tagline,
-        price: new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(item.price),
+        price: new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(item.price),
         featured: item.featured,
         outputs:
-          item.included?.ar?.length && item.included?.en?.length ? item.included : offer.outputs,
+          item.included?.ar?.length && item.included?.en?.length
+            ? {ar: contentProductionLines(offer.id, item.included.ar), en: contentProductionLines(offer.id, item.included.en)}
+            : offer.outputs,
         exclusions: item.exclusions?.ar && item.exclusions?.en ? item.exclusions : offer.exclusions,
         duration: item.duration?.ar && item.duration?.en ? item.duration : offer.duration,
-        revisions: item.revisions || offer.revisions,
+        revisions: item.revisions ?? offer.revisions,
       },
     ];
   });
@@ -117,7 +121,7 @@ function OfferTierCard({ offer, language, route, isStart, index, mobileCard = fa
       </h4>
       <p className="mt-3 min-h-12 text-sm leading-6 text-white/65">{description}</p>
       <p
-        className="mt-6 font-mono text-2xl text-[#BBFF00]"
+        className="mt-6 public-number text-2xl text-[#BBFF00]"
         dir="ltr"
         style={{ unicodeBidi: "isolate" }}
       >
@@ -134,13 +138,17 @@ function OfferTierCard({ offer, language, route, isStart, index, mobileCard = fa
         ))}
       </ul>
       {note && <p className="mt-5 text-xs leading-5 text-white/65">{note}</p>}
+      {offer.exclusions?.[language] && <p className="mt-3 text-sm leading-6 text-white/75"><strong>{isArabic ? "غير مشمول: " : "Not included: "}</strong>{offer.exclusions[language]}</p>}
+      <p className="mt-3 text-xs leading-6 text-white/70">{PAYMENT_TERMS[language]}</p>
       <button
         type="button"
         onClick={() => saveSelection(route, offer.id, isStart, language)}
         data-cursor-label={isArabic ? "اختار" : "CHOOSE"}
         className={`mt-6 zoomix-button w-full ${offer.featured ? "bg-[#BBFF00] text-[#0A0A0A]" : "border-white/30 text-white"}`}
       >
-        {isArabic ? "اختار المسار" : "Choose this route"}
+        {isArabic
+          ? `اختار ${labelFor(offer.name, language)}`
+          : `Choose ${labelFor(offer.name, language)}`}
       </button>
       <a
         href={getPackageWhatsAppHref(offer, language, route)}
@@ -412,7 +420,7 @@ const PackagesSection = memo(function PackagesSection() {
                   </span>
                   <div className="h-px flex-1 bg-white/10" />
                 </div>
-                <div className="mobile-package-scroller" aria-label={lane.label}>
+                <PackageRail offers={lane.packages} language={language}>
                   {lane.packages.map((offer, index) => (
                     <OfferTierCard
                       key={offer.id}
@@ -424,7 +432,7 @@ const PackagesSection = memo(function PackagesSection() {
                       mobileCard
                     />
                   ))}
-                </div>
+                </PackageRail>
               </div>
             ))
           ) : (

@@ -105,9 +105,6 @@ export default function Home() {
           <Suspense fallback={<SectionSkeleton tone="dark" className="min-h-screen" />}>
             <ProjectGallery onOpenProject={handleOpenProject} />
           </Suspense>
-          <Suspense fallback={<SectionSkeleton tone="dark" className="min-h-[40vh]" />}>
-            <SelectedWorkReferences />
-          </Suspense>
         </div>
 
         <Suspense fallback={<SectionSkeleton tone="dark" className="min-h-[40vh]" />}>
@@ -120,6 +117,7 @@ export default function Home() {
         </Suspense>
 
         <Suspense fallback={<SectionSkeleton tone="dark" className="min-h-[40vh]" />}>
+          <SelectedWorkReferences />
           <Footer />
         </Suspense>
       </main>

@@ -51,24 +51,24 @@ export const ZOOMIX_CONTENT_PACKAGES = [
     },
     outputs: {
       ar: [
-        "جلسة إنتاج لمدة 6 ساعات",
-        "2 فيديو قصير من خامات العميل",
-        "8 صور معدلة",
+        "جلسة تصوير وإنتاج محتوى لمدة 6 ساعات بواسطة فريق Zoomix",
+        "2 فيديو قصير من تصوير فريق Zoomix، تشمل المونتاج",
+        "8 صور من تصوير فريق Zoomix، معدلة وجاهزة للاستخدام",
         "Brief وShot List واتجاه إبداعي",
         "مراجعة واحدة",
       ],
       en: [
-        "Six-hour production session",
-        "2 short videos from client-provided footage",
-        "8 edited photos",
+        "6-hour shoot and content production session by the Zoomix team",
+        "2 short videos shot and edited by the Zoomix team",
+        "8 photos shot and edited by the Zoomix team",
         "Brief, Shot List and creative direction",
         "One revision round",
       ],
     },
     price: "5,000",
     priceNote: {
-      ar: "أتعاب الإنتاج الإبداعي. المعدات والانتقالات حسب التنفيذ.",
-      en: "Creative production fee. Equipment and transport depend on the production.",
+      ar: "السعر يشمل التصوير وإنتاج المحتوى والمونتاج، ولا يشمل إيجار المعدات أو الانتقالات. تُوضح تكلفتهما في عرض السعر قبل البدء.",
+      en: "The price includes shooting, content production and editing. Equipment rental and travel are not included; their costs are specified in the quote before work starts.",
     },
   },
   {
@@ -80,24 +80,24 @@ export const ZOOMIX_CONTENT_PACKAGES = [
     },
     outputs: {
       ar: [
-        "جلسة إنتاج لمدة 6 ساعات",
-        "3 فيديوهات قصيرة من خامات العميل",
-        "15 صورة معدلة",
+        "جلسة تصوير وإنتاج محتوى لمدة 6 ساعات بواسطة فريق Zoomix",
+        "3 فيديوهات قصيرة من تصوير فريق Zoomix، تشمل المونتاج",
+        "15 صورة من تصوير فريق Zoomix، معدلة وجاهزة للاستخدام",
         "تطوير الفكرة والرسائل وProduction Plan",
         "مراجعتان",
       ],
       en: [
-        "Six-hour production session",
-        "3 short videos from client-provided footage",
-        "15 edited photos",
+        "6-hour shoot and content production session by the Zoomix team",
+        "3 short videos shot and edited by the Zoomix team",
+        "15 photos shot and edited by the Zoomix team",
         "Idea, message and production-plan development",
         "Two revision rounds",
       ],
     },
     price: "7,000",
     priceNote: {
-      ar: "أتعاب الإنتاج الإبداعي. المعدات والانتقالات حسب التنفيذ.",
-      en: "Creative production fee. Equipment and transport depend on the production.",
+      ar: "السعر يشمل التصوير وإنتاج المحتوى والمونتاج، ولا يشمل إيجار المعدات أو الانتقالات. تُوضح تكلفتهما في عرض السعر قبل البدء.",
+      en: "The price includes shooting, content production and editing. Equipment rental and travel are not included; their costs are specified in the quote before work starts.",
     },
     featured: true,
   },
@@ -110,17 +110,17 @@ export const ZOOMIX_CONTENT_PACKAGES = [
     },
     outputs: {
       ar: [
-        "جلسة إنتاج لمدة 6 ساعات",
-        "4 فيديوهات قصيرة من خامات العميل",
-        "20 صورة معدلة",
+        "جلسة تصوير وإنتاج محتوى لمدة 6 ساعات بواسطة فريق Zoomix",
+        "4 فيديوهات قصيرة من تصوير فريق Zoomix، تشمل المونتاج",
+        "20 صورة من تصوير فريق Zoomix، معدلة وجاهزة للاستخدام",
         "اتجاه بصري وكتابة أو تحسين الاسكريبتات",
         "مونتاج متقدم وMotion Graphics بسيطة",
         "مراجعتان",
       ],
       en: [
-        "Six-hour production session",
-        "4 short videos from client-provided footage",
-        "20 edited photos",
+        "6-hour shoot and content production session by the Zoomix team",
+        "4 short videos shot and edited by the Zoomix team",
+        "20 photos shot and edited by the Zoomix team",
         "Visual direction and script development or refinement",
         "Advanced editing and simple motion graphics",
         "Two revision rounds",
@@ -128,11 +128,22 @@ export const ZOOMIX_CONTENT_PACKAGES = [
     },
     price: "9,500",
     priceNote: {
-      ar: "أتعاب الإنتاج الإبداعي. المعدات والانتقالات حسب التنفيذ.",
-      en: "Creative production fee. Equipment and transport depend on the production.",
+      ar: "السعر يشمل التصوير وإنتاج المحتوى والمونتاج، ولا يشمل إيجار المعدات أو الانتقالات. تُوضح تكلفتهما في عرض السعر قبل البدء.",
+      en: "The price includes shooting, content production and editing. Equipment rental and travel are not included; their costs are specified in the quote before work starts.",
     },
   },
 ];
+
+// Normalize legacy wording only for the three standard content packages.
+// This affects current displays/new quote defaults, never saved quote snapshots.
+export function contentProductionLines(id, lines = []) {
+  if (!["content-start", "content-build", "content-campaign"].includes(id)) return lines;
+  return lines.map(line => String(line)
+    .replace("جلسة إنتاج لمدة 6 ساعات", "جلسة تصوير وإنتاج محتوى لمدة 6 ساعات بواسطة فريق Zoomix")
+    .replace("Six-hour production session", "6-hour shoot and content production session by the Zoomix team")
+    .replace("من خامات العميل", "من تصوير فريق Zoomix، تشمل المونتاج")
+    .replace("from client-provided footage", "shot and edited by the Zoomix team"));
+}
 
 export const ZOOMIX_EVENT_PACKAGES = [
   {
@@ -251,6 +262,7 @@ export const ZOOMIX_PARTNER_PACKAGES = [
         "Caption كامل لكل منشور",
         "4 مكالمات تخطيط شهريًا",
         "حتى 10 طلبات تعديل محدودة",
+        "كل طلب: تعديل بسيط على مخرج واحد، دون فكرة جديدة أو إعادة تصميم",
       ],
       en: [
         "6 social post designs",
@@ -259,6 +271,7 @@ export const ZOOMIX_PARTNER_PACKAGES = [
         "Full caption for every post",
         "4 planning calls per month",
         "Up to 10 limited revision requests",
+        "Each request: a minor change to one deliverable, not a new concept or redesign",
       ],
     },
     price: "9,000",
@@ -279,6 +292,7 @@ export const ZOOMIX_PARTNER_PACKAGES = [
         "4 مكالمات تخطيط شهريًا",
         "خطة محتوى كاملة وتطوير الرسائل",
         "حتى 15 طلب تعديل محدود",
+        "كل طلب: تعديل بسيط على مخرج واحد، دون فكرة جديدة أو إعادة تصميم",
       ],
       en: [
         "10 social post designs",
@@ -288,6 +302,7 @@ export const ZOOMIX_PARTNER_PACKAGES = [
         "4 planning calls per month",
         "Full content plan and message direction",
         "Up to 15 limited revision requests",
+        "Each request: a minor change to one deliverable, not a new concept or redesign",
       ],
     },
     price: "13,000",
@@ -310,6 +325,7 @@ export const ZOOMIX_PARTNER_PACKAGES = [
         "Creative Direction وحملتان محتوى صغيرتان",
         "مراجعة شهرية واقتراحات تحسين",
         "حتى 20 طلب تعديل محدود",
+        "كل طلب: تعديل بسيط على مخرج واحد، دون فكرة جديدة أو إعادة تصميم",
       ],
       en: [
         "14 social post designs",
@@ -320,6 +336,7 @@ export const ZOOMIX_PARTNER_PACKAGES = [
         "Creative direction and two small content campaigns",
         "Monthly review and improvement recommendations",
         "Up to 20 limited revision requests",
+        "Each request: a minor change to one deliverable, not a new concept or redesign",
       ],
     },
     price: "18,000",

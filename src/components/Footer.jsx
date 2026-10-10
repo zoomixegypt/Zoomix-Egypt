@@ -64,7 +64,7 @@ const Footer = memo(function Footer() {
               href="/route-finder"
               className="footer-route-cta mt-8 inline-flex w-full items-center justify-between gap-4 border border-[#BBFF00]/60 bg-[#BBFF00] px-4 py-4 font-bold text-[#0A0A0A] transition-transform hover:-translate-y-0.5 sm:w-fit"
             >
-              <span>{language === "ar" ? "حدد خطوتك — 3 أسئلة" : "Find your next move — 3 questions"}</span>
+              <span>{language === "ar" ? "حدد خطوتك — أسئلة قصيرة" : "Find your next move — short questions"}</span>
               <ActionArrow size={18} aria-hidden="true" />
             </a>
           </div>

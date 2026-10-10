@@ -2,6 +2,10 @@ import { useEffect, useMemo, useState, memo, useRef } from "react";
 import { ArrowUpLeft, ArrowUpRight, Check, MessageCircle } from "lucide-react";
 import { useLanguage } from "../i18n";
 import { trackEvent } from "../utils/analytics";
+import { submitBrief } from "../utils/submitBrief";
+import { readBrowserValue, removeBrowserValue } from "../utils/browserStorage";
+import { openBriefWhatsApp } from "../utils/briefWhatsApp";
+import BriefSaveReceipt from "./BriefSaveReceipt";
 import { ZOOMIX_PACKAGES } from "../data/zoomixPackages";
 import { SITE_CONTACT, PAYMENT_TERMS } from "../data/siteSettings";
 import {
@@ -146,6 +150,8 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
   const isArabic = language === "ar";
   const [form, setForm] = useState(initialForm);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const submitLock = useRef(false);
   const [errors, setErrors] = useState({});
   const [whatsappBlocked, setWhatsappBlocked] = useState(false);
   const [messageCopied, setMessageCopied] = useState(false);
@@ -204,7 +210,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
         service: "",
       }));
     };
-    applyPackage(window.localStorage.getItem("zoomix-selected-package"));
+    applyPackage(readBrowserValue("zoomix-selected-package"));
     try {
       applyRoute(JSON.parse(window.localStorage.getItem("zoomix-project-route") || "null"));
     } catch {
@@ -438,6 +444,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (submitLock.current || submitted) return;
     const required = ["name", "description", "contactPreference"];
     const resolvedService = form.service || inferService(form.route, activeShowType);
     const nextErrors = Object.fromEntries(
@@ -470,30 +477,24 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       setSubmitted(false);
       return;
     }
+    submitLock.current = true;
+    setSubmitting(true);
     setSubmitError("");
     setWhatsappBlocked(false);
     setMessageCopied(false);
     try {
-      const response = await fetch("/api/briefs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const result = await submitBrief({
           ...form,
           activity: activityValue,
           goal: form.goal || form.description,
           service: resolvedService,
           offerName: selectedOfferName,
-        }),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok)
-        throw new Error(
-          result.error || label("حصلت مشكلة أثناء حفظ الطلب.", "We could not save the brief."),
-        );
+        }, language);
       setReferenceCode(result.referenceCode || "");
       setEditUrl(result.editUrl || "");
       setSubmitted(true);
-      window.localStorage.removeItem("zoomix-brief-draft");
+      // Storage restrictions must not turn a confirmed save into a retryable failure.
+      removeBrowserValue("zoomix-brief-draft");
       trackEvent("brief_submitted", {
         route: form.route || "unknown",
         package_id: form.offerId || form.packageId || "none",
@@ -503,18 +504,16 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
           route: form.route || "unknown",
           package_id: form.offerId || form.packageId || "none",
         });
-        const whatsappWindow = window.open(
-          `https://wa.me/201555451535?text=${encodeURIComponent(buildMessage(result.referenceCode, result.editUrl))}`,
-          "_blank",
-          "noopener,noreferrer",
-        );
-        setWhatsappBlocked(!whatsappWindow);
+        setWhatsappBlocked(!openBriefWhatsApp(buildMessage(result.referenceCode, result.editUrl)));
       }
     } catch (error) {
       setSubmitted(false);
       setSubmitError(
         error.message || label("حصلت مشكلة أثناء الإرسال.", "Something went wrong while sending."),
       );
+    } finally {
+      submitLock.current = false;
+      setSubmitting(false);
     }
   };
 
@@ -746,8 +745,8 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 role="alert"
               >
                 {label(
-                  "راجع الحقول المطلوبة قبل الإرسال.",
-                  "Please complete the required fields before sending.",
+                  wizardStep === 3 ? "راجع الحقول المطلوبة قبل الإرسال." : "راجع الحقول المطلوبة قبل المتابعة.",
+                  wizardStep === 3 ? "Please complete the required fields before sending." : "Please complete the required fields before continuing.",
                 )}
               </div>
             )}
@@ -817,8 +816,8 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                           <button
                             type="button"
                             onClick={() => {
-                              window.localStorage.removeItem("zoomix-selected-package");
-                              window.localStorage.removeItem("zoomix-project-route");
+                              removeBrowserValue("zoomix-selected-package");
+                              removeBrowserValue("zoomix-project-route");
                               window.location.assign("/route-finder");
                             }}
                             className="shrink-0 text-xs font-bold underline decoration-black/30 underline-offset-4 transition-colors hover:text-[#5e7c00]"
@@ -989,10 +988,34 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                     </div>
                     <p className="mt-1 text-sm text-black/55">
                       {label(
-                        "راجعنا الاختيار والتفاصيل. فاضل طريقة التواصل فقط.",
-                        "The direction and details are set. Only the contact method is left.",
+                        "راجع بيانات مشروعك، ثم اختار وسيلة التواصل قبل الإرسال.",
+                        "Review your project details, then choose how we should contact you before sending.",
                       )}
                     </p>
+                  </div>
+                  <div className="sm:col-span-2 border border-black/15 p-4">
+                    <h3 className="text-lg font-bold">{label("مراجعة بيانات المشروع", "Review project details")}</h3>
+                    <dl className="public-brief-review">
+                      {[
+                        [label("الاسم", "Name"), form.name],
+                        [label("اسم المشروع", "Project"), form.project],
+                        [label("نوع النشاط", "Activity"), activityValue],
+                        [label("الخدمة", "Service"), selectedOfferName || optionLabel(serviceOptions, form.service)],
+                        [label("الميزانية", "Budget"), optionLabel(BUDGET_OPTIONS, form.budget)],
+                        [label("الموعد", "Timeline"), optionLabel(TIMELINE_OPTIONS, form.launchDate)],
+                        [label("رابط المشروع", "Project link"), form.projectLink],
+                        [label("مصدر الخامات", "Content source"), optionLabel(CONTENT_SOURCE_OPTIONS, form.contentSource)],
+                        [label("نوع الحدث", "Event type"), optionLabel(EVENT_TYPE_OPTIONS, form.eventType)],
+                        [label("تاريخ الحدث", "Event date"), form.eventDate],
+                        [label("مكان الحدث", "Event location"), form.eventLocation],
+                        [label("نوع التغطية", "Coverage type"), optionLabel(EVENT_COVERAGE_OPTIONS, form.coverageType)],
+                        [label("الهدف والتفاصيل", "Goal and details"), form.description],
+                      ].filter(([, value]) => String(value || "").trim()).map(([title, value]) => <div key={title}><dt>{title}</dt><dd>{value}</dd></div>)}
+                    </dl>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <button type="button" className="zoomix-button border-black/25 text-black" onClick={() => goToStep(1)}>{label("تعديل الاختيار والبيانات", "Edit selection and details")}</button>
+                      <button type="button" className="zoomix-button border-black/25 text-black" onClick={() => goToStep(2)}>{label("تعديل نطاق المشروع", "Edit project scope")}</button>
+                    </div>
                   </div>
                   <div className="sm:col-span-2 border-t border-black/15 pt-5">
                     <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-black/45">
@@ -1030,6 +1053,12 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                       label("الوقت المفضل للمكالمة", "Preferred call time"),
                       CALL_TIME_OPTIONS,
                     )}
+                  <details id="brief-privacy" className="sm:col-span-2 border border-black/15 p-4 text-sm leading-7">
+                    <summary className="cursor-pointer font-bold">{label("كيف نستخدم بيانات الطلب؟", "How are your request details used?")}</summary>
+                    <p>{label("نجمع بيانات التواصل وتفاصيل المشروع التي تدخلها لإدارة طلبك والرد عليك. تُحفظ الطلبات المُرسلة في نظام Zoomix، وقد يصل إشعار بها لفريق الإدارة عبر Telegram.", "We collect the contact and project details you enter to manage and respond to your request. Submitted requests are stored in Zoomix's system and may generate a Telegram notification for the administration team.")}</p>
+                    <p>{label("تُحفظ مسودة النموذج في هذا المتصفح لتكمل لاحقًا. اختيار واتساب يفتح رسالة بتفاصيل الطلب، وإرسالها داخل واتساب يتم بمعرفتك.", "A form draft is saved in this browser so you can continue later. Choosing WhatsApp opens a message containing the request details; you send that message yourself in WhatsApp.")}</p>
+                    <p>{label("لطلب تصحيح بيانات الطلب أو الاستفسار عنها، تواصل معنا على", "For corrections or questions about your request details, contact")} <a className="underline" href={`mailto:${SITE_CONTACT.email}`}>{SITE_CONTACT.email}</a>.</p>
+                  </details>
                   <label className="sm:col-span-2 flex items-start gap-3 text-sm leading-6 text-black/70">
                     <input
                       type="checkbox"
@@ -1075,9 +1104,11 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                     </button>
                     <button
                       type="submit"
+                      disabled={submitting || submitted}
+                      aria-busy={submitting}
                       className="zoomix-button w-full bg-[#BBFF00] text-[#0A0A0A] shadow-[0_8px_24px_rgba(187,255,0,0.15)] sm:w-auto"
                     >
-                      {label("ابعت البريف", "Send the brief")}{" "}
+                      {submitting ? label("جارٍ حفظ الطلب…", "Saving your brief…") : submitted ? label("تم حفظ الطلب", "Brief saved") : label("ابعت البريف", "Send the brief")}{" "}
                       <ActionArrow className="brief-next-arrow" size={18} />
                     </button>
                   </div>
@@ -1116,16 +1147,8 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 role="status"
                 aria-live="polite"
               >
-                <p className="flex items-center gap-2">
-                  <Check className="brief-success-icon" size={16} aria-hidden="true" />
-                  {form.contactPreference === "whatsapp"
-                    ? label("تم حفظ البريف وفتح واتساب.", "Brief saved and WhatsApp opened.")
-                    : label(
-                        "تم حفظ البريف. هنتواصل معاك بالطريقة اللي اخترتها.",
-                        "Brief saved. We will follow up using your preferred contact method.",
-                      )}
-                  {referenceCode && <span className="font-mono font-bold">{referenceCode}</span>}
-                </p>
+                <BriefSaveReceipt language={language} contactPreference={form.contactPreference}
+                  whatsappBlocked={whatsappBlocked} referenceCode={referenceCode} />
                 {editUrl && (
                   <a
                     href={editUrl}
@@ -1147,7 +1170,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
         target="_blank"
         rel="noreferrer"
         aria-label="WhatsApp"
-        className="whatsapp-float fixed left-5 z-40 w-12 h-12 bg-[#BBFF00] text-[#0A0A0A] flex items-center justify-center shadow-lg"
+        className="whatsapp-float fixed left-5 z-40 w-12 h-12 bg-[#BBFF00] text-[#0A0A0A] hidden md:flex items-center justify-center shadow-lg"
       >
         <MessageCircle size={22} />
       </a>

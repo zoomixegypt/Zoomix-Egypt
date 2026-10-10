@@ -37,7 +37,8 @@
     "react-router-dom": "^7.14.1"
   },
   "scripts": {
-    "test:studio": "node scripts/test-studio.mjs && node scripts/test-commercial.mjs && node scripts/test-studio-matrix.mjs",
+    "test:main-site": "node scripts/test-main-site.mjs && node scripts/test-brief-submit.mjs && node scripts/test-browser-storage.mjs && node scripts/test-brief-whatsapp.mjs",
+    "test:studio": "node scripts/test-studio.mjs && node scripts/test-commercial.mjs && node scripts/test-studio-matrix.mjs && node scripts/test-studio-display.mjs",
     "test:studio:matrix": "node scripts/test-studio-matrix.mjs",
     "start": "vite --host 0.0.0.0",
     "dev": "vite --host 0.0.0.0",

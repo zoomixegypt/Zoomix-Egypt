@@ -70,12 +70,14 @@ export function resolveLeadOffer(lead, catalog) {
     [
       publicOffer.description?.[language] || publicOffer.tagline?.[language],
       ...(publicOffer.outputs?.[language] || []),
+      publicOffer.priceNote?.[language],
       publicOffer.exclusions?.[language],
     ]
       .filter(Boolean)
       .join("\n");
   return {
     id: null,
+    policyId: publicOffer.id,
     category: ZOOMIX_PACKAGES.includes(publicOffer)
       ? "foundation"
       : ZOOMIX_CONTENT_PACKAGES.includes(publicOffer)
@@ -85,6 +87,10 @@ export function resolveLeadOffer(lead, catalog) {
           : "partnership",
     name: publicOffer.name,
     description: { ar: scope("ar"), en: scope("en") },
+    exclusions: publicOffer.exclusions,
+    revisions:
+      publicOffer.revisions ??
+      { "content-start": 1, "content-build": 2, "content-campaign": 2 }[publicOffer.id],
     price: Number(publicOffer.price.replaceAll(",", "")),
     cost: null,
     costPending: true,
@@ -96,9 +102,9 @@ export function resolveLeadOffer(lead, catalog) {
 export function visibleQuoteDrafts(entries, quotes = []) {
   return entries.filter(
     ([, row]) =>
-      (row.items?.length || row.clientName || row.projectName || row.record?.id) && (
-      !row.record?.id ||
-      row.cloudDirty ||
-      !quotes.some((quote) => String(quote.id) === String(row.record.id))),
+      (row.items?.length || row.clientName || row.projectName || row.record?.id) &&
+      (!row.record?.id ||
+        row.cloudDirty ||
+        !quotes.some((quote) => String(quote.id) === String(row.record.id))),
   );
 }

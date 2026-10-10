@@ -53,16 +53,22 @@ const ProcessSection = memo(function ProcessSection() {
               <h3 className="process-step-title mt-3 text-2xl font-black md:mt-5">
                 {processLabels[step.key]?.[isArabic ? "ar" : "en"] || step.key.toUpperCase()}
               </h3>
-              <p className="process-step-description mt-2 text-black/60 leading-6 md:mt-4 md:leading-7">{isArabic ? step.ar : step.en}</p>
+              <p className="process-step-description mt-2 text-black/60 leading-6 md:mt-4 md:leading-7">
+                {isArabic ? step.ar : step.en}
+              </p>
             </Gsap.article>
           ))}
         </div>
 
-        <div id="faq-section" className="mt-16 grid gap-8 md:mt-40 lg:grid-cols-[0.7fr_1.3fr] lg:gap-12">
+        <div
+          id="faq-section"
+          className="mt-16 grid gap-8 md:mt-40 lg:grid-cols-[0.7fr_1.3fr] lg:gap-12"
+        >
           <h2
             className={`${isArabic ? "font-arabic tracking-normal" : "font-display tracking-[-0.05em]"} text-4xl md:text-6xl font-black leading-none`}
           >
-            FAQ<span className="text-[#BBFF00]">.</span>
+            {language === "ar" ? "الأسئلة الشائعة" : "FAQ"}
+            <span className="text-[#BBFF00]">.</span>
           </h2>
           <div className="border-t border-black/20">
             {FAQ_ITEMS.map((item, index) => {
@@ -97,16 +103,23 @@ const ProcessSection = memo(function ProcessSection() {
 
         <div className="faq-route-cta mt-10 flex flex-col justify-between gap-5 border border-black/15 bg-white/60 p-5 md:flex-row md:items-center md:p-7">
           <div>
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-black/65">ZOOMIX / QUICK MATCH</span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-black/65">
+              ZOOMIX / QUICK MATCH
+            </span>
             <p className="mt-2 text-lg font-black">
               {isArabic ? "لسه مش عارف تبدأ منين؟" : "Still not sure where to start?"}
             </p>
             <p className="mt-1 text-sm leading-6 text-black/55">
-              {isArabic ? "جاوب على 3 أسئلة ونوصلك للخطوة الأقرب لمشروعك." : "Answer three questions and we will point you to the closest next move."}
+              {isArabic
+                ? "جاوب على أسئلة قصيرة ونوصلك للخطوة الأقرب لمشروعك."
+                : "Answer a few short questions and we will point you to the closest next move."}
             </p>
           </div>
-          <a href="/route-finder" className="zoomix-button w-full shrink-0 justify-center bg-[#BBFF00] text-black sm:w-auto">
-            {isArabic ? "حدد خطوتك — 3 أسئلة" : "Find your next move — 3 questions"}
+          <a
+            href="/route-finder"
+            className="zoomix-button w-full shrink-0 justify-center bg-[#BBFF00] text-black sm:w-auto"
+          >
+            {isArabic ? "حدد خطوتك — أسئلة قصيرة" : "Find your next move — short questions"}
             <ActionArrow size={18} aria-hidden="true" />
           </a>
         </div>

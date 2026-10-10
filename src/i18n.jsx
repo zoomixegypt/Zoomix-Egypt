@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { trackEvent } from "./utils/analytics";
+import { readBrowserValue, writeBrowserValue } from "./utils/browserStorage";
 
 const STORAGE_KEY = "zoomix-language";
 
@@ -154,7 +155,7 @@ const translations = {
 
 function readInitialLanguage() {
   if (typeof window === "undefined") return "ar";
-  return window.localStorage.getItem(STORAGE_KEY) === "en" ? "en" : "ar";
+  return readBrowserValue(STORAGE_KEY) === "en" ? "en" : "ar";
 }
 
 const LanguageContext = createContext(null);
@@ -163,7 +164,7 @@ export function I18nProvider({ children }) {
   const [language, setLanguage] = useState(readInitialLanguage);
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, language);
+    writeBrowserValue(STORAGE_KEY, language);
     document.documentElement.lang = language;
     document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
     document.body.dir = language === "ar" ? "rtl" : "ltr";

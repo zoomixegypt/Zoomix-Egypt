@@ -1,4 +1,5 @@
 import { studioFetch } from "./api";
+import { studioLabel } from "./labels";
 import { useUnsavedChanges, confirmLeave } from "./unsaved";
 import { useState } from "react";
 import { MoreHorizontal, Plus, Save, X } from "lucide-react";
@@ -18,6 +19,8 @@ export default function PromotionsView({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [formDirty, setFormDirty] = useState(false);
+  const [kind, setKind] = useState("percentage");
+  const [scope, setScope] = useState("all");
   useUnsavedChanges(formDirty && showCreate);
   useEscape(showCreate, () => {
     if (confirmLeave()) {
@@ -204,11 +207,11 @@ export default function PromotionsView({
             <div className="csp-promo-meta">
               <span>
                 {isArabic ? "النطاق" : "Scope"}
-                <b>{promotion.scope || (isArabic ? "عروض مختارة" : "Selected quotes")}</b>
+                <b>{studioLabel(promotion.scope || "selected", language)}</b>
               </span>
               <span>
                 {isArabic ? "النوع" : "Access"}
-                <b>{promotion.access || (isArabic ? "كود خاص" : "Private code")}</b>
+                <b>{studioLabel(promotion.access || "private", language)}</b>
               </span>
             </div>
             <footer>
@@ -256,33 +259,39 @@ export default function PromotionsView({
                 <X />
               </button>
             </div>
-            <label>
-              <span>
-                {isArabic
-                  ? "البنود المؤهلة عند اختيار نطاق محدد"
-                  : "Eligible items for selected scope"}
-              </span>
-              <select name="catalogIds" multiple>
-                {catalog.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name[language]}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span>{isArabic ? "الإضافة المجانية — وحدة واحدة" : "Free item — one unit"}</span>
-              <select name="freeItemId" defaultValue="">
-                <option value="">—</option>
-                {catalog
-                  .filter((item) => item.type === "addon")
-                  .map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name[language]}
-                    </option>
-                  ))}
-              </select>
-            </label>
+            {scope === "selected" && (
+              <label>
+                <span>
+                  {isArabic
+                    ? "البنود المؤهلة عند اختيار نطاق محدد"
+                    : "Eligible items for selected scope"}
+                </span>
+                <select name="catalogIds" multiple>
+                  {catalog
+                    .filter((item) => item.status !== "archived")
+                    .map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name[language]}
+                      </option>
+                    ))}
+                </select>
+              </label>
+            )}
+            {kind === "free-item" && (
+              <label>
+                <span>{isArabic ? "الإضافة المجانية — وحدة واحدة" : "Free item — one unit"}</span>
+                <select name="freeItemId" defaultValue="">
+                  <option value="">—</option>
+                  {catalog
+                    .filter((item) => item.type === "addon" && item.status !== "archived")
+                    .map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name[language]}
+                      </option>
+                    ))}
+                </select>
+              </label>
+            )}
             <label>
               <span>{isArabic ? "الكود" : "Code"}</span>
               <input name="code" required placeholder="OCTOBER10" />
@@ -290,7 +299,7 @@ export default function PromotionsView({
             <div className="csp-form-grid">
               <label>
                 <span>{isArabic ? "نوع العرض" : "Promotion type"}</span>
-                <select name="kind" defaultValue="percentage">
+                <select name="kind" value={kind} onChange={(event) => setKind(event.target.value)}>
                   <option value="percentage">
                     {isArabic ? "خصم نسبة مئوية" : "Percentage discount"}
                   </option>
@@ -298,17 +307,35 @@ export default function PromotionsView({
                   <option value="fixed">{isArabic ? "خصم مبلغ ثابت" : "Fixed amount"}</option>
                 </select>
               </label>
-              <label>
-                <span>{isArabic ? "قيمة الخصم" : "Discount value"}</span>
-                <input name="value" type="number" min="1" defaultValue="10" required />
-              </label>
+              {kind !== "free-item" && (
+                <label>
+                  <span>{isArabic ? "قيمة الخصم" : "Discount value"}</span>
+                  <input
+                    name="value"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    max={kind === "percentage" ? 80 : undefined}
+                    defaultValue="10"
+                    required
+                  />
+                </label>
+              )}
               <label>
                 <span>{isArabic ? "النطاق" : "Applies to"}</span>
-                <select name="scope" defaultValue="all">
+                <select
+                  name="scope"
+                  value={scope}
+                  onChange={(event) => setScope(event.target.value)}
+                >
                   <option value="foundation">
                     {isArabic ? "باقات التأسيس" : "Foundation packages"}
                   </option>
-                  <option value="all">{isArabic ? "كل الباقات" : "All packages"}</option>
+                  <option value="all">
+                    {isArabic
+                      ? "كل بنود العرض (بما فيها الخدمات والمصروفات)"
+                      : "All quote items (including services and expenses)"}
+                  </option>
                   <option value="selected">{isArabic ? "بنود مختارة" : "Selected items"}</option>
                 </select>
               </label>

@@ -2,65 +2,28 @@ import { useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Gsap, GsapPresence } from "../../utils/gsapAnimate";
 import ProjectDetailRouter from "./ProjectDetailRouter";
+import { useModalFocus } from "../../utils/modalFocus";
 
 export default function ProjectDetailModal() {
   const navigate = useNavigate();
   const location = useLocation();
   const dialogRef = useRef(null);
-  const previousFocusRef = useRef(null);
 
   const handleClose = () => {
     navigate(location.state?.backgroundLocation ? -1 : "/");
   };
+  useModalFocus(true, dialogRef, handleClose);
 
   useEffect(() => {
-    previousFocusRef.current = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
-
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
-
-    const onEscape = (event) => {
-      if (event.key === "Escape") {
-        navigate(location.state?.backgroundLocation ? -1 : "/");
-        return;
-      }
-
-      if (event.key !== "Tab") return;
-
-      const focusable = dialogRef.current?.querySelectorAll(
-        'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-      if (!focusable?.length) return;
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    window.addEventListener("keydown", onEscape);
-    const focusTimer = window.setTimeout(() => {
-      const firstFocusable = dialogRef.current?.querySelector(
-        'button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-      firstFocusable?.focus();
-    }, 0);
-
     return () => {
-      window.clearTimeout(focusTimer);
       document.body.style.overflow = previousOverflow;
       document.documentElement.style.overflow = previousHtmlOverflow;
-      window.removeEventListener("keydown", onEscape);
-      if (previousFocusRef.current instanceof HTMLElement) previousFocusRef.current.focus();
     };
-  }, [location.state, navigate]);
+  }, []);
 
   return (
     <GsapPresence>

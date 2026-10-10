@@ -11,6 +11,7 @@ import {
 import { ZOOMIX_PACKAGES as ZOOMIX_START_PACKAGES } from "../data/zoomixPackages";
 import { SITE_CONTACT } from "../data/siteSettings";
 import { trackEvent } from "../utils/analytics";
+export { copy, getRecommendation, getGoalOptions };
 
 const copy = {
   ar: {
@@ -43,10 +44,10 @@ const copy = {
     routeMapIntro: "اختار بين 4 طرق. كل محطة بتوضح إمتى تناسبك وإيه اللي هتخرج بيه.",
     routeMapSystemNote: "المسارات دي طريقة اختيار العميل؛ أما تنفيذ المشروع فبيتحرك من Build إلى Show إلى Launch.",
     modeLabel: "طريقة التصفح",
-    quickStart: "اختيار سريع — 3 أسئلة",
+    quickStart: "اختيار سريع — أسئلة قصيرة",
     exploreRoutes: "استكشف المسارات",
-    quickPrompt: "خلّينا نحدد خطوتك في 3 أسئلة.",
-    quickDescription: "جاوب على 3 أسئلة، وZoomix ترشح لك المسار والباقة الأنسب.",
+    quickPrompt: "خلّينا نحدد خطوتك بأسئلة قصيرة.",
+    quickDescription: "جاوب على سؤالين أو ثلاثة حسب احتياجك، وZoomix ترشح لك المسار والباقة الأنسب.",
     conversation: {
       stage: {
         start: "حلو، كده فهمنا إنك لسه بتبدأ 👌",
@@ -160,7 +161,7 @@ const copy = {
       ],
       identity: [{ value: "one-off", label: "أحل الجزء المحدد", description: "خدمة واحدة واضحة بدون باقة كاملة." }],
       digital: [{ value: "one-off", label: "أحل الجزء المحدد", description: "خدمة واحدة واضحة بدون باقة كاملة." }],
-      content: [{ value: "one-off", label: "أحل الجزء المحدد", description: "خدمة واحدة واضحة بدون باقة كاملة." }],
+      oneOffContent: [{ value: "one-off", label: "أحل الجزء المحدد", description: "خدمة واحدة واضحة بدون باقة كاملة." }],
       print: [{ value: "one-off", label: "أحل الجزء المحدد", description: "خدمة واحدة واضحة بدون باقة كاملة." }],
       default: [{ value: "one-off", label: "أحل الجزء المحدد", description: "خدمة واحدة واضحة بدون باقة كاملة." }],
     },
@@ -195,10 +196,10 @@ const copy = {
     routeMapIntro: "Choose between four routes. Each stop shows when it fits and what you will leave with.",
     routeMapSystemNote: "These are client routes; the work itself moves from Build to Show to Launch.",
     modeLabel: "Browse mode",
-    quickStart: "Quick match — 3 questions",
+    quickStart: "Quick match — short questions",
     exploreRoutes: "Explore the routes",
-    quickPrompt: "Find your next move in 3 questions.",
-    quickDescription: "Answer three questions and Zoomix will match you with the right route, service or package.",
+    quickPrompt: "Find your next move with a few short questions.",
+    quickDescription: "Answer two or three questions, depending on your needs, and Zoomix will match you with the right route, service or package.",
     conversation: {
       stage: {
         start: "Great, we know you are starting out 👌",
@@ -312,7 +313,7 @@ const copy = {
       ],
       identity: [{ value: "one-off", label: "Solve the specific piece", description: "One clear service without a full package." }],
       digital: [{ value: "one-off", label: "Solve the specific piece", description: "One clear service without a full package." }],
-      content: [{ value: "one-off", label: "Solve the specific piece", description: "One clear service without a full package." }],
+      oneOffContent: [{ value: "one-off", label: "Solve the specific piece", description: "One clear service without a full package." }],
       print: [{ value: "one-off", label: "Solve the specific piece", description: "One clear service without a full package." }],
       default: [{ value: "one-off", label: "Solve the specific piece", description: "One clear service without a full package." }],
     },
@@ -329,6 +330,10 @@ function saveRoute(route, packageId = "", language = "ar") {
   window.localStorage.setItem("zoomix-project-route", JSON.stringify(selection));
   window.dispatchEvent(new CustomEvent("zoomix:route-select", { detail: selection }));
   trackEvent("route_finder_recommendation", { route, package_id: packageId, language });
+}
+
+function getGoalOptions(text, stage, need) {
+  return text.goals[stage === "one-thing" && need === "content" ? "oneOffContent" : need] || text.goals.default;
 }
 
 function getRecommendation(stage, need, goal) {
@@ -533,13 +538,24 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
     () => getRecommendation(answers.stage, answers.need, answers.goal),
     [answers.stage, answers.need, answers.goal],
   );
-  const currentOptions = step === 1 ? text.stages : step === 2 ? text.needs[answers.stage] || [] : text.goals[answers.need] || text.goals.default;
+  const currentOptions = step === 1 ? text.stages : step === 2 ? text.needs[answers.stage] || [] : getGoalOptions(text, answers.stage, answers.need);
   const selectedValue = step === 1 ? answers.stage : step === 2 ? answers.need : answers.goal;
 
   const chooseAnswer = (value) => {
     trackEvent("route_finder_answer", { step, answer: value });
     if (step === 1) setAnswers({ stage: value, need: "", goal: "" });
-    if (step === 2) setAnswers((current) => ({ ...current, need: value, goal: "" }));
+    if (step === 2) {
+      const goals = getGoalOptions(text, answers.stage, value);
+      if (goals.length === 1) {
+        const goal = goals[0].value;
+        setAnswers(current => ({...current, need: value, goal}));
+        const result = getRecommendation(answers.stage, value, goal);
+        saveRoute(result.route, result.packageId || "", language);
+        setStep(3);
+        return;
+      }
+      setAnswers((current) => ({ ...current, need: value, goal: "" }));
+    }
     if (step === 3) {
       setAnswers((current) => ({ ...current, goal: value }));
       const nextRecommendation = getRecommendation(answers.stage, answers.need, value);
@@ -580,9 +596,11 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
   const answerSummary = [
     text.stages.find((item) => item.value === answers.stage)?.label,
     (text.needs[answers.stage] || []).find((item) => item.value === answers.need)?.label,
-    (text.goals[answers.need] || text.goals.default).find((item) => item.value === answers.goal)?.label,
+    getGoalOptions(text, answers.stage, answers.need).find((item) => item.value === answers.goal)?.label,
   ].filter(Boolean);
-  const currentQuestion = step === 1 ? text.questions.stage : step === 2 ? text.questions.need : text.questions.goal;
+  const currentQuestion = step === 3 && answers.goal && currentOptions.length === 1
+    ? (isArabic ? "ترشيحك جاهز — راجع النتيجة بالأسفل." : "Your recommendation is ready — review it below.")
+    : step === 1 ? text.questions.stage : step === 2 ? text.questions.need : text.questions.goal;
   const selectedRouteData = text.routeMap.find((route) => route.value === selectedRoute) || text.routeMap[0];
   const recommendedRouteData = text.routeMap.find((route) => route.value === recommendation.route) || text.routeMap[0];
   const conversationReply = getConversationReply(text, answers);
@@ -1003,7 +1021,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
               </div>
             </div>
             <div key={`options-${step}`} className="grid gap-3 sm:grid-cols-2">
-              {currentOptions.map((option, index) => {
+              {(step === 3 && answers.goal && currentOptions.length === 1 ? [] : currentOptions).map((option, index) => {
                 const selected = selectedValue === option.value;
                 return (
                   <button key={option.value} type="button" onClick={() => chooseAnswer(option.value)} aria-pressed={selected} className={`route-option-card min-h-[126px] border p-5 text-start transition-all ${selected ? "border-[#0A0A0A] bg-[#BBFF00]" : "border-black/15 hover:border-black/50 hover:bg-white"}`}>

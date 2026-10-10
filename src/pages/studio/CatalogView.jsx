@@ -7,6 +7,7 @@ import { Check, Eye, Package, Plus, Save, Search, X } from "lucide-react";
 import {} from "../../data/commercialStudioPrototype";
 
 import { money, margin, StatusChip, logAudit, useEscape } from "./shared";
+import { reviewedCost } from "./catalogDefaults";
 export default function CatalogView({
   language,
   catalog,
@@ -264,6 +265,7 @@ export default function CatalogView({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={isArabic ? "ابحث في قائمة الأسعار" : "Search the price list"}
+            aria-label={isArabic ? "بحث قائمة الأسعار" : "Search the price list"}
           />
         </label>
         <div className="csp-filter-row">
@@ -312,9 +314,22 @@ export default function CatalogView({
                   ] || item.type
                 : item.type}
             </span>
-            <b className="csp-sensitive-number">{money(item.price, language)}</b>
-            <span className="csp-sensitive-number">{money(item.cost, language)}</span>
-            <span className="csp-sensitive-number">{margin(item.price, item.cost)}%</span>
+            <b
+              className="csp-sensitive-number"
+              aria-label={isArabic ? "سعر البيع بالجنيه" : "Sell price in EGP"}
+            >
+              {money(item.price, language)} <small>{isArabic ? "جنيه" : "EGP"}</small>
+            </b>
+            <span className="csp-sensitive-number">
+              {reviewedCost(item) ? money(item.cost, language) : "—"}
+            </span>
+            <span className="csp-sensitive-number">
+              {!reviewedCost(item)
+                ? isArabic
+                  ? "غير معتمد"
+                  : "Unreviewed"
+                : `${margin(item.price, item.cost)}%`}
+            </span>
             <StatusChip accent={item.visible && !item.draft}>
               {item.status === "archived"
                 ? isArabic
@@ -528,7 +543,13 @@ export default function CatalogView({
               className={`csp-margin-preview ${margin(draft.price, draft.cost) < 30 ? "is-warning" : ""}`}
             >
               <span>{isArabic ? "هامش الربح المتوقع" : "Expected margin"}</span>
-              <strong>{margin(draft.price, draft.cost)}%</strong>
+              <strong>
+                {(draft.costReviewed ?? !draft.costPending)
+                  ? `${margin(draft.price, draft.cost)}%`
+                  : isArabic
+                    ? "غير متاح — راجع التكلفة"
+                    : "Unavailable — review cost"}
+              </strong>
             </div>
             <label className="csp-switch">
               <input

@@ -4,7 +4,8 @@ import { useState, Fragment } from "react";
 import { PaymentDetails, WorkspaceDisclosure } from "./BusinessWorkspace";
 import {} from "../../data/commercialStudioPrototype";
 
-import { money, StatusChip, Metric } from "./shared";
+import { money, StatusChip, Metric, useEscape } from "./shared";
+import { studioLabel, paymentLabel, qaMetricsNote } from "./labels";
 export default function PaymentsView({ language, payments, onPaymentUpdated, storageMode }) {
   const isArabic = language === "ar";
   const rows = Array.isArray(payments) ? payments : null;
@@ -12,6 +13,9 @@ export default function PaymentsView({ language, payments, onPaymentUpdated, sto
   const waiting = !rows;
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState(null);
+  const [confirmation, setConfirmation] = useState(null);
+  const [reverseReason, setReverseReason] = useState("");
+  useEscape(Boolean(confirmation), () => setConfirmation(null));
   const paid = list
     .filter((item) => !item.isTest && item.status === "paid")
     .reduce((sum, item) => sum + item.amount, 0);
@@ -32,7 +36,7 @@ export default function PaymentsView({ language, payments, onPaymentUpdated, sto
         const response = await studioFetch(`/api/studio/payments/${payment.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: updated.status }),
+          body: JSON.stringify({ status: updated.status, reason: reverseReason.trim() }),
         });
         const result = await response.json().catch(() => ({}));
         if (!response.ok)
@@ -42,6 +46,8 @@ export default function PaymentsView({ language, payments, onPaymentUpdated, sto
         updated = result.payment;
       }
       onPaymentUpdated?.(updated);
+      setConfirmation(null);
+      setReverseReason("");
     } catch (failure) {
       setError(failure.message);
     } finally {
@@ -73,6 +79,7 @@ export default function PaymentsView({ language, payments, onPaymentUpdated, sto
             : "Numbers become available after the database is connected."}
         </p>
       )}
+      <p className="csp-mode-note">{qaMetricsNote(language)}</p>
       <section className="csp-metrics-grid">
         <Metric
           label={isArabic ? "تم تحصيله" : "COLLECTED"}
@@ -120,29 +127,25 @@ export default function PaymentsView({ language, payments, onPaymentUpdated, sto
                     : ""}
                 </small>
               </span>
-              <span>
-                {payment.type === "deposit"
-                  ? isArabic
-                    ? "المقدم"
-                    : "Deposit"
-                  : isArabic
-                    ? "باقي الرصيد"
-                    : "Balance"}
-              </span>
+              <span>{paymentLabel(payment, language)}</span>
               <b className="csp-sensitive-number">{money(payment.amount)} EGP</b>
               <StatusChip accent={payment.status === "paid"} warning={payment.status === "overdue"}>
-                {payment.status}
+                {studioLabel(payment.status, language)}
               </StatusChip>
               <button
                 type="button"
                 className="csp-button"
                 disabled={busyId !== null}
-                onClick={() => update(payment)}
+                onClick={() => {
+                  setError("");
+                  setReverseReason("");
+                  setConfirmation(payment);
+                }}
               >
                 {payment.status === "paid"
                   ? isArabic
-                    ? "إلغاء التسجيل"
-                    : "Mark pending"
+                    ? "عكس تسجيل التحصيل"
+                    : "Reverse collection"
                   : isArabic
                     ? "تسجيل كمُسددة"
                     : "Mark paid"}
@@ -175,6 +178,77 @@ export default function PaymentsView({ language, payments, onPaymentUpdated, sto
           </div>
         )}
       </section>
+      {confirmation && (
+        <div className="csp-modal-backdrop">
+          <section
+            className="csp-confirm-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="payment-confirm-title"
+          >
+            <h2 id="payment-confirm-title">
+              {confirmation.status === "paid"
+                ? isArabic
+                  ? "عكس تسجيل التحصيل"
+                  : "Reverse collection"
+                : isArabic
+                  ? "تأكيد تسجيل التحصيل"
+                  : "Confirm collection"}
+            </h2>
+            <p>
+              {confirmation.clientName} · {confirmation.projectName}
+            </p>
+            <p>
+              {paymentLabel(confirmation, language)} ·{" "}
+              <b className="csp-sensitive-number">{money(confirmation.amount)} EGP</b>
+            </p>
+            <p>
+              {isArabic
+                ? "هذا تسجيل داخلي فقط، وليس تحويلًا ماليًا. الإيصالات السابقة تظل مستندات تاريخية."
+                : "This is an internal record, not a money transfer. Existing receipts remain historical documents."}
+            </p>
+            {confirmation.status === "paid" && (
+              <label>
+                {isArabic ? "سبب العكس (مطلوب)" : "Reason for reversal (required)"}
+                <textarea
+                  value={reverseReason}
+                  maxLength={1000}
+                  onChange={(event) => setReverseReason(event.target.value)}
+                />
+              </label>
+            )}
+            {error && (
+              <p role="alert" className="csp-warning">
+                {error}
+              </p>
+            )}
+            <div className="csp-head-actions">
+              <button
+                className="csp-button"
+                disabled={busyId !== null}
+                onClick={() => setConfirmation(null)}
+              >
+                {isArabic ? "رجوع" : "Cancel"}
+              </button>
+              <button
+                className="csp-button csp-button--primary"
+                disabled={
+                  busyId !== null || (confirmation.status === "paid" && !reverseReason.trim())
+                }
+                onClick={() => update(confirmation)}
+              >
+                {busyId !== null
+                  ? isArabic
+                    ? "جارٍ التسجيل…"
+                    : "Saving…"
+                  : isArabic
+                    ? "تأكيد"
+                    : "Confirm"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
