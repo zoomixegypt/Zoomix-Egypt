@@ -24,7 +24,7 @@ const translations = {
       titleAccent: "يظهر",
       titleB: "بالشكل اللي يستحقه.",
       description: "هوية، محتوى، تصوير وحضور رقمي في اتجاه واحد واضح.",
-      partnerLine: "شريكك الإبداعي من أول فكرة مشروعك لحد ما يبقى جاهز للظهور والانطلاق.",
+      partnerLine: "للمشروعات الصغيرة والناشئة — من أول فكرة مشروعك لحد ما يبقى جاهز للظهور والانطلاق.",
       work: "شوف أعمالنا",
       build: "BUILD THE BRAND",
       show: "SHOW THE WORK",
@@ -97,7 +97,7 @@ const translations = {
       description:
         "Identity, content, photography and digital presence, built in one clear direction.",
       partnerLine:
-        "Your creative partner from the first idea to a project ready to show up and launch.",
+        "For small and growing businesses — from the first idea to a project ready to show up and launch.",
       work: "View our work",
       build: "BUILD THE BRAND",
       show: "SHOW THE WORK",

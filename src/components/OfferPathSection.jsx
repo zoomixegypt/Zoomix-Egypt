@@ -18,6 +18,8 @@ const copy = {
     eyebrow: "ZOOMIX / نحدد الخطوة الجاية",
     title: "اختار طريقتك.",
     intro: "ممكن نرشح لك بسرعة، أو تستكشف المسارات بنفسك.",
+    standaloneTitle: "ابدأ بالاختيار السريع.",
+    standaloneIntro: "جاوب على سؤالين أو ثلاثة، أو استكشف المسارات لو عارف أنت محتاج إيه.",
     steps: ["مكانك دلوقتي", "اللي ناقصك", "النتيجة اللي عاوزها"],
     back: "السؤال السابق",
     reset: "ابدأ من جديد",
@@ -170,6 +172,8 @@ const copy = {
     eyebrow: "ZOOMIX / FIND YOUR NEXT MOVE",
     title: "Choose your way in.",
     intro: "Get a quick recommendation or explore the routes yourself.",
+    standaloneTitle: "Start with a quick match.",
+    standaloneIntro: "Answer two or three questions, or explore the routes if you already know what you need.",
     steps: ["Where you are", "What is missing", "What you want next"],
     back: "Previous question",
     reset: "Start over",
@@ -457,6 +461,8 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
   const isArabic = language === "ar";
   const ActionArrow = isArabic ? ArrowUpLeft : ArrowUpRight;
   const text = copy[language];
+  const sectionTitle = standalone ? text.standaloneTitle : text.title;
+  const sectionIntro = standalone ? text.standaloneIntro : text.intro;
   const [step, setStep] = useState(1);
   const [answers, setAnswers] = useState({ stage: "", need: "", goal: "" });
   const [mode, setMode] = useState(standalone ? "quiz" : "explore");
@@ -540,6 +546,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
   );
   const currentOptions = step === 1 ? text.stages : step === 2 ? text.needs[answers.stage] || [] : getGoalOptions(text, answers.stage, answers.need);
   const selectedValue = step === 1 ? answers.stage : step === 2 ? answers.need : answers.goal;
+  const isAutoCompletedStep = step === 3 && Boolean(answers.goal) && currentOptions.length === 1;
 
   const chooseAnswer = (value) => {
     trackEvent("route_finder_answer", { step, answer: value });
@@ -757,8 +764,8 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
         </div>
 
         <div className={`route-finder-page-intro mb-12 grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end ${standalone ? "route-finder-page-intro--standalone" : ""}`}>
-          <h2 className={`${isArabic ? "font-arabic tracking-normal" : "font-display tracking-[-0.05em]"} text-5xl font-black leading-[0.95] md:text-7xl`}>{text.title}</h2>
-          <p className="max-w-xl text-lg leading-8 text-black/65 md:text-xl">{text.intro}</p>
+          <h2 className={`${isArabic ? "font-arabic tracking-normal" : "font-display tracking-[-0.05em]"} text-5xl font-black leading-[0.95] md:text-7xl`}>{sectionTitle}</h2>
+          <p className="max-w-xl text-lg leading-8 text-black/65 md:text-xl">{sectionIntro}</p>
         </div>
 
         {standalone && restoredDraft && (
@@ -961,7 +968,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
         </div>}
 
         {mode === "quiz" && <>
-        <div className="route-progress mb-8 grid grid-cols-3 gap-2 md:gap-5" aria-label={isArabic ? "خطوات اختيار المسار" : "Route selection steps"}>
+        <div id="route-questions" className="route-progress mb-8 grid grid-cols-3 gap-2 md:gap-5" aria-label={isArabic ? "خطوات اختيار المسار" : "Route selection steps"}>
           {text.steps.map((label, index) => {
             const number = index + 1;
             const active = number === step;
@@ -976,7 +983,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
           })}
         </div>
 
-        <div data-step={step} className="route-finder-quiz-grid grid gap-5 lg:grid-cols-[0.72fr_1.28fr]">
+        {!isAutoCompletedStep && <div data-step={step} className="route-finder-quiz-grid grid gap-5 lg:grid-cols-[0.72fr_1.28fr]">
           <aside className="route-finder-aside relative overflow-hidden bg-[#0A0A0A] p-6 text-white md:p-8" data-step={step}>
             <div className="route-finder-orbit absolute -end-16 -top-20 h-64 w-64 rounded-full border-[28px] border-white/[0.06]" aria-hidden="true" />
             <div className="route-finder-orbit route-finder-orbit--inner absolute -end-2 top-10 h-36 w-36 rounded-full border border-[#BBFF00]/20" aria-hidden="true" />
@@ -1043,7 +1050,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
               {step < 3 && <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-black/40">{text.routeLabels[step]} →</span>}
             </div>
           </div>
-        </div>
+        </div>}
 
         {step === 3 && answers.goal && (
           <>

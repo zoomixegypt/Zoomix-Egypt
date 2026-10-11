@@ -48,8 +48,8 @@ export default function RouteFinder() {
             <span><b className="text-[#789900]">03</b> {isArabic ? "خد خطوتك" : "Take the next move"}</span>
           </div>
           <div className="route-finder-page-cta mt-8 flex flex-wrap gap-3">
-            <a href="#route-mode-chooser" className="zoomix-button bg-[#0A0A0A] text-white hover:bg-[#BBFF00] hover:text-black">
-              {isArabic ? "حدد خطوتك" : "Find your next move"}
+            <a href="#route-questions" className="zoomix-button bg-[#0A0A0A] text-white hover:bg-[#BBFF00] hover:text-black">
+              {isArabic ? "ابدأ الاختيار السريع" : "Start quick match"}
               <ActionArrow size={18} aria-hidden="true" />
             </a>
             <a href="/#packages-section" className="zoomix-button border-black/25 text-black hover:border-black hover:bg-white">

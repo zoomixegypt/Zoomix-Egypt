@@ -2,6 +2,25 @@ import { readBrowserValue, writeBrowserValue } from "./browserStorage";
 const CONSENT_KEY = "zoomix-analytics-consent";
 const GOOGLE_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || "G-XWCZXLJ14C";
 let googleAnalyticsReady = false;
+let runtimeAnalyticsConsent = "unknown";
+
+function isPublicAnalyticsPath(pathname = "") {
+  return (
+    !pathname.startsWith("/studio") &&
+    !pathname.startsWith("/prototype") &&
+    !pathname.startsWith("/q/") &&
+    !pathname.startsWith("/brief/edit/")
+  );
+}
+
+function updateGoogleConsent(analyticsStorage) {
+  window.gtag?.("consent", "update", {
+    analytics_storage: analyticsStorage,
+    ad_storage: "denied",
+    ad_user_data: "denied",
+    ad_personalization: "denied",
+  });
+}
 
 function loadGoogleAnalytics() {
   if (googleAnalyticsReady || !GOOGLE_MEASUREMENT_ID || typeof window === "undefined") return;
@@ -11,6 +30,14 @@ function loadGoogleAnalytics() {
     window.dataLayer.push(arguments);
   };
   if (!window.__zoomixGaConfigured) {
+    // Measurement is enabled automatically for this site, while advertising
+    // storage, ad data, and ad personalization remain disabled.
+    window.gtag("consent", "default", {
+      analytics_storage: "granted",
+      ad_storage: "denied",
+      ad_user_data: "denied",
+      ad_personalization: "denied",
+    });
     window.gtag("js", new Date());
     window.gtag("config", GOOGLE_MEASUREMENT_ID, { send_page_view: false });
     window.__zoomixGaConfigured = true;
@@ -29,25 +56,55 @@ function loadGoogleAnalytics() {
 
 export function getAnalyticsConsent() {
   if (typeof window === "undefined") return "declined";
-  return readBrowserValue(CONSENT_KEY, "unknown");
+  const stored = readBrowserValue(CONSENT_KEY, "unknown");
+  if (stored === "accepted" || stored === "declined") {
+    runtimeAnalyticsConsent = stored;
+    return stored;
+  }
+  return runtimeAnalyticsConsent;
 }
 
 export function setAnalyticsConsent(value) {
   if (typeof window === "undefined") return;
-  writeBrowserValue(CONSENT_KEY, value === "accepted" ? "accepted" : "declined");
+  const consent = value === "accepted" ? "accepted" : "declined";
+  runtimeAnalyticsConsent = consent;
+  writeBrowserValue(CONSENT_KEY, consent);
   if (value === "accepted") {
     loadGoogleAnalytics();
-    window.gtag?.("consent", "update", {
-      analytics_storage: "granted",
-      ad_storage: "denied",
-    });
+    updateGoogleConsent("granted");
     trackPageView();
+  } else if (googleAnalyticsReady) {
+    updateGoogleConsent("denied");
   }
   window.dispatchEvent(new CustomEvent("zoomix:analytics-consent", { detail: value }));
 }
 
+export function initializeAnalytics() {
+  if (typeof window === "undefined") return "declined";
+
+  // Keep an explicit opt-out, but do not interrupt new visitors with a
+  // consent banner. Storage can be unavailable; the runtime value still
+  // keeps this page's measurement behavior deterministic.
+  const stored = readBrowserValue(CONSENT_KEY, "unknown");
+  if (stored === "declined") {
+    runtimeAnalyticsConsent = "declined";
+    return "declined";
+  }
+
+  runtimeAnalyticsConsent = "accepted";
+  writeBrowserValue(CONSENT_KEY, "accepted");
+  loadGoogleAnalytics();
+  updateGoogleConsent("granted");
+  return "accepted";
+}
+
 export function trackEvent(eventName, properties = {}) {
-  if (getAnalyticsConsent() !== "accepted" || typeof window === "undefined") return;
+  if (
+    typeof window === "undefined" ||
+    !isPublicAnalyticsPath(window.location?.pathname) ||
+    getAnalyticsConsent() !== "accepted"
+  )
+    return;
   loadGoogleAnalytics();
   if (typeof window.gtag === "function") {
     window.gtag("event", eventName, properties);
@@ -67,13 +124,18 @@ export function trackEvent(eventName, properties = {}) {
 }
 
 export function trackPageView(path) {
-  if (getAnalyticsConsent() !== "accepted" || typeof window === "undefined") return;
-  path ??= window.location.pathname + window.location.search;
+  if (
+    typeof window === "undefined" ||
+    !isPublicAnalyticsPath(window.location?.pathname) ||
+    getAnalyticsConsent() !== "accepted"
+  )
+    return;
+  path ??= window.location.pathname;
   loadGoogleAnalytics();
   if (typeof window.gtag === "function") {
     window.gtag("event", "page_view", {
       page_path: path,
-      page_location: window.location.href,
+      page_location: `${window.location.origin}${window.location.pathname}`,
       page_title: document.title,
     });
   }

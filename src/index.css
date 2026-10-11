@@ -262,7 +262,7 @@
     backdrop-filter: blur(10px);
     border: 1px solid rgba(10, 10, 10, 0.14);
     display: flex;
-    bottom: max(1.25rem, env(safe-area-inset-bottom));
+    bottom: auto;
     gap: 0.45rem;
     left: 1.25rem;
     max-width: min(21rem, calc(100vw - 2rem));
@@ -276,6 +276,8 @@
       transform 220ms var(--zoomix-ease);
     white-space: normal;
     width: max-content;
+    /* The button lives inside the fixed navbar. Anchor it to the viewport rather than the navbar box. */
+    top: calc(100svh - 4rem);
   }
 
   .route-finder-fixed-entry--dark {
@@ -392,6 +394,7 @@
     }
 
     .route-finder-fixed-entry {
+      top: auto;
       bottom: max(1rem, env(safe-area-inset-bottom));
       left: 0.75rem;
       box-shadow: 0 8px 22px rgba(10, 10, 10, 0.2);

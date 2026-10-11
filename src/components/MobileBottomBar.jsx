@@ -37,7 +37,7 @@ export default function MobileBottomBar() {
           className="mobile-bottom-bar__item mobile-bottom-bar__item--primary"
         >
           <Compass size={18} strokeWidth={1.8} aria-hidden="true" />
-          <span>{isArabic ? "حدد" : "Choose"}</span>
+          <span>{isArabic ? "ابدأ" : "Start"}</span>
         </button>
         {items.map(({ href, label, Icon, external }) => (
           <a

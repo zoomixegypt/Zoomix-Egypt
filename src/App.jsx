@@ -5,9 +5,8 @@ import BriefEdit from "./pages/BriefEdit";
 import NotFound from "./pages/NotFound";
 import ProjectDetailModal from "./components/projects/ProjectDetailModal";
 import SectionSkeleton from "./components/SectionSkeleton";
-import AnalyticsConsent from "./components/AnalyticsConsent";
 import MobileBottomBar from "./components/MobileBottomBar";
-import { trackPageView } from "./utils/analytics";
+import { initializeAnalytics, trackPageView } from "./utils/analytics";
 
 const RouteFinder = lazy(() => import("./pages/RouteFinder"));
 const StudioEntry = lazy(() => import("./pages/studio/StudioEntry"));
@@ -128,10 +127,17 @@ function ScrollToTop() {
 export default function App() {
   const location = useLocation();
   const backgroundLocation = location.state?.backgroundLocation;
+  const isPublicAnalyticsRoute =
+    !location.pathname.startsWith("/studio") &&
+    !location.pathname.startsWith("/prototype") &&
+    !location.pathname.startsWith("/q/") &&
+    !location.pathname.startsWith("/brief/edit/");
 
   useEffect(() => {
-    trackPageView(`${location.pathname}${location.search}${location.hash}`);
-  }, [location.pathname, location.search, location.hash]);
+    if (!isPublicAnalyticsRoute) return;
+    initializeAnalytics();
+    trackPageView(`${location.pathname}${location.hash}`);
+  }, [isPublicAnalyticsRoute, location.pathname, location.hash]);
 
   return (
     <>
@@ -183,9 +189,6 @@ export default function App() {
       {!location.pathname.startsWith("/studio") &&
         !location.pathname.startsWith("/prototype") &&
         !location.pathname.startsWith("/q/") && <MobileBottomBar />}
-      {!location.pathname.startsWith("/studio") &&
-        !location.pathname.startsWith("/prototype") &&
-        !location.pathname.startsWith("/q/") && <AnalyticsConsent />}
     </>
   );
 }

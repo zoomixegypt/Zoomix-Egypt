@@ -6,7 +6,7 @@ Scope: local public website. No deployment, commit/push, production briefs, or e
 
 1. Optional browser storage: reads/writes/removals return safe fallbacks for privacy restrictions, quota failures and blocked storage getters.
 2. Language initialization and persistence tolerate inaccessible storage; document language/direction updates are no longer preceded by an unsafe storage write.
-3. Analytics consent reads tolerate inaccessible storage and default to unknown; page-view tracking is safe without a browser global. No consent is inferred from a failed read.
+3. Public-page Analytics initializes automatically without a consent banner; an explicit stored decline remains respected, storage failures keep the page usable, and Studio/client-quote/brief-edit routes are excluded from public measurement.
 4. Brief initialization and clearing previous package choices tolerate unavailable storage.
 5. WhatsApp draft opening is isolated and returns a blocked state rather than invalidating a saved request. The destination is fixed, message encoding is tested, and opener isolation retained.
 6. Receipt messaging distinguishes saved request, prepared WhatsApp draft and blocked WhatsApp. It does not claim a WhatsApp message was sent.
@@ -26,7 +26,7 @@ Scope: local public website. No deployment, commit/push, production briefs, or e
 | Optional storage | 19 normal/SSR/privacy/quota/getter checks | Utility behavior, not browser privacy settings |
 | WhatsApp draft | 6 bilingual destination/encoding/open-block cases | Injected opener; no real WhatsApp open/send |
 | Receipt rendering | 12 language/contact/block combinations | SSR, not final mobile screenshot |
-| Storage-blocked integration | Language-provider SSR and analytics no-consent calls | Does not simulate every browser effect |
+| Storage-blocked integration | Language-provider SSR and automatic-analytics initialization | Does not simulate every browser effect |
 
 ## Remaining before public-site acceptance
 
