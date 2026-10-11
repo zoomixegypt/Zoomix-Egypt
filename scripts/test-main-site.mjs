@@ -46,7 +46,8 @@ try {
     assert.match(html, /aria-live="polite"/);
     assert.match(html, /tabindex="0"/);
     assert.match(html, language === "ar" ? /مقارنة سريعة ظاهرة/ : /Quick comparison/);
-    assert.doesNotMatch(html, /aria-expanded=/);
+    assert.match(html, language === "ar" ? /قارن الباقات/ : /Compare packages/);
+    assert.match(html, /aria-expanded="false"/);
     for (const item of ZOOMIX_CONTENT_PACKAGES) {
       assert.ok(
         !item.outputs[language]

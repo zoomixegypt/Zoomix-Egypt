@@ -452,7 +452,7 @@ const PackagesSection = memo(function PackagesSection() {
                   </span>
                   <div className="h-px flex-1 bg-white/10" />
                 </div>
-                <PackageRail offers={lane.packages} language={language}>
+                <PackageRail offers={lane.packages} language={language} route={mobileGroup.route}>
                   {lane.packages.map((offer, index) => (
                     <OfferTierCard
                       key={offer.id}
