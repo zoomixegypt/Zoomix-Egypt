@@ -7,6 +7,7 @@ import useLenis from "../hooks/useLenis";
 import useScrollToGallery from "../hooks/useScrollToGallery";
 import SectionSkeleton from "../components/SectionSkeleton";
 import HomeSeo from "../components/HomeSeo";
+import SplashConnectionV2Tmp from "../components/SplashConnectionV2Tmp";
 import { trackEvent } from "../utils/analytics";
 
 const MarqueeBanner = lazy(() => import("../components/MarqueeBanner"));
@@ -21,6 +22,20 @@ const ProjectGallery = lazy(() => import("../components/ProjectGallery"));
 const SelectedWorkReferences = lazy(() => import("../components/SelectedWorkReferences"));
 const NoiseOverlay = lazy(() => import("../components/NoiseOverlay"));
 
+const SPLASH_SESSION_KEY = "zoomix-splash-v2-seen";
+
+function shouldShowSiteSplash() {
+  if (typeof window === "undefined") return false;
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("splash") === "1") return true;
+  if (params.get("splash") === "0") return false;
+  try {
+    return window.sessionStorage.getItem(SPLASH_SESSION_KEY) !== "1";
+  } catch {
+    return true;
+  }
+}
+
 export default function Home() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,6 +45,7 @@ export default function Home() {
   const [isLoading] = useState(false);
   const [isScrollLocked] = useState(false);
   const [enableNoiseOverlay, setEnableNoiseOverlay] = useState(false);
+  const [showSiteSplash, setShowSiteSplash] = useState(false);
 
   // Initialize Lenis with scroll lock state
   useLenis(isScrollLocked);
@@ -43,6 +59,19 @@ export default function Home() {
       setEnableNoiseOverlay(isFinePointer && !reduceMotion);
     }
   }, []);
+
+  useEffect(() => {
+    if (shouldShowSiteSplash()) setShowSiteSplash(true);
+  }, []);
+
+  useEffect(() => {
+    if (!showSiteSplash) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [showSiteSplash]);
 
   // Manage body overflow based on scroll lock
   useEffect(() => {
@@ -65,6 +94,15 @@ export default function Home() {
     },
     [navigate, location],
   );
+
+  const handleSplashComplete = useCallback(() => {
+    try {
+      window.sessionStorage.setItem(SPLASH_SESSION_KEY, "1");
+    } catch {
+      // The intro remains non-blocking if storage is unavailable.
+    }
+    setShowSiteSplash(false);
+  }, []);
 
   return (
     <>
@@ -121,6 +159,9 @@ export default function Home() {
           <Footer />
         </Suspense>
       </main>
+      {showSiteSplash && (
+        <SplashConnectionV2Tmp onComplete={handleSplashComplete} preview={false} />
+      )}
     </>
   );
 }

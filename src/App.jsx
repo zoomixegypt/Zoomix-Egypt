@@ -6,11 +6,17 @@ import NotFound from "./pages/NotFound";
 import ProjectDetailModal from "./components/projects/ProjectDetailModal";
 import SectionSkeleton from "./components/SectionSkeleton";
 import MobileBottomBar from "./components/MobileBottomBar";
+import SplashConnectionV2Tmp from "./components/SplashConnectionV2Tmp";
 import { initializeAnalytics, trackPageView } from "./utils/analytics";
 
 const RouteFinder = lazy(() => import("./pages/RouteFinder"));
 const StudioEntry = lazy(() => import("./pages/studio/StudioEntry"));
 const ClientQuote = lazy(() => import("./pages/ClientQuote"));
+const SplashPreviewTmp = lazy(() => import("./components/SplashPreviewTmp"));
+const SplashPromiseTmp = lazy(() => import("./components/SplashPromiseTmp"));
+const SplashPhasesTmp = lazy(() => import("./components/SplashPhasesTmp"));
+const SplashPhasesV2Tmp = lazy(() => import("./components/SplashPhasesV2Tmp"));
+const SplashMergedTmp = lazy(() => import("./components/SplashMergedTmp"));
 
 // Component untuk scroll ke atas setiap kali route berubah
 function ScrollToTop() {
@@ -178,6 +184,54 @@ export default function App() {
           }
         />
         <Route path="/projects/:slug" element={<ProjectDetailModal />} />
+        <Route
+          path="/preview-splash-tmp"
+          element={
+            <Suspense fallback={<SectionSkeleton className="min-h-screen" />}>
+              <SplashPreviewTmp />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/preview-splash-promise-tmp"
+          element={
+            <Suspense fallback={<SectionSkeleton className="min-h-screen" />}>
+              <SplashPromiseTmp />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/preview-splash-phases-tmp"
+          element={
+            <Suspense fallback={<SectionSkeleton className="min-h-screen" />}>
+              <SplashPhasesTmp />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/preview-splash-v2-tmp"
+          element={
+            <Suspense fallback={<SectionSkeleton className="min-h-screen" />}>
+              <SplashConnectionV2Tmp />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/preview-splash-phases-v2-tmp"
+          element={
+            <Suspense fallback={<SectionSkeleton className="min-h-screen" />}>
+              <SplashPhasesV2Tmp />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/preview-splash-merged-tmp"
+          element={
+            <Suspense fallback={<SectionSkeleton className="min-h-screen" />}>
+              <SplashMergedTmp />
+            </Suspense>
+          }
+        />
         <Route path="*" element={<NotFound />} />
       </Routes>
 
