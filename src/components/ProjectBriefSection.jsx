@@ -159,6 +159,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
   const [editUrl, setEditUrl] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [wizardStep, setWizardStep] = useState(1);
+  const [returnToReview, setReturnToReview] = useState(false);
   const [draftLoaded, setDraftLoaded] = useState(false);
   const sectionRef = useRef(null);
   const briefStartedRef = useRef(false);
@@ -431,11 +432,23 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
     return true;
   };
 
-  const goToStep = (step) => {
+  const goToStep = (step, options = {}) => {
+    setReturnToReview(Boolean(options.returnToReview));
     setWizardStep(step);
-    requestAnimationFrame(() =>
-      sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
-    );
+    requestAnimationFrame(() => {
+      sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (options.focusId) {
+        window.setTimeout(() => document.getElementById(options.focusId)?.focus(), 450);
+      }
+    });
+  };
+
+  const editSummaryField = (fieldKey, step, focusId) => {
+    if (fieldKey === "selection") {
+      window.location.assign("/route-finder");
+      return;
+    }
+    goToStep(step, { returnToReview: true, focusId });
   };
 
   const handleNextStep = () => {
@@ -483,13 +496,16 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
     setWhatsappBlocked(false);
     setMessageCopied(false);
     try {
-      const result = await submitBrief({
+      const result = await submitBrief(
+        {
           ...form,
           activity: activityValue,
           goal: form.goal || form.description,
           service: resolvedService,
           offerName: selectedOfferName,
-        }, language);
+        },
+        language,
+      );
       setReferenceCode(result.referenceCode || "");
       setEditUrl(result.editUrl || "");
       setSubmitted(true);
@@ -602,6 +618,71 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
       )}
     </label>
   );
+
+  const reviewRows = [
+    [label("الاسم", "Name"), form.name, "name", 1, "brief-name"],
+    [label("اسم المشروع", "Project"), form.project, "project", 1, "brief-project"],
+    [label("نوع النشاط", "Activity"), activityValue, "activity", 1, "brief-activity"],
+    [label("المسار", "Route"), selectedPathLabel, "selection", 1, ""],
+    [label("الباقة / الخدمة", "Package / service"), selectedChoiceLabel, "selection", 1, ""],
+    [
+      label("الميزانية", "Budget"),
+      optionLabel(BUDGET_OPTIONS, form.budget),
+      "budget",
+      2,
+      "brief-budget",
+    ],
+    [
+      label("الموعد", "Timeline"),
+      optionLabel(TIMELINE_OPTIONS, form.launchDate),
+      "launchDate",
+      2,
+      "brief-launchDate",
+    ],
+    [
+      label("رابط المشروع", "Project link"),
+      form.projectLink,
+      "projectLink",
+      2,
+      "brief-projectLink",
+    ],
+    [
+      label("مصدر الخامات", "Content source"),
+      optionLabel(CONTENT_SOURCE_OPTIONS, form.contentSource),
+      "contentSource",
+      2,
+      "brief-contentSource",
+    ],
+    [
+      label("نوع الحدث", "Event type"),
+      optionLabel(EVENT_TYPE_OPTIONS, form.eventType),
+      "eventType",
+      2,
+      "brief-eventType",
+    ],
+    [label("تاريخ الحدث", "Event date"), form.eventDate, "eventDate", 2, "brief-eventDate"],
+    [
+      label("مكان الحدث", "Event location"),
+      form.eventLocation,
+      "eventLocation",
+      2,
+      "brief-eventLocation",
+    ],
+    [
+      label("نوع التغطية", "Coverage type"),
+      optionLabel(EVENT_COVERAGE_OPTIONS, form.coverageType),
+      "coverageType",
+      2,
+      "brief-coverageType",
+    ],
+    [
+      label("الهدف والتفاصيل", "Goal and details"),
+      form.description,
+      "description",
+      2,
+      "brief-description",
+    ],
+  ].filter(([, value]) => String(value || "").trim());
 
   return (
     <section
@@ -745,8 +826,12 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 role="alert"
               >
                 {label(
-                  wizardStep === 3 ? "راجع الحقول المطلوبة قبل الإرسال." : "راجع الحقول المطلوبة قبل المتابعة.",
-                  wizardStep === 3 ? "Please complete the required fields before sending." : "Please complete the required fields before continuing.",
+                  wizardStep === 3
+                    ? "راجع الحقول المطلوبة قبل الإرسال."
+                    : "راجع الحقول المطلوبة قبل المتابعة.",
+                  wizardStep === 3
+                    ? "Please complete the required fields before sending."
+                    : "Please complete the required fields before continuing.",
                 )}
               </div>
             )}
@@ -839,6 +924,15 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                     )}
                   </div>
                   <div className="brief-step-actions sm:col-span-2 flex justify-end border-t border-black/15 pt-5">
+                    {returnToReview && (
+                      <button
+                        type="button"
+                        onClick={() => goToStep(3)}
+                        className="zoomix-button mr-auto border border-black/20 text-[#0A0A0A]"
+                      >
+                        {label("العودة للمراجعة", "Back to review")}
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={handleNextStep}
@@ -941,13 +1035,24 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                     )}
                   </label>
                   <div className="brief-step-actions sm:col-span-2 flex flex-col justify-between gap-4 border-t border-black/15 pt-5 sm:flex-row">
-                    <button
-                      type="button"
-                      onClick={() => goToStep(1)}
-                      className="zoomix-button w-full border border-black/20 text-[#0A0A0A] sm:w-auto"
-                    >
-                      {label("رجوع", "Back")}
-                    </button>
+                    <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+                      <button
+                        type="button"
+                        onClick={() => goToStep(1)}
+                        className="zoomix-button w-full border border-black/20 text-[#0A0A0A] sm:w-auto"
+                      >
+                        {label("رجوع", "Back")}
+                      </button>
+                      {returnToReview && (
+                        <button
+                          type="button"
+                          onClick={() => goToStep(3)}
+                          className="zoomix-button w-full border border-black/20 text-[#0A0A0A] sm:w-auto"
+                        >
+                          {label("العودة للمراجعة", "Back to review")}
+                        </button>
+                      )}
+                    </div>
                     <button
                       type="button"
                       onClick={handleNextStep}
@@ -970,17 +1075,35 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                     </p>
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
                       <div className="border border-black/10 bg-white/70 p-3">
-                        <span className="block font-mono text-[10px] font-bold tracking-[0.12em] text-black/45">
-                          {label("المسار", "ROUTE")}
-                        </span>
+                        <div className="flex items-start justify-between gap-3">
+                          <span className="block font-mono text-[10px] font-bold tracking-[0.12em] text-black/45">
+                            {label("المسار", "ROUTE")}
+                          </span>
+                          <button
+                            type="button"
+                            className="text-xs font-bold underline"
+                            onClick={() => editSummaryField("selection", 1, "")}
+                          >
+                            {label("تعديل", "Edit")}
+                          </button>
+                        </div>
                         <strong className="mt-1 block text-base leading-tight">
                           {selectedPathLabel}
                         </strong>
                       </div>
                       <div className="border border-black/10 bg-white/70 p-3">
-                        <span className="block font-mono text-[10px] font-bold tracking-[0.12em] text-black/45">
-                          {label("الباقة / الخدمة", "PACKAGE / SERVICE")}
-                        </span>
+                        <div className="flex items-start justify-between gap-3">
+                          <span className="block font-mono text-[10px] font-bold tracking-[0.12em] text-black/45">
+                            {label("الباقة / الخدمة", "PACKAGE / SERVICE")}
+                          </span>
+                          <button
+                            type="button"
+                            className="text-xs font-bold underline"
+                            onClick={() => editSummaryField("selection", 1, "")}
+                          >
+                            {label("تعديل", "Edit")}
+                          </button>
+                        </div>
                         <strong className="mt-1 block text-base leading-tight">
                           {selectedChoiceLabel || label("بريف مشروع جديد", "New project brief")}
                         </strong>
@@ -994,27 +1117,41 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                     </p>
                   </div>
                   <div className="sm:col-span-2 border border-black/15 p-4">
-                    <h3 className="text-lg font-bold">{label("مراجعة بيانات المشروع", "Review project details")}</h3>
+                    <h3 className="text-lg font-bold">
+                      {label("مراجعة بيانات المشروع", "Review project details")}
+                    </h3>
                     <dl className="public-brief-review">
-                      {[
-                        [label("الاسم", "Name"), form.name],
-                        [label("اسم المشروع", "Project"), form.project],
-                        [label("نوع النشاط", "Activity"), activityValue],
-                        [label("الخدمة", "Service"), selectedOfferName || optionLabel(serviceOptions, form.service)],
-                        [label("الميزانية", "Budget"), optionLabel(BUDGET_OPTIONS, form.budget)],
-                        [label("الموعد", "Timeline"), optionLabel(TIMELINE_OPTIONS, form.launchDate)],
-                        [label("رابط المشروع", "Project link"), form.projectLink],
-                        [label("مصدر الخامات", "Content source"), optionLabel(CONTENT_SOURCE_OPTIONS, form.contentSource)],
-                        [label("نوع الحدث", "Event type"), optionLabel(EVENT_TYPE_OPTIONS, form.eventType)],
-                        [label("تاريخ الحدث", "Event date"), form.eventDate],
-                        [label("مكان الحدث", "Event location"), form.eventLocation],
-                        [label("نوع التغطية", "Coverage type"), optionLabel(EVENT_COVERAGE_OPTIONS, form.coverageType)],
-                        [label("الهدف والتفاصيل", "Goal and details"), form.description],
-                      ].filter(([, value]) => String(value || "").trim()).map(([title, value]) => <div key={title}><dt>{title}</dt><dd>{value}</dd></div>)}
+                      {reviewRows.map(([title, value, fieldKey, step, focusId]) => (
+                        <div key={`${fieldKey}-${title}`}>
+                          <div className="flex items-start justify-between gap-3">
+                            <dt>{title}</dt>
+                            <button
+                              type="button"
+                              className="shrink-0 text-xs font-bold underline decoration-black/30 underline-offset-4"
+                              onClick={() => editSummaryField(fieldKey, step, focusId)}
+                            >
+                              {label("تعديل", "Edit")}
+                            </button>
+                          </div>
+                          <dd>{value}</dd>
+                        </div>
+                      ))}
                     </dl>
                     <div className="mt-4 flex flex-wrap gap-3">
-                      <button type="button" className="zoomix-button border-black/25 text-black" onClick={() => goToStep(1)}>{label("تعديل الاختيار والبيانات", "Edit selection and details")}</button>
-                      <button type="button" className="zoomix-button border-black/25 text-black" onClick={() => goToStep(2)}>{label("تعديل نطاق المشروع", "Edit project scope")}</button>
+                      <button
+                        type="button"
+                        className="zoomix-button border-black/25 text-black"
+                        onClick={() => goToStep(1)}
+                      >
+                        {label("تعديل الاختيار والبيانات", "Edit selection and details")}
+                      </button>
+                      <button
+                        type="button"
+                        className="zoomix-button border-black/25 text-black"
+                        onClick={() => goToStep(2)}
+                      >
+                        {label("تعديل نطاق المشروع", "Edit project scope")}
+                      </button>
                     </div>
                   </div>
                   <div className="sm:col-span-2 border-t border-black/15 pt-5">
@@ -1053,11 +1190,35 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                       label("الوقت المفضل للمكالمة", "Preferred call time"),
                       CALL_TIME_OPTIONS,
                     )}
-                  <details id="brief-privacy" className="sm:col-span-2 border border-black/15 p-4 text-sm leading-7">
-                    <summary className="cursor-pointer font-bold">{label("كيف نستخدم بيانات الطلب؟", "How are your request details used?")}</summary>
-                    <p>{label("نجمع بيانات التواصل وتفاصيل المشروع التي تدخلها لإدارة طلبك والرد عليك. تُحفظ الطلبات المُرسلة في نظام Zoomix، وقد يصل إشعار بها لفريق الإدارة عبر Telegram.", "We collect the contact and project details you enter to manage and respond to your request. Submitted requests are stored in Zoomix's system and may generate a Telegram notification for the administration team.")}</p>
-                    <p>{label("تُحفظ مسودة النموذج في هذا المتصفح لتكمل لاحقًا. اختيار واتساب يفتح رسالة بتفاصيل الطلب، وإرسالها داخل واتساب يتم بمعرفتك.", "A form draft is saved in this browser so you can continue later. Choosing WhatsApp opens a message containing the request details; you send that message yourself in WhatsApp.")}</p>
-                    <p>{label("لطلب تصحيح بيانات الطلب أو الاستفسار عنها، تواصل معنا على", "For corrections or questions about your request details, contact")} <a className="underline" href={`mailto:${SITE_CONTACT.email}`}>{SITE_CONTACT.email}</a>.</p>
+                  <details
+                    id="brief-privacy"
+                    className="sm:col-span-2 border border-black/15 p-4 text-sm leading-7"
+                  >
+                    <summary className="cursor-pointer font-bold">
+                      {label("كيف نستخدم بيانات الطلب؟", "How are your request details used?")}
+                    </summary>
+                    <p>
+                      {label(
+                        "نجمع بيانات التواصل وتفاصيل المشروع التي تدخلها لإدارة طلبك والرد عليك. تُحفظ الطلبات المُرسلة في نظام Zoomix، وقد يصل إشعار بها لفريق الإدارة عبر Telegram.",
+                        "We collect the contact and project details you enter to manage and respond to your request. Submitted requests are stored in Zoomix's system and may generate a Telegram notification for the administration team.",
+                      )}
+                    </p>
+                    <p>
+                      {label(
+                        "تُحفظ مسودة النموذج في هذا المتصفح لتكمل لاحقًا. اختيار واتساب يفتح رسالة بتفاصيل الطلب، وإرسالها داخل واتساب يتم بمعرفتك.",
+                        "A form draft is saved in this browser so you can continue later. Choosing WhatsApp opens a message containing the request details; you send that message yourself in WhatsApp.",
+                      )}
+                    </p>
+                    <p>
+                      {label(
+                        "لطلب تصحيح بيانات الطلب أو الاستفسار عنها، تواصل معنا على",
+                        "For corrections or questions about your request details, contact",
+                      )}{" "}
+                      <a className="underline" href={`mailto:${SITE_CONTACT.email}`}>
+                        {SITE_CONTACT.email}
+                      </a>
+                      .
+                    </p>
                   </details>
                   <label className="sm:col-span-2 flex items-start gap-3 text-sm leading-6 text-black/70">
                     <input
@@ -1108,7 +1269,11 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                       aria-busy={submitting}
                       className="zoomix-button w-full bg-[#BBFF00] text-[#0A0A0A] shadow-[0_8px_24px_rgba(187,255,0,0.15)] sm:w-auto"
                     >
-                      {submitting ? label("جارٍ حفظ الطلب…", "Saving your brief…") : submitted ? label("تم حفظ الطلب", "Brief saved") : label("ابعت البريف", "Send the brief")}{" "}
+                      {submitting
+                        ? label("جارٍ حفظ الطلب…", "Saving your brief…")
+                        : submitted
+                          ? label("تم حفظ الطلب", "Brief saved")
+                          : label("ابعت البريف", "Send the brief")}{" "}
                       <ActionArrow className="brief-next-arrow" size={18} />
                     </button>
                   </div>
@@ -1147,8 +1312,12 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
                 role="status"
                 aria-live="polite"
               >
-                <BriefSaveReceipt language={language} contactPreference={form.contactPreference}
-                  whatsappBlocked={whatsappBlocked} referenceCode={referenceCode} />
+                <BriefSaveReceipt
+                  language={language}
+                  contactPreference={form.contactPreference}
+                  whatsappBlocked={whatsappBlocked}
+                  referenceCode={referenceCode}
+                />
                 {editUrl && (
                   <a
                     href={editUrl}

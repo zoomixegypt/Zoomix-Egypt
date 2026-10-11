@@ -2,6 +2,7 @@
   "name": "zoomix-site",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "ZOOMIX creative partner website built with React, Vite, Tailwind CSS, GSAP, and Lenis.",
   "keywords": [
     "zoomix",
@@ -44,7 +45,7 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vite build && node scripts/prepare-pages-routes.mjs",
     "preview": "vite preview --host 0.0.0.0",
-    "dev:cf": "npm run build && wrangler pages dev --port 8788",
+    "dev:cf": "npm run db:local && npm run build && wrangler pages dev --port 8788",
     "db:local": "wrangler d1 migrations apply zoomix-studio --local",
     "check": "npm run build && npm audit --omit=dev",
     "format": "prettier --write .",
@@ -74,6 +75,7 @@
     "postcss": "^8.5.6",
     "prettier": "^3.8.3",
     "tailwindcss": "4.3.3",
-    "vite": "^8.0.8"
+    "vite": "^8.0.8",
+    "wrangler": "4.149.0"
   }
 }

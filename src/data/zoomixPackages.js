@@ -39,6 +39,7 @@ export const ZOOMIX_PACKAGES = [
       ar: "لا تشمل التصوير أو الفيديو أو Reels أو Landing Page أو الطباعة الفعلية أو التنقل.",
       en: "Does not include photography, video, Reels, Landing Page, physical printing or transport.",
     },
+    revisions: 2,
     price: "6,000",
   },
   {
@@ -77,6 +78,7 @@ export const ZOOMIX_PACKAGES = [
       ar: "لا تشمل التصوير أو الفيديو أو Reels أو الطباعة الفعلية أو الشحن أو التنقل أو دومين مدفوع.",
       en: "Does not include photography, video, Reels, physical printing, shipping, transport or a paid domain.",
     },
+    revisions: 2,
     price: "11,000",
     featured: true,
   },
@@ -116,6 +118,7 @@ export const ZOOMIX_PACKAGES = [
       ar: "المعدات والتنقل ومصاريف الإنتاج منفصلة. لا تشمل Raw Files أو أكثر من موقع أو أكثر من 6 ساعات.",
       en: "Equipment, transport and production expenses are separate. Raw Files, extra locations and time beyond 6 hours are excluded.",
     },
+    revisions: 2,
     price: "15,000",
   },
 ];

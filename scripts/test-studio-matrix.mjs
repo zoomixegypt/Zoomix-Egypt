@@ -125,6 +125,18 @@ const check = async (name, expected, fn) => {
     results.push({ name, expected, actual: String(e.message), result: "FAIL" });
   }
 };
+const loginAttempt = () =>
+  c.studioLogin(
+    new Request("https://test/api/studio/login", {
+      method: "POST",
+      headers: { "CF-Connecting-IP": "192.0.2.250", "User-Agent": "QA-login-matrix" },
+      body: JSON.stringify({ password: "qa-definitely-wrong" }),
+    }),
+    env,
+  );
+for (let i = 1; i <= 10; i++)
+  await check(`studio login rate limit accepts ${i}`, 401, async () => (await loginAttempt()).status);
+await check("studio login rate limit rejects eleventh", 429, async () => (await loginAttempt()).status);
 const line = {
   catalogId: "presence",
   name: { ar: "اختبار", en: "QA" },
@@ -971,6 +983,70 @@ await check("chunked large body rejected", 400, () =>
   op(`lead-operations/${followBrief}`, { owner: "x".repeat(1048577) }),
 );
 const backup = JSON.parse((await (await c.studioBackup(req(), env)).text()).replace(/^\uFEFF/, ""));
+const restoreEnv = { ...env, STUDIO_BACKUP_RESTORE_MODE: "isolated" };
+const backupPreviewRequest = (payload, environment = restoreEnv) =>
+  new Request("https://test/api/studio/backup/preview", {
+    method: "POST",
+    headers: { Cookie: cookie },
+    body: JSON.stringify(payload),
+  });
+await check("backup restore is isolated-only", 503, () =>
+  c.studioBackupPreview(backupPreviewRequest(backup), env),
+);
+const previewResponse = await c.studioBackupPreview(backupPreviewRequest(backup), restoreEnv);
+const preview = await previewResponse.json();
+await check("backup preview succeeds in isolated D1", 200, () => previewResponse.status);
+await check("backup preview returns a token", true, () => typeof preview.previewToken === "string" && preview.previewToken.length === 64);
+await check("backup restore rejects missing double confirmation", 400, () =>
+  c.studioBackupRestore(
+    new Request("https://test/api/studio/backup/restore", {
+      method: "POST",
+      headers: { Cookie: cookie },
+      body: JSON.stringify({ backup, previewToken: preview.previewToken, confirmation: "RESTORE" }),
+    }),
+    restoreEnv,
+  ),
+);
+const backupBriefName = backup.tables.brief_requests.find((row) => Number(row.id) === 1)?.name;
+db.prepare("UPDATE brief_requests SET name='QA changed after backup' WHERE id=1").run();
+const restoreResponse = await c.studioBackupRestore(
+  new Request("https://test/api/studio/backup/restore", {
+    method: "POST",
+    headers: { Cookie: cookie },
+    body: JSON.stringify({
+      backup,
+      previewToken: preview.previewToken,
+      confirmation: "RESTORE",
+      secondConfirmation: "RESTORE",
+    }),
+  }),
+  restoreEnv,
+);
+const restoredPayload = await restoreResponse.json();
+await check("backup restore succeeds after preview", 200, () => restoreResponse.status);
+await check("backup restore matches previewed data", backupBriefName, () => db.prepare("SELECT name FROM brief_requests WHERE id=1").get().name);
+const rollbackResponse = await c.studioBackupRollback(
+  new Request("https://test/api/studio/backup/rollback", {
+    method: "POST",
+    headers: { Cookie: cookie },
+    body: JSON.stringify({ restoreId: restoredPayload.restoreId, confirmation: "ROLLBACK", secondConfirmation: "ROLLBACK" }),
+  }),
+  restoreEnv,
+);
+await check("backup rollback succeeds", 200, () => rollbackResponse.status);
+await check("backup rollback restores pre-restore data", "QA changed after backup", () => db.prepare("SELECT name FROM brief_requests WHERE id=1").get().name);
+await check("audit search finds matching reason", true, async () => {
+  const response = await c.studioAudit(
+    new Request("https://test/api/studio/audit?q=QA%20reason", { headers: { Cookie: cookie } }),
+    env,
+  );
+  const payload = await response.json();
+  return payload.entries.some((row) => row.action === "follow_up_updated");
+});
+await check("business report rejects invalid date range", 400, async () => {
+  const response = await op("business-report?from=2026-02-30&to=2026-03-01");
+  return response.status;
+});
 await check("QA overdue reminders excluded", 0, async () => {
   db.prepare(
     "UPDATE commercial_payments SET due_at='2000-01-01T00:00:00Z' WHERE project_id=(SELECT id FROM commercial_projects WHERE quote_id=?)",

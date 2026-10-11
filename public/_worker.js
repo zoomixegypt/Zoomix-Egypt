@@ -7,6 +7,29 @@ const JSON_HEADERS = {
   "Cache-Control": "no-store",
 };
 
+const SECURITY_HEADERS = {
+  "Content-Security-Policy": [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "form-action 'self' https://wa.me https://*.whatsapp.com",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "script-src 'self' https://www.googletagmanager.com",
+    "connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://analytics.google.com https://*.google-analytics.com",
+    "media-src 'self' data: blob: https:",
+    "manifest-src 'self'",
+    "worker-src 'self' blob:",
+  ].join("; "),
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+  "X-Permitted-Cross-Domain-Policies": "none",
+};
+
 const STATUS_VALUES = new Set(["new", "contacted", "in-progress", "won", "archived"]);
 const CONTACT_VALUES = new Set(["whatsapp", "call", "email"]);
 const ANALYTICS_EVENTS = new Set([
@@ -29,11 +52,95 @@ const STUDIO_EVENTS_ROOM = "studio-live";
 const EDIT_LINK_TTL_DAYS = 30;
 const CATALOG_TYPES = new Set(["package", "service", "addon", "expense"]);
 const CATALOG_STATUSES = new Set(["draft", "published", "archived"]);
+const STUDIO_BACKUP_TABLES = [
+  "brief_requests",
+  "analytics_events",
+  "commercial_catalog_items",
+  "commercial_catalog_versions",
+  "commercial_quotes",
+  "commercial_quote_versions",
+  "commercial_quote_items",
+  "commercial_quote_events",
+  "commercial_promotions",
+  "commercial_promotion_redemptions",
+  "commercial_projects",
+  "commercial_payments",
+  "commercial_audit_log",
+  "commercial_lead_operations",
+  "commercial_project_entries",
+  "commercial_documents",
+  "commercial_quote_rejections",
+  "commercial_attachments",
+];
+const STUDIO_BACKUP_COLUMNS = {
+  brief_requests: [
+    "id", "reference_code", "name", "project", "phone", "email", "contact_preference", "preferred_time",
+    "activity", "service", "route", "offer_id", "offer_name", "show_type", "content_source", "event_type",
+    "event_date", "event_location", "coverage_type", "stage", "budget", "launch_timeline", "source",
+    "project_link", "goal", "description", "consent", "status", "notes", "created_at", "updated_at",
+    "edit_token_hash", "edit_token_expires_at", "is_test",
+  ],
+  analytics_events: ["id", "event_name", "language", "properties_json", "created_at"],
+  commercial_catalog_items: [
+    "id", "item_type", "category", "name_ar", "name_en", "description_ar", "description_en", "price_minor",
+    "cost_minor", "minimum_price_minor", "currency", "unit", "status", "visible_on_site", "featured",
+    "sort_order", "created_at", "updated_at", "published_at", "included_json", "exclusions_ar", "exclusions_en",
+    "duration_ar", "duration_en", "revisions", "published_snapshot_json", "cost_reviewed",
+  ],
+  commercial_catalog_versions: ["id", "catalog_item_id", "version_number", "snapshot_json", "change_type", "created_at"],
+  commercial_quotes: [
+    "id", "reference_code", "brief_request_id", "client_name", "project_name", "language", "status", "current_version",
+    "public_token_hash", "expires_at", "created_at", "updated_at", "is_test", "pricing_approved_version", "pricing_approval_reason",
+  ],
+  commercial_quote_versions: [
+    "id", "quote_id", "version_number", "subtotal_minor", "discount_minor", "tax_minor", "total_minor",
+    "internal_cost_minor", "deposit_percent", "timeline_text", "revisions", "terms_json", "created_at",
+  ],
+  commercial_quote_items: [
+    "id", "quote_version_id", "catalog_item_id", "sort_order", "name_ar", "name_en", "description_ar",
+    "description_en", "quantity", "unit_price_minor", "cost_minor", "discount_minor", "optional",
+  ],
+  commercial_quote_events: ["id", "quote_id", "quote_version_id", "event_type", "message", "selection_json", "created_at"],
+  commercial_promotions: [
+    "id", "code", "promotion_type", "value_minor", "percentage_value", "scope_json", "usage_limit", "usage_count",
+    "starts_at", "ends_at", "status", "created_at", "updated_at",
+  ],
+  commercial_promotion_redemptions: ["quote_id", "promotion_id", "redeemed_at"],
+  commercial_projects: [
+    "id", "quote_id", "reference_code", "client_name", "project_name", "status", "contract_value_minor",
+    "expected_cost_minor", "created_at", "updated_at",
+  ],
+  commercial_payments: [
+    "id", "project_id", "payment_type", "amount_minor", "status", "due_at", "paid_at", "created_at", "updated_at",
+    "reminder_sent_at", "method", "collection_reference", "receipt_url", "label",
+  ],
+  commercial_audit_log: ["id", "entity_type", "entity_id", "action", "before_json", "after_json", "created_at"],
+  commercial_lead_operations: ["brief_id", "owner", "follow_up_at", "loss_reason", "updated_at"],
+  commercial_project_entries: [
+    "id", "project_id", "entry_type", "title", "detail", "status", "owner", "due_at", "amount_minor", "created_at", "updated_at",
+  ],
+  commercial_documents: ["id", "project_id", "payment_id", "document_type", "reference", "snapshot_json", "created_at"],
+  commercial_quote_rejections: ["quote_id", "version_number", "reason", "created_at"],
+  commercial_attachments: ["id", "project_id", "payment_id", "filename", "mime_type", "size_bytes", "content_base64", "created_at"],
+};
 
 function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
     headers: { ...JSON_HEADERS, ...extraHeaders },
+  });
+}
+
+function withSecurityHeaders(response, request) {
+  const headers = new Headers(response.headers);
+  Object.entries(SECURITY_HEADERS).forEach(([name, value]) => headers.set(name, value));
+  if (request && new URL(request.url).protocol === "https:") {
+    headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
   });
 }
 
@@ -267,6 +374,62 @@ async function enforceBriefRateLimit(request, env) {
   return { allowed: true };
 }
 
+async function enforceStudioLoginRateLimit(request, env) {
+  if (!env.DB) return { allowed: true };
+  const ip = clientIp(request);
+  // Local development and private previews do not always provide a client IP.
+  if (!ip) return { allowed: true };
+
+  const userAgent = text(request.headers.get("User-Agent"), 240);
+  const fingerprint = await sha256(`studio-login|${ip}|${userAgent}`);
+  const current = new Date();
+  const currentIso = current.toISOString();
+  const windowMs = 15 * 60 * 1000;
+  const expiresAt = new Date(current.getTime() + windowMs).toISOString();
+  const maxAttempts = 10;
+
+  try {
+    await env.DB.prepare("DELETE FROM studio_login_rate_limits WHERE expires_at <= ?").bind(currentIso).run();
+    const row = await env.DB.prepare(
+      "SELECT attempt_count, expires_at FROM studio_login_rate_limits WHERE fingerprint = ? LIMIT 1",
+    ).bind(fingerprint).first();
+    if (!row || row.expires_at <= currentIso) {
+      await env.DB.prepare(
+        "INSERT OR REPLACE INTO studio_login_rate_limits (fingerprint, window_started_at, attempt_count, expires_at) VALUES (?, ?, ?, ?)",
+      ).bind(fingerprint, currentIso, 1, expiresAt).run();
+      return { allowed: true };
+    }
+    const attemptCount = Number(row.attempt_count) || 0;
+    if (attemptCount >= maxAttempts) {
+      return {
+        allowed: false,
+        retryAfter: Math.max(1, Math.ceil((new Date(row.expires_at).getTime() - current.getTime()) / 1000)),
+      };
+    }
+    await env.DB.prepare(
+      "UPDATE studio_login_rate_limits SET attempt_count = attempt_count + 1 WHERE fingerprint = ?",
+    ).bind(fingerprint).run();
+    return { allowed: true };
+  } catch (error) {
+    // A missing migration must not lock the admin out during a staged rollout.
+    console.error("Studio login rate limiter unavailable", error?.name || "Error");
+    return { allowed: true };
+  }
+}
+
+async function resetStudioLoginRateLimit(request, env) {
+  if (!env.DB) return;
+  const ip = clientIp(request);
+  if (!ip) return;
+  const userAgent = text(request.headers.get("User-Agent"), 240);
+  const fingerprint = await sha256(`studio-login|${ip}|${userAgent}`);
+  try {
+    await env.DB.prepare("DELETE FROM studio_login_rate_limits WHERE fingerprint = ?").bind(fingerprint).run();
+  } catch (error) {
+    console.error("Studio login rate limiter reset unavailable", error?.name || "Error");
+  }
+}
+
 async function sendBriefEmails(brief, env) {
   const adminEmail = env.ADMIN_EMAIL || "zoomix.eg@gmail.com";
   if (!env.EMAIL || !env.EMAIL_FROM) return false;
@@ -470,6 +633,14 @@ async function authenticateStudio(request, env) {
 
 async function studioLogin(request, env) {
   if (!env.DB || !env.STUDIO_PASSWORD) return json({ error: "Studio access is not configured yet." }, 503);
+  const rateLimit = await enforceStudioLoginRateLimit(request, env);
+  if (!rateLimit.allowed) {
+    return json(
+      { error: "Too many login attempts. Please try again later." },
+      429,
+      { "Retry-After": String(rateLimit.retryAfter) },
+    );
+  }
   let payload;
   try {
     payload = await requestObject(request);
@@ -486,6 +657,7 @@ async function studioLogin(request, env) {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
   await env.DB.prepare("DELETE FROM studio_sessions WHERE expires_at <= ?").bind(createdAt).run();
   await env.DB.prepare("INSERT INTO studio_sessions (token_hash, created_at, expires_at) VALUES (?, ?, ?)").bind(tokenHash, createdAt, expiresAt).run();
+  await resetStudioLoginRateLimit(request, env);
   return json({ ok: true }, 200, { "Set-Cookie": sessionCookie(token, request) });
 }
 
@@ -819,7 +991,27 @@ async function studioIntegrations(request, env) {
 
 async function studioAudit(request, env) {
   const auth = await authenticateStudio(request, env); if (!auth.ok) return json({ error: auth.error }, auth.status);
-  const result = await env.DB.prepare("SELECT entity_type, entity_id, action, after_json, created_at FROM commercial_audit_log ORDER BY created_at DESC LIMIT 50").all();
+  const url = new URL(request.url);
+  const query = text(url.searchParams.get("q"), 120);
+  const entity = text(url.searchParams.get("entity"), 80);
+  const action = text(url.searchParams.get("action"), 120);
+  const conditions = [];
+  const params = [];
+  if (entity) {
+    conditions.push("entity_type = ?");
+    params.push(entity);
+  }
+  if (action) {
+    conditions.push("action = ?");
+    params.push(action);
+  }
+  if (query) {
+    const term = `%${query}%`;
+    conditions.push("(entity_type LIKE ? OR entity_id LIKE ? OR action LIKE ? OR before_json LIKE ? OR after_json LIKE ?)");
+    params.push(term, term, term, term, term);
+  }
+  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+  const result = await env.DB.prepare(`SELECT entity_type, entity_id, action, after_json, created_at FROM commercial_audit_log ${where} ORDER BY created_at DESC LIMIT 200`).bind(...params).all();
   return json({ entries: (result.results || []).map((item) => {
     let reason = "";
     if (item.entity_type === "payment" && item.action === "status_changed") {
@@ -987,7 +1179,7 @@ async function studioQuotes(request, env) {
   const auth = await authenticateStudio(request, env);
   if (!auth.ok) return json({ error: auth.error }, auth.status);
   const result = await env.DB.prepare(`
-    SELECT q.id, q.is_test, q.reference_code, q.client_name, q.project_name, q.language, q.status, q.current_version, q.expires_at, q.created_at, q.updated_at,
+    SELECT q.id, q.brief_request_id, q.is_test, q.reference_code, q.client_name, q.project_name, q.language, q.status, q.current_version, q.expires_at, q.created_at, q.updated_at,
       v.total_minor, v.tax_minor, v.internal_cost_minor,
       (SELECT event_type FROM commercial_quote_events e WHERE e.quote_id = q.id ORDER BY e.created_at DESC, e.id DESC LIMIT 1) AS last_event,
       (SELECT created_at FROM commercial_quote_events e WHERE e.quote_id = q.id ORDER BY e.created_at DESC, e.id DESC LIMIT 1) AS last_event_at
@@ -995,7 +1187,7 @@ async function studioQuotes(request, env) {
     LEFT JOIN commercial_quote_versions v ON v.quote_id = q.id AND v.version_number = q.current_version
     ORDER BY q.updated_at DESC
   `).all();
-  return json({ quotes: (result.results || []).map((quote) => ({ id: Number(quote.id), isTest: Boolean(quote.is_test), reference: quote.reference_code, clientName: quote.client_name || "", projectName: quote.project_name || "", language: quote.language || "ar", status: quote.expires_at && quote.expires_at < now() && !["draft", "accepted", "cancelled"].includes(quote.status) ? "expired" : quote.status, version: Number(quote.current_version), total: Number(quote.total_minor || 0) / 100, netValue: (Number(quote.total_minor || 0) - Number(quote.tax_minor || 0)) / 100, internalCost: Number(quote.internal_cost_minor || 0) / 100, expiresAt: quote.expires_at, createdAt: quote.created_at, updatedAt: quote.updated_at, lastEvent: quote.last_event || "", lastEventAt: quote.last_event_at || "" })) });
+  return json({ quotes: (result.results || []).map((quote) => ({ id: Number(quote.id), briefRequestId: quote.brief_request_id === null ? null : Number(quote.brief_request_id), isTest: Boolean(quote.is_test), reference: quote.reference_code, clientName: quote.client_name || "", projectName: quote.project_name || "", language: quote.language || "ar", status: quote.expires_at && quote.expires_at < now() && !["draft", "accepted", "cancelled"].includes(quote.status) ? "expired" : quote.status, version: Number(quote.current_version), total: Number(quote.total_minor || 0) / 100, netValue: (Number(quote.total_minor || 0) - Number(quote.tax_minor || 0)) / 100, internalCost: Number(quote.internal_cost_minor || 0) / 100, expiresAt: quote.expires_at, createdAt: quote.created_at, updatedAt: quote.updated_at, lastEvent: quote.last_event || "", lastEventAt: quote.last_event_at || "" })) });
 }
 
 async function studioQuoteTestMode(request, env, id) {
@@ -1388,21 +1580,204 @@ async function studioExport(request, env) {
   });
 }
 
+function backupRestoreEnabled(env) {
+  return env.STUDIO_BACKUP_RESTORE_MODE === "isolated";
+}
+
+function backupPayloadFromSnapshots(snapshots, exportedAt = now()) {
+  const tables = {};
+  STUDIO_BACKUP_TABLES.forEach((table, index) => {
+    tables[table] = snapshots[index]?.results || [];
+  });
+  return {
+    format: "zoomix-studio-backup",
+    schemaVersion: 1,
+    exportedAt,
+    requests: tables.brief_requests,
+    analyticsEvents: tables.analytics_events,
+    tables,
+  };
+}
+
+function backupSummary(payload) {
+  const tables = STUDIO_BACKUP_TABLES.map((name) => ({ name, rows: payload.tables[name].length }));
+  return { tables, totalRows: tables.reduce((total, table) => total + table.rows, 0) };
+}
+
+function validateBackupPayload(input) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return { error: "Invalid backup payload." };
+  if (input.format !== "zoomix-studio-backup" || Number(input.schemaVersion) !== 1) {
+    return { error: "Unsupported backup format or schema version." };
+  }
+  if (!input.tables || typeof input.tables !== "object" || Array.isArray(input.tables)) {
+    return { error: "Backup tables are missing." };
+  }
+  const incomingTables = Object.keys(input.tables);
+  if (incomingTables.some((table) => !STUDIO_BACKUP_TABLES.includes(table))) {
+    return { error: "Backup contains an unknown table." };
+  }
+  const tables = {};
+  for (const table of STUDIO_BACKUP_TABLES) {
+    const rows = input.tables[table];
+    if (!Array.isArray(rows)) return { error: `Backup table is missing: ${table}.` };
+    const columns = STUDIO_BACKUP_COLUMNS[table];
+    tables[table] = [];
+    for (const row of rows) {
+      if (!row || typeof row !== "object" || Array.isArray(row)) return { error: `Invalid row in ${table}.` };
+      const keys = Object.keys(row);
+      if (keys.some((key) => !columns.includes(key)) || keys.length !== columns.length) {
+        return { error: `Backup columns do not match ${table}.` };
+      }
+      if (columns.some((column) => !Object.prototype.hasOwnProperty.call(row, column))) {
+        return { error: `Backup row is incomplete in ${table}.` };
+      }
+      if (Object.values(row).some((value) => value !== null && !["string", "number"].includes(typeof value))) {
+        return { error: `Backup contains an unsupported value in ${table}.` };
+      }
+      tables[table].push(Object.fromEntries(columns.map((column) => [column, row[column]])));
+    }
+  }
+  return {
+    payload: {
+      format: "zoomix-studio-backup",
+      schemaVersion: 1,
+      exportedAt: text(input.exportedAt, 80),
+      requests: tables.brief_requests,
+      analyticsEvents: tables.analytics_events,
+      tables,
+    },
+  };
+}
+
+function backupReplaceStatements(env, payload) {
+  const statements = STUDIO_BACKUP_TABLES.slice()
+    .reverse()
+    .map((table) => env.DB.prepare(`DELETE FROM ${table}`));
+  for (const table of STUDIO_BACKUP_TABLES) {
+    const columns = STUDIO_BACKUP_COLUMNS[table];
+    const placeholders = columns.map(() => "?").join(", ");
+    for (const row of payload.tables[table]) {
+      statements.push(
+        env.DB.prepare(`INSERT INTO ${table} (${columns.join(", ")}) VALUES (${placeholders})`).bind(
+          ...columns.map((column) => row[column]),
+        ),
+      );
+    }
+  }
+  return statements;
+}
+
+async function backupPayloadFromDatabase(env) {
+  const snapshots = await env.DB.batch(
+    STUDIO_BACKUP_TABLES.map((table) => env.DB.prepare(`SELECT * FROM ${table}`)),
+  );
+  return backupPayloadFromSnapshots(snapshots);
+}
+
+async function studioBackupPreview(request, env) {
+  const auth = await authenticateStudio(request, env);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+  if (!backupRestoreEnabled(env)) return json({ error: "Backup restore is available only in an isolated D1 environment." }, 503);
+  let input;
+  try {
+    input = await limitedJson(request);
+  } catch {
+    return json({ error: "Invalid backup JSON or request exceeds 1 MB." }, 400);
+  }
+  const validated = validateBackupPayload(input);
+  if (validated.error) return json({ error: validated.error }, 400);
+  const backupHash = await sha256(JSON.stringify(validated.payload.tables));
+  return json({
+    ok: true,
+    previewToken: backupHash,
+    format: validated.payload.format,
+    schemaVersion: validated.payload.schemaVersion,
+    exportedAt: validated.payload.exportedAt,
+    ...backupSummary(validated.payload),
+  });
+}
+
+async function studioBackupRestore(request, env) {
+  const auth = await authenticateStudio(request, env);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+  if (!backupRestoreEnabled(env)) return json({ error: "Backup restore is available only in an isolated D1 environment." }, 503);
+  let input;
+  try {
+    input = await limitedJson(request);
+  } catch {
+    return json({ error: "Invalid restore request or request exceeds 1 MB." }, 400);
+  }
+  const validated = validateBackupPayload(input?.backup);
+  if (validated.error) return json({ error: validated.error }, 400);
+  if (input.confirmation !== "RESTORE" || input.secondConfirmation !== "RESTORE") {
+    return json({ error: "Two explicit RESTORE confirmations are required." }, 400);
+  }
+  const backupHash = await sha256(JSON.stringify(validated.payload.tables));
+  if (input.previewToken !== backupHash) return json({ error: "The backup changed after Preview. Preview it again." }, 409);
+  const previousPayload = await backupPayloadFromDatabase(env);
+  const restoreId = crypto.randomUUID();
+  const restoredAt = now();
+  const statements = backupReplaceStatements(env, validated.payload);
+  statements.push(
+    env.DB.prepare(`INSERT INTO commercial_backup_restore_runs (id, state, backup_hash, previous_backup_json, restored_backup_json, created_at) VALUES (?, 'restored', ?, ?, ?, ?)`).bind(
+      restoreId,
+      backupHash,
+      JSON.stringify(previousPayload),
+      JSON.stringify(validated.payload),
+      restoredAt,
+    ),
+  );
+  try {
+    await env.DB.batch(statements);
+  } catch (error) {
+    return json({ error: `Restore failed: ${text(error?.message, 300)}` }, 409);
+  }
+  return json({ ok: true, restoreId, restoredAt, ...backupSummary(validated.payload) });
+}
+
+async function studioBackupRollback(request, env) {
+  const auth = await authenticateStudio(request, env);
+  if (!auth.ok) return json({ error: auth.error }, auth.status);
+  if (!backupRestoreEnabled(env)) return json({ error: "Backup restore is available only in an isolated D1 environment." }, 503);
+  let input;
+  try {
+    input = await limitedJson(request);
+  } catch {
+    return json({ error: "Invalid rollback request or request exceeds 1 MB." }, 400);
+  }
+  if (input.confirmation !== "ROLLBACK" || input.secondConfirmation !== "ROLLBACK") {
+    return json({ error: "Two explicit ROLLBACK confirmations are required." }, 400);
+  }
+  const restoreId = text(input.restoreId, 80);
+  if (!restoreId) return json({ error: "A restore id is required." }, 400);
+  const run = await env.DB.prepare("SELECT * FROM commercial_backup_restore_runs WHERE id = ? AND state = 'restored' LIMIT 1").bind(restoreId).first();
+  if (!run) return json({ error: "This restore is not available for rollback." }, 404);
+  let previous;
+  try {
+    previous = JSON.parse(run.previous_backup_json);
+  } catch {
+    return json({ error: "Rollback snapshot is unreadable." }, 409);
+  }
+  const validated = validateBackupPayload(previous);
+  if (validated.error) return json({ error: "Rollback snapshot failed validation." }, 409);
+  const rolledBackAt = now();
+  const statements = backupReplaceStatements(env, validated.payload);
+  statements.push(
+    env.DB.prepare("UPDATE commercial_backup_restore_runs SET state = 'rolled_back', rolled_back_at = ? WHERE id = ? AND state = 'restored'").bind(rolledBackAt, restoreId),
+  );
+  try {
+    await env.DB.batch(statements);
+  } catch (error) {
+    return json({ error: `Rollback failed: ${text(error?.message, 300)}` }, 409);
+  }
+  return json({ ok: true, restoreId, rolledBackAt, ...backupSummary(validated.payload) });
+}
+
 async function studioBackup(request, env) {
   const auth = await authenticateStudio(request, env);
   if (!auth.ok) return json({ error: auth.error }, auth.status);
-  const tables = ["brief_requests", "analytics_events", "commercial_catalog_items", "commercial_catalog_versions", "commercial_quotes", "commercial_quote_versions", "commercial_quote_items", "commercial_quote_events", "commercial_promotions", "commercial_promotion_redemptions", "commercial_projects", "commercial_payments", "commercial_audit_log", "commercial_lead_operations", "commercial_project_entries", "commercial_documents", "commercial_quote_rejections", "commercial_attachments"];
   // D1 batch provides one consistent transaction rather than independent reads.
-  const snapshots = await env.DB.batch(tables.map(table => env.DB.prepare(`SELECT * FROM ${table}`)));
-  const payload = {
-    format: "zoomix-studio-backup",
-    schemaVersion: 1,
-    exportedAt: now(),
-    requests: snapshots[0].results || [],
-    analyticsEvents: snapshots[1].results || [],
-  };
-  payload.tables = {};
-  tables.forEach((table,index) => { payload.tables[table] = snapshots[index].results || []; });
+  const payload = await backupPayloadFromDatabase(env);
   return new Response(`\ufeff${JSON.stringify(payload, null, 2)}`, {
     status: 200,
     headers: {
@@ -1480,6 +1855,9 @@ async function api(request, env, ctx) {
   if (request.method === "POST" && url.pathname === "/api/studio/promotions") return studioPromotionCreate(request, env);
   if (request.method === "GET" && url.pathname === "/api/studio/integrations") return studioIntegrations(request, env);
   if (request.method === "GET" && url.pathname === "/api/studio/audit") return studioAudit(request, env);
+  if (request.method === "POST" && url.pathname === "/api/studio/backup/preview") return studioBackupPreview(request, env);
+  if (request.method === "POST" && url.pathname === "/api/studio/backup/restore") return studioBackupRestore(request, env);
+  if (request.method === "POST" && url.pathname === "/api/studio/backup/rollback") return studioBackupRollback(request, env);
   if (request.method === "POST" && url.pathname === "/api/studio/integrations/telegram/test") return studioTelegramTest(request, env);
   if (request.method === "POST" && url.pathname === "/api/studio/payments/reminders") return studioPaymentReminders(request, env);
   const publicQuoteMatch = url.pathname.match(/^\/api\/quotes\/(QT-[A-Z0-9-]+)\/([a-f0-9]{64})$/i);
@@ -1548,14 +1926,17 @@ export class StudioLiveUpdates extends DurableObject {
       void write(": heartbeat\n\n");
     }, 25000);
 
-    return new Response(readable, {
-      headers: {
-        "Content-Type": "text/event-stream; charset=UTF-8",
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Connection: "keep-alive",
-        "X-Accel-Buffering": "no",
-      },
-    });
+    return withSecurityHeaders(
+      new Response(readable, {
+        headers: {
+          "Content-Type": "text/event-stream; charset=UTF-8",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Connection: "keep-alive",
+          "X-Accel-Buffering": "no",
+        },
+      }),
+      request,
+    );
   }
 
   async broadcast(event) {
@@ -1584,19 +1965,28 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname.startsWith("/api/")) {
-      try { return await api(request, env, ctx); }
-      catch(error) { console.error('API request failed', error?.name || 'Error');return json({error:'The operation could not be completed. Please retry.'},500); }
+      try {
+        return withSecurityHeaders(await api(request, env, ctx), request);
+      } catch (error) {
+        console.error("API request failed", error?.name || "Error");
+        return withSecurityHeaders(json({ error: "The operation could not be completed. Please retry." }, 500), request);
+      }
     }
     const isHtmlRoute = request.method === "GET" && !url.pathname.includes(".");
-    if (isHtmlRoute && url.pathname !== "/") {
-      // Pages normalizes /index.html to / with a 308. Fetch the root asset
-      // internally so the browser keeps the requested client-side route.
-      return env.ASSETS.fetch(new Request(new URL("/", request.url), request));
-    }
     const asset = await env.ASSETS.fetch(request);
     const needsSpaFallback = asset.status === 404 || (asset.status >= 300 && asset.status < 400);
-    if (!isHtmlRoute || !needsSpaFallback) return asset;
-    return env.ASSETS.fetch(new Request(new URL("/", request.url), request));
+    if (!isHtmlRoute || !needsSpaFallback) return withSecurityHeaders(asset, request);
+    if (url.pathname !== "/" && !url.pathname.endsWith("/")) {
+      const slashUrl = new URL(request.url);
+      slashUrl.pathname = `${url.pathname}/`;
+      const prerenderedAsset = await env.ASSETS.fetch(new Request(slashUrl, request));
+      const routeExists = prerenderedAsset.status !== 404 && !(prerenderedAsset.status >= 300 && prerenderedAsset.status < 400);
+      if (routeExists) return withSecurityHeaders(prerenderedAsset, request);
+    }
+    // Prefer a prerendered route when Pages exposes it. Fall back to the root
+    // shell only when no route asset exists, keeping client-side navigation
+    // working without replacing route-specific metadata.
+    return withSecurityHeaders(await env.ASSETS.fetch(new Request(new URL("/", request.url), request)), request);
   },
   async scheduled(controller, env, ctx) {
     ctx.waitUntil(processPaymentReminders(env).catch((error) => console.error("Payment reminder run failed", error)));

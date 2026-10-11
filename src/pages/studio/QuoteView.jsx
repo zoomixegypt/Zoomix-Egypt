@@ -272,6 +272,67 @@ export default function QuoteView({
   const tax = calculation.taxMinor / 100;
   const total = calculation.totalMinor / 100;
   const quoteMargin = margin(subtotal - discount, cost);
+  const discountImpactRows = items.map((row, index) => {
+    const grossMinor = Math.max(
+      0,
+      Math.round(Math.round(Number(row.unitPrice || 0) * 100) * Number(row.quantity || 0)),
+    );
+    const itemDiscountMinor = Math.min(
+      grossMinor,
+      Math.max(0, Math.round(Number(row.discount || 0) * 100)),
+    );
+    const promoDiscountMinor = Math.min(
+      Math.max(0, grossMinor - itemDiscountMinor),
+      Math.max(0, Number(calculation.allocations?.[index] || 0)),
+    );
+    const netMinor = Math.max(0, grossMinor - itemDiscountMinor - promoDiscountMinor);
+    const catalogItem = (catalog || []).find((item) => item.id === row.catalogId);
+    const minimumMinor = catalogItem
+      ? Math.max(0, Math.round(Number(catalogItem.minimumPrice || 0) * 100)) *
+        Number(row.quantity || 0)
+      : 0;
+    return {
+      row,
+      gross: grossMinor / 100,
+      itemDiscount: itemDiscountMinor / 100,
+      promoDiscount: promoDiscountMinor / 100,
+      net: netMinor / 100,
+      minimum: minimumMinor / 100,
+      ineligible: minimumMinor > 0 && netMinor < minimumMinor,
+    };
+  });
+  const grossTotalMinor = discountImpactRows.reduce(
+    (sum, item) => sum + Math.round(item.gross * 100),
+    0,
+  );
+  const totalDiscountMinor = discountImpactRows.reduce(
+    (sum, item) => sum + Math.round((item.itemDiscount + item.promoDiscount) * 100),
+    0,
+  );
+  const pricingWarnings = [
+    ...discountImpactRows
+      .filter((item) => item.ineligible)
+      .map((item) => ({
+        key: `minimum-${item.row.rowId}`,
+        type: "item",
+        label: item.row.name[language],
+        reason: isArabic
+          ? `الصافي ${money(item.net, language)} جنيه أقل من الحد الأدنى ${money(item.minimum, language)} جنيه.`
+          : `Net ${money(item.net, language)} EGP is below the ${money(item.minimum, language)} EGP minimum.`,
+      })),
+    ...(grossTotalMinor > 0 && totalDiscountMinor / grossTotalMinor > 0.2
+      ? [
+          {
+            key: "discount-cap",
+            type: "total",
+            label: isArabic ? "إجمالي الخصم" : "Total discount",
+            reason: isArabic
+              ? `الخصم الفعلي ${money(totalDiscountMinor / 100, language)} جنيه، أي أكثر من 20% من إجمالي البنود.`
+              : `The effective discount is ${money(totalDiscountMinor / 100, language)} EGP, above 20% of the gross scope.`,
+          },
+        ]
+      : []),
+  ];
   const markDirty = () => {
     setSaveError("");
     skipBackup.current = false;
@@ -1164,6 +1225,81 @@ export default function QuoteView({
                 </div>
               </div>
             ))}
+            <section className="csp-discount-impact" aria-labelledby="discount-impact-title">
+              <div className="csp-discount-impact-head">
+                <div>
+                  <p className="csp-kicker">PRICING / IMPACT</p>
+                  <h3 id="discount-impact-title">
+                    {isArabic ? "أثر الخصم والأهلية" : "Discount impact and eligibility"}
+                  </h3>
+                </div>
+                <span>
+                  {isArabic
+                    ? `إجمالي التوفير ${money(totalDiscountMinor / 100, language)} جنيه`
+                    : `${money(totalDiscountMinor / 100, language)} EGP total savings`}
+                </span>
+              </div>
+              {discountImpactRows.length ? (
+                <div className="csp-discount-table-wrap">
+                  <table className="csp-discount-table">
+                    <thead>
+                      <tr>
+                        <th>{isArabic ? "البند" : "Item"}</th>
+                        <th>{isArabic ? "قبل الخصم" : "Gross"}</th>
+                        <th>{isArabic ? "خصم البند" : "Item discount"}</th>
+                        <th>{isArabic ? "خصم العرض" : "Promo discount"}</th>
+                        <th>{isArabic ? "الصافي" : "Net"}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {discountImpactRows.map((impact) => (
+                        <tr
+                          className={impact.ineligible ? "is-ineligible" : ""}
+                          key={impact.row.rowId}
+                        >
+                          <th scope="row">
+                            <strong>{impact.row.name[language]}</strong>
+                            {impact.ineligible && (
+                              <small>
+                                {isArabic
+                                  ? `غير مؤهل: أقل من الحد الأدنى ${money(impact.minimum, language)} جنيه`
+                                  : `Ineligible: below ${money(impact.minimum, language)} EGP minimum`}
+                              </small>
+                            )}
+                          </th>
+                          <td>{money(impact.gross, language)}</td>
+                          <td>−{money(impact.itemDiscount, language)}</td>
+                          <td>−{money(impact.promoDiscount, language)}</td>
+                          <td>
+                            <b>{money(impact.net, language)}</b>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="csp-discount-impact-empty">
+                  {isArabic ? "أضف بندًا لعرض أثر الخصم." : "Add an item to see discount impact."}
+                </p>
+              )}
+              {pricingWarnings.length > 0 && (
+                <div className="csp-pricing-alert" role="alert">
+                  <strong>
+                    {isArabic
+                      ? "يحتاج هذا العرض إلى مراجعة تسعير قبل الإرسال"
+                      : "This quote needs pricing review before sending"}
+                  </strong>
+                  <ul>
+                    {pricingWarnings.map((warning) => (
+                      <li key={warning.key}>
+                        <span>{warning.label}</span> — {warning.reason}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </section>
             {!items.length && (
               <div className="csp-empty-state">
                 <Package />
@@ -1437,6 +1573,27 @@ export default function QuoteView({
                   ? "أنت في الوضع المحلي التجريبي؛ لن يصدر رابط حقيقي."
                   : "Local demo mode is active; no real link will be issued."}
             </p>
+            {pricingWarnings.length > 0 && (
+              <div className="csp-pricing-alert csp-pricing-alert--modal" role="alert">
+                <strong>
+                  {isArabic
+                    ? "تنبيه: قد يحتاج الإصدار إلى اعتماد تسعير"
+                    : "Notice: this version may need pricing approval"}
+                </strong>
+                <ul>
+                  {pricingWarnings.map((warning) => (
+                    <li key={warning.key}>
+                      <span>{warning.label}</span> — {warning.reason}
+                    </li>
+                  ))}
+                </ul>
+                <small>
+                  {isArabic
+                    ? "راجع جدول الأثر واعتمد الاستثناء بسبب مسجل قبل إعادة المحاولة."
+                    : "Review the impact table and approve the exception with an audited reason before retrying."}
+                </small>
+              </div>
+            )}
             <div className="csp-channel-grid">
               {[
                 ["copy", isArabic ? "نسخ الرابط" : "Copy link"],

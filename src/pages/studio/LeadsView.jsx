@@ -6,16 +6,31 @@ import { briefLabel, safeDate } from "./briefs";
 import {} from "../../data/commercialStudioPrototype";
 
 import { StatusChip } from "./shared";
-export default function LeadsView({ language, requests, onCreateQuote, storageMode, onUpdated }) {
+export default function LeadsView({
+  language,
+  requests,
+  quotes = [],
+  onCreateQuote,
+  onOpenQuote,
+  storageMode,
+  onUpdated,
+}) {
   const isArabic = language === "ar";
   const rows = Array.isArray(requests) ? requests : [];
+  const quoteRows = Array.isArray(quotes) ? quotes : [];
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
+  const [quality, setQuality] = useState("all");
   const [board, setBoard] = useState(false);
   const [boardError, setBoardError] = useState("");
+  const isQaRecord = (row) =>
+    row?.is_test === true || row?.is_test === 1 || row?.is_test === "1";
+  const linkedQuoteFor = (request) =>
+    quoteRows.find((quote) => String(quote.briefRequestId) === String(request.id));
   const filtered = rows.filter(
     (row) =>
       (!status || (row.status || "new") === status) &&
+      (quality === "all" || (quality === "qa" ? isQaRecord(row) : !isQaRecord(row))) &&
       [
         row.name,
         row.project,
@@ -62,6 +77,27 @@ export default function LeadsView({ language, requests, onCreateQuote, storageMo
             ))}
           </select>
         </label>
+        <div
+          className="csp-filter-row csp-quality-filter"
+          role="group"
+          aria-label={isArabic ? "نوع بيانات الطلب" : "Brief data type"}
+        >
+          {[
+            ["all", isArabic ? "الكل" : "All"],
+            ["real", isArabic ? "حقيقي" : "Real"],
+            ["qa", isArabic ? "اختبار QA" : "QA"],
+          ].map(([value, label]) => (
+            <button
+              type="button"
+              key={value}
+              className={quality === value ? "is-active" : ""}
+              aria-pressed={quality === value}
+              onClick={() => setQuality(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <p role="status">
           {filtered.length} / {rows.length} {isArabic ? "طلب" : "briefs"}
         </p>
@@ -87,7 +123,27 @@ export default function LeadsView({ language, requests, onCreateQuote, storageMo
                       <p>
                         {r.project} · {r.reference_code}
                       </p>
-                      {Boolean(r.is_test) && <StatusChip>TEST QA</StatusChip>}
+                      {isQaRecord(r) && <StatusChip>TEST QA</StatusChip>}
+                      <div className="csp-lead-actions">
+                        {linkedQuoteFor(r) && (
+                          <button
+                            type="button"
+                            className="csp-button"
+                            onClick={() => onOpenQuote?.(linkedQuoteFor(r).id)}
+                          >
+                            <FileText size={14} />
+                            {linkedQuoteFor(r).reference}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="csp-button csp-button--primary"
+                          onClick={() => onCreateQuote(r)}
+                        >
+                          <FileText size={14} />
+                          {isArabic ? "إنشاء عرض" : "Create quote"}
+                        </button>
+                      </div>
                       <label>
                         {isArabic ? "نقل إلى" : "Move to"}
                         <select
@@ -129,7 +185,7 @@ export default function LeadsView({ language, requests, onCreateQuote, storageMo
               >
                 <span className="csp-item-name">
                   <strong>{request.name}</strong>
-                  {Boolean(request.is_test) && (
+                  {isQaRecord(request) && (
                     <StatusChip>{isArabic ? "اختبار QA" : "TEST QA"}</StatusChip>
                   )}
                   <small>
@@ -142,20 +198,46 @@ export default function LeadsView({ language, requests, onCreateQuote, storageMo
                 <StatusChip accent={(request.status || "new") === "new"}>
                   {briefLabel(request.status || "new", language)}
                 </StatusChip>
-                <button
-                  type="button"
-                  className="csp-button csp-button--primary"
-                  onClick={() => onCreateQuote(request)}
-                >
-                  <FileText size={15} />
-                  {isArabic ? "إنشاء عرض" : "Create quote"}
-                </button>
+                <div className="csp-lead-actions">
+                  {linkedQuoteFor(request) && (
+                    <button
+                      type="button"
+                      className="csp-button"
+                      onClick={() => onOpenQuote?.(linkedQuoteFor(request).id)}
+                    >
+                      <FileText size={15} />
+                      {linkedQuoteFor(request).reference}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="csp-button csp-button--primary"
+                    onClick={() => onCreateQuote(request)}
+                  >
+                    <FileText size={15} />
+                    {isArabic ? "إنشاء عرض" : "Create quote"}
+                  </button>
+                </div>
               </div>
               <details className="csp-brief-details">
                 <summary>
                   {isArabic ? "تفاصيل الطلب كاملة" : "Full brief details"} ·{" "}
                   {request.reference_code}
                 </summary>
+                {linkedQuoteFor(request) && (
+                  <div className="csp-linked-quote">
+                    <span>{isArabic ? "العرض المرتبط" : "Linked quote"}</span>
+                    <button
+                      type="button"
+                      className="csp-button"
+                      disabled={!onOpenQuote}
+                      onClick={() => onOpenQuote?.(linkedQuoteFor(request).id)}
+                    >
+                      <FileText size={15} />
+                      {linkedQuoteFor(request).reference} · {linkedQuoteFor(request).status}
+                    </button>
+                  </div>
+                )}
                 {storageMode === "cloud" && (
                   <WorkspaceDisclosure label={isArabic ? "المسؤول والمتابعة" : "Owner & follow-up"}>
                     <LeadFollowUp id={request.id} language={language} />
@@ -246,7 +328,8 @@ function BriefManagement({ request, language, onUpdated }) {
   const ar = language === "ar";
   const [status, setStatus] = useState(request.status || "new");
   const [notes, setNotes] = useState(request.notes || "");
-  const [isTest, setIsTest] = useState(Boolean(request.is_test));
+  const isQa = request.is_test === true || request.is_test === 1 || request.is_test === "1";
+  const [isTest, setIsTest] = useState(isQa);
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -255,7 +338,7 @@ function BriefManagement({ request, language, onUpdated }) {
     if (!dirty) {
       setStatus(request.status || "new");
       setNotes(request.notes || "");
-      setIsTest(Boolean(request.is_test));
+      setIsTest(request.is_test === true || request.is_test === 1 || request.is_test === "1");
     }
   }, [request.status, request.notes, request.is_test, dirty]);
   return (

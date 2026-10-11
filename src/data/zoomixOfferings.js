@@ -138,11 +138,16 @@ export const ZOOMIX_CONTENT_PACKAGES = [
 // This affects current displays/new quote defaults, never saved quote snapshots.
 export function contentProductionLines(id, lines = []) {
   if (!["content-start", "content-build", "content-campaign"].includes(id)) return lines;
-  return lines.map(line => String(line)
-    .replace("جلسة إنتاج لمدة 6 ساعات", "جلسة تصوير وإنتاج محتوى لمدة 6 ساعات بواسطة فريق Zoomix")
-    .replace("Six-hour production session", "6-hour shoot and content production session by the Zoomix team")
-    .replace("من خامات العميل", "من تصوير فريق Zoomix، تشمل المونتاج")
-    .replace("from client-provided footage", "shot and edited by the Zoomix team"));
+  return lines.map((line) =>
+    String(line)
+      .replace("جلسة إنتاج لمدة 6 ساعات", "جلسة تصوير وإنتاج محتوى لمدة 6 ساعات بواسطة فريق Zoomix")
+      .replace(
+        "Six-hour production session",
+        "6-hour shoot and content production session by the Zoomix team",
+      )
+      .replace("من خامات العميل", "من تصوير فريق Zoomix، تشمل المونتاج")
+      .replace("from client-provided footage", "shot and edited by the Zoomix team"),
+  );
 }
 
 export const ZOOMIX_EVENT_PACKAGES = [
@@ -275,6 +280,10 @@ export const ZOOMIX_PARTNER_PACKAGES = [
       ],
     },
     price: "9,000",
+    priceNote: {
+      ar: "الفيديوهات تعتمد على خامات العميل؛ طلبات التعديل محدودة، وكل طلب تعديل بسيط على مخرج واحد دون فكرة جديدة أو إعادة تصميم.",
+      en: "Videos use client-provided footage; revisions are limited, with each request being a minor change to one deliverable rather than a new concept or redesign.",
+    },
   },
   {
     id: "partner-growth",
@@ -306,6 +315,10 @@ export const ZOOMIX_PARTNER_PACKAGES = [
       ],
     },
     price: "13,000",
+    priceNote: {
+      ar: "الفيديوهات تعتمد على خامات العميل؛ طلبات التعديل محدودة، وكل طلب تعديل بسيط على مخرج واحد دون فكرة جديدة أو إعادة تصميم.",
+      en: "Videos use client-provided footage; revisions are limited, with each request being a minor change to one deliverable rather than a new concept or redesign.",
+    },
     featured: true,
   },
   {
@@ -340,6 +353,10 @@ export const ZOOMIX_PARTNER_PACKAGES = [
       ],
     },
     price: "18,000",
+    priceNote: {
+      ar: "الفيديوهات تعتمد على خامات العميل؛ طلبات التعديل محدودة، وكل طلب تعديل بسيط على مخرج واحد دون فكرة جديدة أو إعادة تصميم.",
+      en: "Videos use client-provided footage; revisions are limited, with each request being a minor change to one deliverable rather than a new concept or redesign.",
+    },
   },
 ];
 

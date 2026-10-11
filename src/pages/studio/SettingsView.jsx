@@ -11,16 +11,42 @@ export default function SettingsView({ language, storageMode }) {
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState("idle");
   const [message, setMessage] = useState("");
+  const [auditQuery, setAuditQuery] = useState("");
+  const [auditEntity, setAuditEntity] = useState("");
+  const [auditAction, setAuditAction] = useState("");
+  const [backupFile, setBackupFile] = useState(null);
+  const [backupPreview, setBackupPreview] = useState(null);
+  const [backupState, setBackupState] = useState("idle");
+  const [backupMessage, setBackupMessage] = useState("");
+  const [restoreConfirmed, setRestoreConfirmed] = useState(false);
+  const [restoreSecondConfirmed, setRestoreSecondConfirmed] = useState(false);
+  const [rollbackConfirmed, setRollbackConfirmed] = useState(false);
+  const [rollbackSecondConfirmed, setRollbackSecondConfirmed] = useState(false);
   const [auditRows, setAuditRows] = useState(() =>
     storageMode === "cloud" ? null : readLocalAudit(),
   );
   useEffect(() => {
     if (storageMode !== "cloud") {
-      setAuditRows(readLocalAudit());
+      const query = auditQuery.trim().toLowerCase();
+      setAuditRows(
+        readLocalAudit().filter((row) => {
+          const haystack =
+            `${row.action || ""} ${row.entity || ""} ${row.entityId || ""} ${row.detail || ""}`.toLowerCase();
+          return (
+            (!query || haystack.includes(query)) &&
+            (!auditEntity || row.entity === auditEntity) &&
+            (!auditAction || row.action === auditAction)
+          );
+        }),
+      );
       return;
     }
     setAuditRows(null);
-    studioFetch("/api/studio/audit")
+    const params = new URLSearchParams();
+    if (auditQuery.trim()) params.set("q", auditQuery.trim());
+    if (auditEntity) params.set("entity", auditEntity);
+    if (auditAction) params.set("action", auditAction);
+    studioFetch(`/api/studio/audit${params.toString() ? `?${params}` : ""}`)
       .then((response) =>
         response.ok ? response.json() : Promise.reject(new Error("unavailable")),
       )
@@ -32,6 +58,7 @@ export default function SettingsView({ language, storageMode }) {
               entity: entry.entity,
               entityId: entry.entityId,
               at: entry.at,
+              reason: entry.reason,
             })),
           );
       })
@@ -42,7 +69,7 @@ export default function SettingsView({ language, storageMode }) {
             : "Database audit could not be loaded. Retry.",
         ),
       );
-  }, [storageMode, retry]);
+  }, [storageMode, retry, auditQuery, auditEntity, auditAction]);
   useEffect(() => {
     if (storageMode !== "cloud") {
       setConfigured(false);
@@ -77,6 +104,90 @@ export default function SettingsView({ language, storageMode }) {
     } catch (error) {
       setState("error");
       setMessage(error.message);
+    }
+  };
+  const previewBackup = async () => {
+    if (!backupFile) return;
+    setBackupState("previewing");
+    setBackupMessage("");
+    try {
+      const backup = JSON.parse((await backupFile.text()).replace(/^\uFEFF/, ""));
+      const response = await studioFetch("/api/studio/backup/preview", {
+        method: "POST",
+        body: JSON.stringify(backup),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Preview failed");
+      setBackupPreview({ backup, ...payload });
+      setRestoreConfirmed(false);
+      setRestoreSecondConfirmed(false);
+      setRollbackConfirmed(false);
+      setRollbackSecondConfirmed(false);
+      setBackupState("previewed");
+      setBackupMessage(
+        isArabic
+          ? "تمت معاينة النسخة دون تغيير البيانات."
+          : "Backup preview completed without changing data.",
+      );
+    } catch (error) {
+      setBackupState("error");
+      setBackupMessage(error.message);
+    }
+  };
+  const restoreBackup = async () => {
+    if (!backupPreview || !restoreConfirmed || !restoreSecondConfirmed) return;
+    setBackupState("restoring");
+    setBackupMessage("");
+    try {
+      const response = await studioFetch("/api/studio/backup/restore", {
+        method: "POST",
+        body: JSON.stringify({
+          backup: backupPreview.backup,
+          previewToken: backupPreview.previewToken,
+          confirmation: "RESTORE",
+          secondConfirmation: "RESTORE",
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Restore failed");
+      setBackupPreview((current) => ({ ...current, restoreId: payload.restoreId }));
+      setBackupState("restored");
+      setBackupMessage(
+        isArabic
+          ? "تمت الاستعادة في البيئة المعزولة. يمكنك التراجع الآن."
+          : "Restore completed in the isolated environment. You can roll it back now.",
+      );
+      setRetry((value) => value + 1);
+    } catch (error) {
+      setBackupState("error");
+      setBackupMessage(error.message);
+    }
+  };
+  const rollbackBackup = async () => {
+    if (!backupPreview?.restoreId || !rollbackConfirmed || !rollbackSecondConfirmed) return;
+    setBackupState("rolling-back");
+    setBackupMessage("");
+    try {
+      const response = await studioFetch("/api/studio/backup/rollback", {
+        method: "POST",
+        body: JSON.stringify({
+          restoreId: backupPreview.restoreId,
+          confirmation: "ROLLBACK",
+          secondConfirmation: "ROLLBACK",
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Rollback failed");
+      setBackupState("rolled-back");
+      setBackupMessage(
+        isArabic
+          ? "تم التراجع وإرجاع بيانات ما قبل الاستعادة."
+          : "Rollback completed and the pre-restore data was returned.",
+      );
+      setRetry((value) => value + 1);
+    } catch (error) {
+      setBackupState("error");
+      setBackupMessage(error.message);
     }
   };
   const auditLabel = (row) =>
@@ -125,9 +236,144 @@ export default function SettingsView({ language, storageMode }) {
           </div>
           <p>
             {isArabic
-              ? "ملف خاص يحتوي بيانات العملاء؛ احفظه في مكان آمن. الاستعادة ليست إجراءً متاحًا من هذه الشاشة."
-              : "Private customer data: store securely. Restore is not available from this screen."}
+              ? "ملف خاص يحتوي بيانات العملاء؛ احفظه في مكان آمن. الاستعادة متاحة للاختبار المعزول فقط، ولن تعمل على الإنتاج."
+              : "Private customer data: store it securely. Restore is available only for isolated testing and is disabled in production."}
           </p>
+          <div className="csp-backup-restore">
+            <div className="csp-panel-head">
+              <h3>
+                {isArabic ? "استعادة نسخة — D1 معزولة فقط" : "Restore backup — isolated D1 only"}
+              </h3>
+              <StatusChip warning>ISOLATED ONLY</StatusChip>
+            </div>
+            <p>
+              {isArabic
+                ? "ارفع ملف JSON من زر التنزيل، عاينه أولًا، ثم أكد الاستعادة مرتين. زر التراجع يعيد الحالة السابقة من لقطة محمية."
+                : "Upload a JSON backup, preview it first, then confirm restore twice. Rollback uses a protected snapshot of the previous state."}
+            </p>
+            <label className="csp-file-picker">
+              <span>{isArabic ? "ملف النسخة" : "Backup file"}</span>
+              <input
+                type="file"
+                accept=".json,application/json"
+                onChange={(event) => setBackupFile(event.target.files?.[0] || null)}
+              />
+            </label>
+            <button
+              type="button"
+              className="csp-button"
+              onClick={previewBackup}
+              disabled={
+                !backupFile ||
+                backupState === "previewing" ||
+                backupState === "restoring" ||
+                backupState === "rolling-back"
+              }
+            >
+              {backupState === "previewing"
+                ? isArabic
+                  ? "جارٍ الفحص…"
+                  : "Previewing…"
+                : isArabic
+                  ? "معاينة النسخة"
+                  : "Preview backup"}
+            </button>
+            {backupPreview && (
+              <div className="csp-backup-preview">
+                <strong>{isArabic ? "ملخص المعاينة" : "Preview summary"}</strong>
+                <span>
+                  {isArabic ? "إجمالي السجلات" : "Total rows"}: {backupPreview.totalRows}
+                </span>
+                <span>
+                  {backupPreview.tables.map((table) => `${table.name}: ${table.rows}`).join(" · ")}
+                </span>
+                <label className="csp-confirm-line">
+                  <input
+                    type="checkbox"
+                    checked={restoreConfirmed}
+                    onChange={(event) => setRestoreConfirmed(event.target.checked)}
+                  />
+                  {isArabic
+                    ? "أؤكد أن هذه نسخة D1 المعزولة المقصودة."
+                    : "I confirm this is the intended isolated D1 backup."}
+                </label>
+                <label className="csp-confirm-line">
+                  <input
+                    type="checkbox"
+                    checked={restoreSecondConfirmed}
+                    onChange={(event) => setRestoreSecondConfirmed(event.target.checked)}
+                  />
+                  {isArabic ? "أؤكد الاستعادة الثانية: RESTORE." : "Second confirmation: RESTORE."}
+                </label>
+                <button
+                  type="button"
+                  className="csp-button csp-button--danger"
+                  onClick={restoreBackup}
+                  disabled={
+                    !restoreConfirmed ||
+                    !restoreSecondConfirmed ||
+                    backupState === "restoring" ||
+                    backupState === "rolled-back"
+                  }
+                >
+                  {backupState === "restoring"
+                    ? isArabic
+                      ? "جارٍ الاستعادة…"
+                      : "Restoring…"
+                    : isArabic
+                      ? "استعادة النسخة"
+                      : "Restore backup"}
+                </button>
+              </div>
+            )}
+            {backupPreview?.restoreId && backupState === "restored" && (
+              <div className="csp-backup-preview csp-backup-rollback">
+                <strong>{isArabic ? "اختبار التراجع" : "Rollback test"}</strong>
+                <label className="csp-confirm-line">
+                  <input
+                    type="checkbox"
+                    checked={rollbackConfirmed}
+                    onChange={(event) => setRollbackConfirmed(event.target.checked)}
+                  />
+                  {isArabic
+                    ? "أؤكد أنني أريد إرجاع الحالة السابقة."
+                    : "I confirm that I want to return to the previous state."}
+                </label>
+                <label className="csp-confirm-line">
+                  <input
+                    type="checkbox"
+                    checked={rollbackSecondConfirmed}
+                    onChange={(event) => setRollbackSecondConfirmed(event.target.checked)}
+                  />
+                  {isArabic ? "أؤكد التراجع الثاني: ROLLBACK." : "Second confirmation: ROLLBACK."}
+                </label>
+                <button
+                  type="button"
+                  className="csp-button"
+                  onClick={rollbackBackup}
+                  disabled={
+                    !rollbackConfirmed || !rollbackSecondConfirmed || backupState === "rolling-back"
+                  }
+                >
+                  {backupState === "rolling-back"
+                    ? isArabic
+                      ? "جارٍ التراجع…"
+                      : "Rolling back…"
+                    : isArabic
+                      ? "تراجع عن الاستعادة"
+                      : "Rollback restore"}
+                </button>
+              </div>
+            )}
+            {backupMessage && (
+              <p
+                className={backupState === "error" ? "csp-warning" : "csp-success-note"}
+                role="status"
+              >
+                {backupMessage}
+              </p>
+            )}
+          </div>
         </section>
       )}
       <section className="csp-panel csp-integration-card">
@@ -191,6 +437,51 @@ export default function SettingsView({ language, storageMode }) {
           <StatusChip accent={storageMode === "cloud"}>
             {storageMode === "cloud" ? "DATABASE" : "THIS DEVICE"}
           </StatusChip>
+        </div>
+        <div className="csp-audit-filters" role="search">
+          <label>
+            <span>{isArabic ? "بحث" : "Search"}</span>
+            <input
+              value={auditQuery}
+              onChange={(event) => setAuditQuery(event.target.value)}
+              placeholder={isArabic ? "عملية، عنصر، أو رقم" : "Action, entity or id"}
+            />
+          </label>
+          <label>
+            <span>{isArabic ? "العنصر" : "Entity"}</span>
+            <select value={auditEntity} onChange={(event) => setAuditEntity(event.target.value)}>
+              <option value="">{isArabic ? "كل العناصر" : "All entities"}</option>
+              {Object.keys(AUDIT_ENTITIES).map((entity) => (
+                <option key={entity} value={entity}>
+                  {AUDIT_ENTITIES[entity][isArabic ? "ar" : "en"]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>{isArabic ? "العملية" : "Action"}</span>
+            <select value={auditAction} onChange={(event) => setAuditAction(event.target.value)}>
+              <option value="">{isArabic ? "كل العمليات" : "All actions"}</option>
+              {Object.keys(AUDIT_LABELS).map((action) => (
+                <option key={action} value={action}>
+                  {AUDIT_LABELS[action][isArabic ? "ar" : "en"]}
+                </option>
+              ))}
+            </select>
+          </label>
+          {(auditQuery || auditEntity || auditAction) && (
+            <button
+              type="button"
+              className="csp-button"
+              onClick={() => {
+                setAuditQuery("");
+                setAuditEntity("");
+                setAuditAction("");
+              }}
+            >
+              {isArabic ? "مسح الفلاتر" : "Clear filters"}
+            </button>
+          )}
         </div>
         <div className="csp-table-head csp-audit-head">
           <span>{isArabic ? "العملية" : "Action"}</span>

@@ -8,6 +8,7 @@ import {} from "../../data/commercialStudioPrototype";
 
 import { money, margin, StatusChip, logAudit, useEscape } from "./shared";
 import { reviewedCost } from "./catalogDefaults";
+import { PAYMENT_TERMS } from "../../data/siteSettings";
 export default function CatalogView({
   language,
   catalog,
@@ -26,7 +27,9 @@ export default function CatalogView({
   const [showCreate, setShowCreate] = useState(false);
   const [creationDirty, setCreationDirty] = useState(false);
   const [publishPrompt, setPublishPrompt] = useState(false);
+  const [previewItem, setPreviewItem] = useState(null);
   useEscape(publishPrompt, () => setPublishPrompt(false));
+  useEscape(Boolean(previewItem), () => setPreviewItem(null));
   const activeItem = catalog.find((item) => item.id === editingId);
   const visible = catalog.filter(
     (item) =>
@@ -243,7 +246,12 @@ export default function CatalogView({
           </span>
         </div>
         <div className="csp-head-actions">
-          <button type="button" className="csp-button">
+          <button
+            type="button"
+            className="csp-button"
+            onClick={() => setPreviewItem(visible[0] || null)}
+            disabled={!visible.length}
+          >
             <Eye size={16} />
             {isArabic ? "معاينة الموقع" : "Preview website"}
           </button>
@@ -295,18 +303,21 @@ export default function CatalogView({
           <span>{isArabic ? "التكلفة" : "Cost"}</span>
           <span>{isArabic ? "الهامش" : "Margin"}</span>
           <span>{isArabic ? "الحالة" : "Status"}</span>
+          <span>{isArabic ? "إجراءات" : "Actions"}</span>
         </div>
         {visible.map((item) => (
-          <button
-            type="button"
+          <div
             className="csp-table-row"
             key={item.id}
-            onClick={() => openEditor(item)}
           >
-            <span className="csp-item-name">
+            <button
+              type="button"
+              className="csp-item-name csp-table-row-open"
+              onClick={() => openEditor(item)}
+            >
               <strong>{item.name[language]}</strong>
               <small>{item.description[language]}</small>
-            </span>
+            </button>
             <span>
               {isArabic
                 ? { package: "باقة", service: "خدمة", addon: "إضافة", expense: "مصروف" }[
@@ -347,7 +358,29 @@ export default function CatalogView({
                       ? "داخلي"
                       : "INTERNAL"}
             </StatusChip>
-          </button>
+            <div className="csp-row-actions csp-catalog-row-actions">
+              <button
+                type="button"
+                onClick={() => setPreviewItem(item)}
+                aria-label={
+                  isArabic
+                    ? `معاينة ${item.name[language]}`
+                    : `Preview ${item.name[language]}`
+                }
+                title={isArabic ? "ما يراه العميل" : "What the client sees"}
+              >
+                <Eye size={15} />
+              </button>
+              <button
+                type="button"
+                onClick={() => openEditor(item)}
+                aria-label={isArabic ? `تعديل ${item.name[language]}` : `Edit ${item.name[language]}`}
+                title={isArabic ? "تعديل البند" : "Edit item"}
+              >
+                <Package size={15} />
+              </button>
+            </div>
+          </div>
         ))}
         {!visible.length && (
           <div className="csp-empty-state">
@@ -788,6 +821,101 @@ export default function CatalogView({
                   : "Create draft"}
             </button>
           </form>
+        </div>
+      )}
+      {previewItem && (
+        <div
+          className="csp-modal-backdrop csp-site-preview-backdrop"
+          onMouseDown={(event) => event.target === event.currentTarget && setPreviewItem(null)}
+        >
+          <section
+            className="csp-site-preview"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="catalog-site-preview-title"
+          >
+            <header className="csp-site-preview-head">
+              <div>
+                <p className="csp-kicker">SITE PREVIEW / {isArabic ? "معاينة العميل" : "CLIENT VIEW"}</p>
+                <h2 id="catalog-site-preview-title">
+                  {isArabic ? "ما يراه العميل" : "What the client sees"}
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="csp-site-preview-close"
+                onClick={() => setPreviewItem(null)}
+                aria-label={isArabic ? "إغلاق المعاينة" : "Close preview"}
+              >
+                <X />
+              </button>
+            </header>
+            <div className="csp-site-preview-card">
+              <div className="csp-site-preview-card-top">
+                <span className="csp-chip csp-chip--accent">
+                  {previewItem.featured
+                    ? isArabic
+                      ? "الأنسب لمشروعك"
+                      : "RECOMMENDED"
+                    : isArabic
+                      ? previewItem.type === "package"
+                        ? "باقة"
+                        : "خدمة"
+                      : previewItem.type.toUpperCase()}
+                </span>
+              </div>
+              <h3>
+                {previewItem.name?.[language] || previewItem.name?.en || previewItem.id}
+              </h3>
+              <p className="csp-site-preview-description">
+                {previewItem.description?.[language] || previewItem.description?.en || ""}
+              </p>
+              <div className="csp-site-preview-price">
+                <strong>{money(previewItem.price, language)}</strong>
+                <span>{isArabic ? "جنيه" : "EGP"}</span>
+              </div>
+              {previewItem.included?.[language]?.length > 0 && (
+                <div className="csp-site-preview-section">
+                  <span className="csp-site-preview-label">
+                    {isArabic ? "يشمل" : "Includes"}
+                  </span>
+                  <ul>
+                    {previewItem.included[language].map((line, index) => (
+                      <li key={`${previewItem.id}-preview-${index}`}>{line}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {(previewItem.duration?.[language] || Number(previewItem.revisions) > 0) && (
+                <div className="csp-site-preview-meta">
+                  {previewItem.duration?.[language] && (
+                    <div>
+                      <span>{isArabic ? "مدة التنفيذ" : "Timeline"}</span>
+                      <strong>{previewItem.duration[language]}</strong>
+                    </div>
+                  )}
+                  {Number(previewItem.revisions) > 0 && (
+                    <div>
+                      <span>{isArabic ? "المراجعات" : "Revisions"}</span>
+                      <strong>{previewItem.revisions}</strong>
+                    </div>
+                  )}
+                </div>
+              )}
+              {previewItem.exclusions?.[language] && (
+                <div className="csp-site-preview-exclusions">
+                  <span>{isArabic ? "غير مشمول" : "Not included"}</span>
+                  <p>{previewItem.exclusions[language]}</p>
+                </div>
+              )}
+              <p className="csp-site-preview-payment">{PAYMENT_TERMS[language]}</p>
+            </div>
+            <p className="csp-site-preview-note">
+              {isArabic
+                ? "هذه معاينة للعرض الحالي. لا تظهر التغييرات للعملاء إلا بعد حفظها ونشرها."
+                : "This previews the current item. Changes are not public until saved and published."}
+            </p>
+          </section>
         </div>
       )}
     </div>

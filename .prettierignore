@@ -22,3 +22,7 @@ docs
 # Misc
 .vite
 *.min.js
+
+# macOS Finder/resource-fork metadata copied into shared worktrees
+._*
+**/._*

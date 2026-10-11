@@ -35,6 +35,241 @@ import SectionBoundary from "./studio/SectionBoundary";
 import "./commercialStudioPrototype.css";
 import "./studio/studioLayout.css";
 import { useStudioData } from "./studio/useStudioData";
+
+const QUOTE_STATUSES = [
+  "draft",
+  "sent",
+  "viewed",
+  "revision_requested",
+  "accepted",
+  "cancelled",
+  "expired",
+];
+
+const quoteStatusLabel = (status, isArabic) =>
+  ({
+    draft: isArabic ? "مسودة" : "Draft",
+    sent: isArabic ? "مُرسل" : "Sent",
+    viewed: isArabic ? "تمت المشاهدة" : "Viewed",
+    revision_requested: isArabic ? "مطلوب تعديل" : "Revision requested",
+    accepted: isArabic ? "مقبول" : "Accepted",
+    cancelled: isArabic ? "ملغي" : "Cancelled",
+    expired: isArabic ? "منتهي" : "Expired",
+    "local-draft": isArabic ? "مسودة على الجهاز" : "Device draft",
+  })[status] || status;
+
+const quoteValueRange = (value, isArabic) =>
+  ({
+    all: isArabic ? "كل القيم" : "All values",
+    under_5000: isArabic ? "أقل من 5,000" : "Under 5,000",
+    from_5000_to_10000: isArabic ? "5,000–10,000" : "5,000–10,000",
+    from_10000_to_15000: isArabic ? "10,000–15,000" : "10,000–15,000",
+    over_15000: isArabic ? "أكثر من 15,000" : "Over 15,000",
+  })[value];
+
+const quoteMatchesValueRange = (total, range) => {
+  if (range === "all") return true;
+  if (!Number.isFinite(total)) return false;
+  if (range === "under_5000") return total < 5000;
+  if (range === "from_5000_to_10000") return total >= 5000 && total <= 10000;
+  if (range === "from_10000_to_15000") return total > 10000 && total <= 15000;
+  return total > 15000;
+};
+
+function QuoteList({ language, quotes = [], draftRows = [], onOpenQuote }) {
+  const isArabic = language === "ar";
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState("all");
+  const [valueRange, setValueRange] = useState("all");
+  const [version, setVersion] = useState("all");
+
+  const records = useMemo(
+    () => [
+      ...(quotes || []).map((row) => ({
+        ...row,
+        kind: "quote",
+        status: row.status || "draft",
+        version: Number(row.version || 0),
+        total: Number.isFinite(Number(row.total)) ? Number(row.total) : null,
+        searchText: [row.reference, row.clientName, row.projectName].filter(Boolean).join(" "),
+      })),
+      ...visibleQuoteDrafts(draftRows, quotes || []).map(([id, row]) => ({
+        ...row,
+        id,
+        kind: "local-draft",
+        status: "local-draft",
+        version: Number(row.record?.version || row.version || 0),
+        total: Number.isFinite(Number(row.total)) ? Number(row.total) : null,
+        searchText: [
+          row.record?.reference,
+          row.clientName,
+          row.projectName,
+          row.record?.projectName,
+        ]
+          .filter(Boolean)
+          .join(" "),
+      })),
+    ],
+    [draftRows, quotes],
+  );
+
+  const versions = useMemo(
+    () =>
+      [...new Set(records.map((row) => row.version).filter((value) => value > 0))].sort(
+        (a, b) => a - b,
+      ),
+    [records],
+  );
+
+  const filtered = useMemo(() => {
+    const normalizedQuery = query.trim().toLocaleLowerCase();
+    return records.filter((row) => {
+      const matchesQuery =
+        !normalizedQuery || row.searchText.toLocaleLowerCase().includes(normalizedQuery);
+      const matchesStatus = status === "all" || row.status === status;
+      const matchesRange = quoteMatchesValueRange(row.total, valueRange);
+      const matchesVersion = version === "all" || String(row.version) === version;
+      return matchesQuery && matchesStatus && matchesRange && matchesVersion;
+    });
+  }, [query, records, status, valueRange, version]);
+
+  const hasFilters =
+    Boolean(query.trim()) || status !== "all" || valueRange !== "all" || version !== "all";
+  const resetFilters = () => {
+    setQuery("");
+    setStatus("all");
+    setValueRange("all");
+    setVersion("all");
+  };
+
+  return (
+    <section className="csp-draft-list csp-quote-list" aria-labelledby="quote-list-title">
+      <div className="csp-quote-list-head">
+        <div>
+          <p className="csp-kicker">QUOTES / SEARCH + FILTER</p>
+          <h2 id="quote-list-title">{isArabic ? "العروض والمسودات" : "Quotes and drafts"}</h2>
+        </div>
+        <span className="csp-quote-list-count">
+          {filtered.length} / {records.length}
+        </span>
+      </div>
+      <div className="csp-quote-list-toolbar">
+        <label className="csp-quote-search">
+          <Search size={16} aria-hidden="true" />
+          <span className="csp-sr-only">{isArabic ? "بحث في العروض" : "Search quotes"}</span>
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={
+              isArabic ? "ابحث بالمرجع أو العميل أو المشروع" : "Search reference, client or project"
+            }
+          />
+        </label>
+        <label>
+          <span>{isArabic ? "الحالة" : "Status"}</span>
+          <select value={status} onChange={(event) => setStatus(event.target.value)}>
+            <option value="all">{isArabic ? "كل الحالات" : "All statuses"}</option>
+            {QUOTE_STATUSES.map((value) => (
+              <option value={value} key={value}>
+                {quoteStatusLabel(value, isArabic)}
+              </option>
+            ))}
+            <option value="local-draft">{quoteStatusLabel("local-draft", isArabic)}</option>
+          </select>
+        </label>
+        <label>
+          <span>{isArabic ? "نطاق القيمة" : "Value range"}</span>
+          <select value={valueRange} onChange={(event) => setValueRange(event.target.value)}>
+            {Object.keys({
+              all: true,
+              under_5000: true,
+              from_5000_to_10000: true,
+              from_10000_to_15000: true,
+              over_15000: true,
+            }).map((value) => (
+              <option value={value} key={value}>
+                {quoteValueRange(value, isArabic)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>{isArabic ? "الإصدار" : "Version"}</span>
+          <select value={version} onChange={(event) => setVersion(event.target.value)}>
+            <option value="all">{isArabic ? "كل الإصدارات" : "All versions"}</option>
+            {versions.map((value) => (
+              <option value={value} key={value}>
+                {isArabic ? `الإصدار ${value}` : `Version ${value}`}
+              </option>
+            ))}
+          </select>
+        </label>
+        {hasFilters && (
+          <button type="button" className="csp-button" onClick={resetFilters}>
+            {isArabic ? "مسح الفلاتر" : "Clear filters"}
+          </button>
+        )}
+      </div>
+      {filtered.length ? (
+        <div className="csp-quote-list-grid">
+          {filtered.map((row) => {
+            const isLocal = row.kind === "local-draft";
+            const reference = isLocal
+              ? row.record?.reference || (isArabic ? "مسودة محلية" : "Local draft")
+              : row.reference;
+            return (
+              <button
+                type="button"
+                className="csp-quote-list-row"
+                key={`${row.kind}-${row.id}`}
+                onClick={() => (isLocal ? onOpenQuote(null, row.id) : onOpenQuote(row.id))}
+              >
+                <span>
+                  <strong>{reference || (isArabic ? "عرض بلا مرجع" : "Unreferenced quote")}</strong>
+                  <small>{row.clientName || (isArabic ? "بدون اسم عميل" : "Unnamed client")}</small>
+                  <small>
+                    {row.projectName || (isArabic ? "بدون اسم مشروع" : "Unnamed project")}
+                  </small>
+                </span>
+                <span className="csp-quote-list-meta">
+                  <b>{quoteStatusLabel(row.status, isArabic)}</b>
+                  <small>
+                    {row.version > 0 ? (isArabic ? `V${row.version}` : `v${row.version}`) : "—"}
+                  </small>
+                </span>
+                <span className="csp-quote-list-total">
+                  {row.total == null
+                    ? "—"
+                    : `${money(row.total, language)} ${isArabic ? "جنيه" : "EGP"}`}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="csp-empty-state csp-quote-list-empty" role="status">
+          <FileText />
+          <strong>{isArabic ? "لا توجد عروض مطابقة" : "No matching quotes"}</strong>
+          <span>
+            {hasFilters
+              ? isArabic
+                ? "غيّر البحث أو الفلاتر، أو امسحها لرؤية كل العروض."
+                : "Change the search or filters, or clear them to see every quote."
+              : isArabic
+                ? "لا توجد عروض محفوظة أو مسودات على الجهاز حتى الآن."
+                : "There are no saved quotes or device drafts yet."}
+          </span>
+          {hasFilters && (
+            <button type="button" className="csp-button" onClick={resetFilters}>
+              {isArabic ? "مسح الفلاتر" : "Clear filters"}
+            </button>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function CommercialStudioPrototype({ demo = false }) {
   const [language, setLanguage] = useState("ar");
   const [params, setParams] = useSearchParams();
@@ -668,7 +903,9 @@ export default function CommercialStudioPrototype({ demo = false }) {
                 onUpdated={retry}
                 language={language}
                 requests={requests}
+                quotes={quotes}
                 onCreateQuote={createQuoteFromLead}
+                onOpenQuote={(id) => navigate("quotes", id)}
               />
             )}
             {page === "catalog" && (
@@ -681,29 +918,16 @@ export default function CommercialStudioPrototype({ demo = false }) {
               />
             )}
             {page === "quotes" && (
-              <section className="csp-draft-list">
-                <h2>{isArabic ? "العروض والمسودات" : "Quotes and drafts"}</h2>
-                {(quotes || []).map((row) => (
-                  <button
-                    className="csp-button"
-                    key={`q-${row.id}`}
-                    onClick={() => navigate("quotes", row.id)}
-                  >
-                    {row.reference} · {row.clientName}
-                  </button>
-                ))}
-                {visibleQuoteDrafts(draftRows, quotes || []).map(([id, row]) => (
-                  <button
-                    className="csp-button"
-                    key={id}
-                    onClick={() => navigate("quotes", null, id)}
-                  >
-                    {isArabic ? "مسودة على الجهاز: " : "Device draft: "}
-                    {row.clientName || (isArabic ? "مسودة بدون اسم" : "Unnamed draft")} ·{" "}
-                    {shortTime(row.savedAt)}
-                  </button>
-                ))}
-              </section>
+              <QuoteList
+                language={language}
+                quotes={quotes || []}
+                draftRows={draftRows}
+                onOpenQuote={(quoteId, localDraftId) =>
+                  localDraftId
+                    ? navigate("quotes", null, localDraftId)
+                    : navigate("quotes", quoteId)
+                }
+              />
             )}
             {page === "quotes" && (
               <QuoteView

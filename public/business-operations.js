@@ -4,6 +4,28 @@ const timestamp = () => new Date().toISOString();
 const response = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } });
 const audit = (env, type, id, action, before, after, at) => env.DB.prepare('INSERT INTO commercial_audit_log(entity_type,entity_id,action,before_json,after_json,created_at) VALUES(?,?,?,?,?,?)').bind(type, String(id), action, JSON.stringify(before), JSON.stringify(after), at);
 const date = value => !value ? null : Number.isFinite(Date.parse(value)) ? new Date(value).toISOString() : undefined;
+const reportDate = value => {
+ if (!value) return null;
+ if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return undefined;
+ const parsed = new Date(`${value}T00:00:00.000Z`);
+ return parsed.toISOString().slice(0, 10) === value ? parsed : undefined;
+};
+const reportRange = url => {
+ const from = reportDate(url.searchParams.get('from'));
+ const toDate = reportDate(url.searchParams.get('to'));
+ if (from === undefined || toDate === undefined) return { error: 'Report dates must use YYYY-MM-DD.' };
+ if (from && toDate && from > toDate) return { error: 'Report start date must be before its end date.' };
+ const to = toDate ? new Date(toDate) : null;
+ if (to) to.setUTCDate(to.getUTCDate() + 1);
+ return { from, to: to?.toISOString() || null, toDate: toDate || null };
+};
+const reportClause = (field, range) => {
+ if (!range.from && !range.to) return { sql: '', params: [] };
+ const conditions = [], params = [];
+ if (range.from) { conditions.push(`${field} >= ?`); params.push(range.from.toISOString()); }
+ if (range.to) { conditions.push(`${field} < ?`); params.push(range.to); }
+ return { sql: ` AND ${conditions.join(' AND ')}`, params };
+};
 const httpsLink = value => { if (!value) return ''; try { const url = new URL(value); return url.protocol === 'https:' && !url.username && !url.password ? url.href : null; } catch { return null; } };
 export async function limitedJson(request) {
  if(!request.body)throw new Error('Missing request body.');
@@ -42,10 +64,15 @@ export async function businessOperations(request,env,authenticate) {
    return response({attachments:(await env.DB.prepare('SELECT id,project_id,payment_id,filename,mime_type,size_bytes,created_at FROM commercial_attachments WHERE project_id=? ORDER BY id DESC').bind(id).all()).results||[]});
   }
   if(kind==='business-report') {
-   const projects=(await env.DB.prepare("SELECT p.*,v.terms_json,COALESCE((SELECT SUM(e.amount_minor) FROM commercial_project_entries e WHERE e.project_id=p.id AND e.entry_type='expense' AND e.status!='cancelled'),0) actual_cost_minor FROM commercial_projects p JOIN commercial_quotes q ON q.id=p.quote_id JOIN commercial_quote_versions v ON v.quote_id=q.id AND v.version_number=q.current_version WHERE q.is_test=0").all()).results||[];
-   const losses=(await env.DB.prepare("SELECT o.loss_reason,COUNT(*) count FROM commercial_lead_operations o JOIN brief_requests b ON b.id=o.brief_id WHERE b.is_test=0 AND o.loss_reason!='' GROUP BY o.loss_reason").all()).results||[];
-   const sources=(await env.DB.prepare("SELECT source,COUNT(*) count FROM brief_requests WHERE is_test=0 GROUP BY source").all()).results||[];
-   return response({projects:projects.map(p=>({id:p.id,name:p.project_name,expectedCost:p.expected_cost_minor/100,recordedCost:p.actual_cost_minor/100,netValue:Math.round(p.contract_value_minor/(1+Number(JSON.parse(p.terms_json||'{}').taxPercent||0)/100))/100})),losses,sources});
+   const range = reportRange(url);
+   if (range.error) return response({ error: range.error }, 400);
+   const expenseRange = reportClause('e.created_at', range);
+   const projectRange = reportClause('p.created_at', range);
+   const briefRange = reportClause('b.created_at', range);
+   const projects=(await env.DB.prepare(`SELECT p.*,v.terms_json,COALESCE((SELECT SUM(e.amount_minor) FROM commercial_project_entries e WHERE e.project_id=p.id AND e.entry_type='expense' AND e.status!='cancelled'${expenseRange.sql}),0) actual_cost_minor FROM commercial_projects p JOIN commercial_quotes q ON q.id=p.quote_id JOIN commercial_quote_versions v ON v.quote_id=q.id AND v.version_number=q.current_version WHERE q.is_test=0${projectRange.sql}`).bind(...expenseRange.params, ...projectRange.params).all()).results||[];
+   const losses=(await env.DB.prepare(`SELECT o.loss_reason,COUNT(*) count FROM commercial_lead_operations o JOIN brief_requests b ON b.id=o.brief_id WHERE b.is_test=0 AND o.loss_reason!=''${briefRange.sql} GROUP BY o.loss_reason`).bind(...briefRange.params).all()).results||[];
+   const sources=(await env.DB.prepare(`SELECT b.source,COUNT(*) count FROM brief_requests b WHERE b.is_test=0${briefRange.sql} GROUP BY b.source`).bind(...briefRange.params).all()).results||[];
+   return response({range:{from:range.from?.toISOString().slice(0,10)||null,to:range.toDate?.toISOString().slice(0,10)||null},projects:projects.map(p=>({id:p.id,name:p.project_name,expectedCost:p.expected_cost_minor/100,recordedCost:p.actual_cost_minor/100,netValue:Math.round(p.contract_value_minor/(1+Number(JSON.parse(p.terms_json||'{}').taxPercent||0)/100))/100})),losses,sources});
   }
   if(kind==='lead-operations') return response({rows:(await env.DB.prepare('SELECT * FROM commercial_lead_operations').all()).results||[]});
   if(kind==='project-workspace' && id) {

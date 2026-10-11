@@ -26,19 +26,22 @@ function Field({ label, ...props }) {
     </label>
   );
 }
-export function BusinessReport({ language }) {
+export function BusinessReport({ language, from = "", to = "" }) {
   const ar = language === "ar";
   const [data, setData] = useState(null),
     [error, setError] = useState("");
   useEffect(() => {
     let active = true;
-    studioRequest("/api/studio/business-report")
+    const query = new URLSearchParams();
+    if (from) query.set("from", from);
+    if (to) query.set("to", to);
+    studioRequest(`/api/studio/business-report${query.toString() ? `?${query}` : ""}`)
       .then((d) => active && setData(d))
       .catch((e) => active && setError(e.message));
     return () => {
       active = false;
     };
-  }, []);
+  }, [from, to]);
   return (
     <section className="csp-panel csp-operation-panel">
       <h2>{ar ? "المصروفات والربحية التشغيلية" : "Recorded costs & operational profit"}</h2>
@@ -47,6 +50,11 @@ export function BusinessReport({ language }) {
           ? "الربح المحسوب هنا = القيمة دون الضريبة ناقص المصروفات المسجلة فقط؛ لا يمثل الربح النهائي قبل اكتمال التسجيل. بيانات الاختبار مستبعدة."
           : "Profit here is net contract value minus recorded expenses only. It is not final until expenses are complete. Test records are excluded."}
       </p>
+      {data?.range && (
+        <p className="csp-mode-note">
+          {ar ? "نطاق البيانات" : "Data range"}: {data.range.from || "…"} → {data.range.to || "…"}
+        </p>
+      )}
       {error && <p role="alert">{error}</p>}
       {data?.projects.map((row) => (
         <article key={row.id} className="csp-operation-row">
@@ -259,7 +267,8 @@ export function ProjectWorkspace({ id, language }) {
   const [data, setData] = useState(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
-    [document, setDocument] = useState(null);
+    [document, setDocument] = useState(null),
+    [activeTab, setActiveTab] = useState("overview");
   const initial = { type: "task", title: "", detail: "", owner: "", dueAt: "", amount: 0 };
   const [form, setForm] = useState(initial);
   const load = () => studioRequest(`/api/studio/project-workspace/${id}`).then(setData);
@@ -291,54 +300,46 @@ export function ProjectWorkspace({ id, language }) {
   const cost = data.entries
     .filter((r) => r.entry_type === "expense" && r.status !== "cancelled")
     .reduce((sum, r) => sum + r.amount_minor, 0);
-  return (
-    <section className="csp-panel csp-operation-panel">
-      <h2>{ar ? "مساحة تنفيذ المشروع" : "Project delivery workspace"}</h2>
-      <p role="status">{error}</p>
-      <label>
-        {ar ? "مرحلة التنفيذ" : "Delivery phase"}
-        <select
-          value={data.project.status}
-          disabled={busy}
-          onChange={(e) => mutate({ projectStatus: e.target.value })}
-        >
-          {["confirmed", "planning", "production", "review", "delivered", "closed"].map((s, i) => (
-            <option key={s} value={s}>
-              {ar ? ["مؤكد", "تخطيط", "إنتاج", "مراجعة", "تسليم", "مغلق"][i] : s}
-            </option>
-          ))}
-        </select>
-      </label>
-      <p className="csp-sensitive-number">
-        {ar ? "التكلفة المتوقعة" : "Expected cost"}: {money(data.project.expected_cost_minor / 100)}{" "}
-        EGP · {ar ? "المصروفات المسجلة" : "Recorded expenses"}: {money(cost / 100)} EGP ·{" "}
-        {ar ? "الفرق" : "Variance"}: {money((cost - data.project.expected_cost_minor) / 100)} EGP
-      </p>
-      <p>
-        {ar
-          ? "الربح الفعلي يعتمد على اكتمال تسجيل المصروفات؛ هذه ليست محاسبة ضريبية."
-          : "Actual profitability depends on complete expense recording; this is not tax accounting."}
-      </p>
+  const tabs = [
+    ["overview", ar ? "نظرة عامة" : "Overview"],
+    ["execution", ar ? "التنفيذ" : "Execution"],
+    ["expenses", ar ? "المصروفات" : "Expenses"],
+    ["files", ar ? "الملفات" : "Files"],
+    ["documents", ar ? "المستندات" : "Documents"],
+  ];
+  const renderEntryForm = (expenseOnly = false) => {
+    const entryType = expenseOnly ? "expense" : form.type;
+    return (
       <form
+        className="csp-workspace-form"
         onSubmit={async (e) => {
           e.preventDefault();
           if (
-            await mutate({ ...form, dueAt: form.dueAt ? new Date(form.dueAt).toISOString() : null })
+            await mutate({
+              ...form,
+              type: entryType,
+              dueAt: form.dueAt ? new Date(form.dueAt).toISOString() : null,
+            })
           )
             setForm(initial);
         }}
       >
         <div className="csp-operation-grid">
-          <label>
-            {ar ? "النوع" : "Type"}
-            <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-              {["task", "team", "file", "expense"].map((s, i) => (
-                <option key={s} value={s}>
-                  {ar ? ["مهمة", "فريق / مورد", "رابط ملف", "مصروف"][i] : s}
-                </option>
-              ))}
-            </select>
-          </label>
+          {!expenseOnly && (
+            <label>
+              {ar ? "النوع" : "Type"}
+              <select
+                value={form.type}
+                onChange={(e) => setForm({ ...form, type: e.target.value })}
+              >
+                {["task", "team", "file", "expense"].map((s, i) => (
+                  <option key={s} value={s}>
+                    {ar ? ["مهمة", "فريق / مورد", "رابط ملف", "مصروف"][i] : s}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <Field
             label={ar ? "العنوان" : "Title"}
             required
@@ -360,7 +361,7 @@ export function ProjectWorkspace({ id, language }) {
         </div>
         <Field
           label={
-            form.type === "file"
+            entryType === "file"
               ? ar
                 ? "رابط HTTPS — لا تضع روابط سرية"
                 : "HTTPS link — no secret URLs"
@@ -368,12 +369,12 @@ export function ProjectWorkspace({ id, language }) {
                 ? "التفاصيل"
                 : "Details"
           }
-          required={form.type === "file"}
-          type={form.type === "file" ? "url" : "text"}
+          required={entryType === "file"}
+          type={entryType === "file" ? "url" : "text"}
           value={form.detail}
           onChange={(e) => setForm({ ...form, detail: e.target.value })}
         />
-        {form.type === "expense" && (
+        {entryType === "expense" && (
           <Field
             label={ar ? "المبلغ EGP" : "Amount EGP"}
             type="number"
@@ -387,62 +388,154 @@ export function ProjectWorkspace({ id, language }) {
           {ar ? "إضافة" : "Add"}
         </button>
       </form>
-      {data.entries.map((row) => (
-        <article className="csp-operation-row" key={row.id}>
-          <strong>{row.title}</strong>
-          <span>
-            {row.owner} ·{" "}
-            {row.entry_type === "expense" ? `${money(row.amount_minor / 100)} EGP` : row.detail}
-          </span>
-          {row.entry_type === "file" && (
-            <a href={row.detail} target="_blank" rel="noreferrer">
-              {ar ? "فتح الملف" : "Open file"}
-            </a>
-          )}
+    );
+  };
+  const renderEntries = (filter) => {
+    const rows = data.entries.filter(filter);
+    if (!rows.length)
+      return (
+        <p className="csp-mode-note">
+          {ar ? "لا توجد سجلات في هذا القسم بعد." : "No records in this section yet."}
+        </p>
+      );
+    return rows.map((row) => (
+      <article className="csp-operation-row" key={row.id}>
+        <strong>{row.title}</strong>
+        <span>
+          {row.owner || "—"} ·{" "}
+          {row.entry_type === "expense"
+            ? `${money(row.amount_minor / 100)} EGP`
+            : row.detail || "—"}
+        </span>
+        {row.entry_type === "file" && (
+          <a href={row.detail} target="_blank" rel="noreferrer">
+            {ar ? "فتح الملف" : "Open file"}
+          </a>
+        )}
+        <label>
+          {ar ? "الحالة" : "Status"}
+          <select
+            value={row.status}
+            disabled={busy}
+            onChange={(e) => mutate({ entryId: row.id, status: e.target.value })}
+          >
+            {["open", "done", "cancelled"].map((s, i) => (
+              <option key={s} value={s}>
+                {ar ? ["قائم", "مكتمل", "ملغى"][i] : s}
+              </option>
+            ))}
+          </select>
+        </label>
+      </article>
+    ));
+  };
+  return (
+    <section className="csp-panel csp-operation-panel">
+      <h2>{ar ? "مساحة تنفيذ المشروع" : "Project delivery workspace"}</h2>
+      <p role="status">{error}</p>
+      <div
+        className="csp-workspace-tabs"
+        role="tablist"
+        aria-label={ar ? "أقسام المشروع" : "Project sections"}
+      >
+        {tabs.map(([value, label]) => (
+          <button
+            type="button"
+            role="tab"
+            key={value}
+            aria-selected={activeTab === value}
+            aria-controls={`project-workspace-${value}`}
+            className={`csp-workspace-tab ${activeTab === value ? "is-active" : ""}`}
+            onClick={() => setActiveTab(value)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {activeTab === "overview" && (
+        <div id="project-workspace-overview" role="tabpanel" className="csp-workspace-tabpanel">
           <label>
-            {ar ? "الحالة" : "Status"}
+            {ar ? "مرحلة التنفيذ" : "Delivery phase"}
             <select
-              value={row.status}
+              value={data.project.status}
               disabled={busy}
-              onChange={(e) => mutate({ entryId: row.id, status: e.target.value })}
+              onChange={(e) => mutate({ projectStatus: e.target.value })}
             >
-              {["open", "done", "cancelled"].map((s, i) => (
-                <option key={s} value={s}>
-                  {ar ? ["قائم", "مكتمل", "ملغى"][i] : s}
-                </option>
-              ))}
+              {["confirmed", "planning", "production", "review", "delivered", "closed"].map(
+                (s, i) => (
+                  <option key={s} value={s}>
+                    {ar ? ["مؤكد", "تخطيط", "إنتاج", "مراجعة", "تسليم", "مغلق"][i] : s}
+                  </option>
+                ),
+              )}
             </select>
           </label>
-        </article>
-      ))}
-      <PrivateAttachments projectId={id} language={language} />
-      <h3>{ar ? "المستندات" : "Documents"}</h3>
-      {["invoice", "contract"].map((type, i) => (
-        <button
-          key={type}
-          className="csp-button"
-          disabled={busy}
-          onClick={async () => {
-            setBusy(true);
-            try {
-              setDocument((await write(`/api/studio/documents/${id}`, { type })).document);
-              await load();
-            } catch (e) {
-              setError(e.message);
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
-          {ar ? ["إنشاء فاتورة تشغيلية", "إنشاء مسودة عقد"][i] : `Create ${type}`}
-        </button>
-      ))}
-      {data.documents.map((doc) => (
-        <button key={doc.id} className="csp-button" onClick={() => setDocument(doc)}>
-          {doc.reference}
-        </button>
-      ))}
-      {document && <BusinessDocument document={document} language={language} />}
+          <p className="csp-sensitive-number">
+            {ar ? "التكلفة المتوقعة" : "Expected cost"}:{" "}
+            {money(data.project.expected_cost_minor / 100)} EGP ·{" "}
+            {ar ? "المصروفات المسجلة" : "Recorded expenses"}: {money(cost / 100)} EGP ·{" "}
+            {ar ? "الفرق" : "Variance"}: {money((cost - data.project.expected_cost_minor) / 100)}{" "}
+            EGP
+          </p>
+          <p>
+            {ar
+              ? "الربح الفعلي يعتمد على اكتمال تسجيل المصروفات؛ هذه ليست محاسبة ضريبية."
+              : "Actual profitability depends on complete expense recording; this is not tax accounting."}
+          </p>
+        </div>
+      )}
+      {activeTab === "execution" && (
+        <div id="project-workspace-execution" role="tabpanel" className="csp-workspace-tabpanel">
+          <h3>{ar ? "إضافة مهمة أو فريق أو رابط" : "Add a task, team member or link"}</h3>
+          {renderEntryForm()}
+          {renderEntries((row) => ["task", "team"].includes(row.entry_type))}
+        </div>
+      )}
+      {activeTab === "expenses" && (
+        <div id="project-workspace-expenses" role="tabpanel" className="csp-workspace-tabpanel">
+          <h3>{ar ? "إضافة مصروف" : "Add expense"}</h3>
+          {renderEntryForm(true)}
+          {renderEntries((row) => row.entry_type === "expense")}
+        </div>
+      )}
+      {activeTab === "files" && (
+        <div id="project-workspace-files" role="tabpanel" className="csp-workspace-tabpanel">
+          <h3>{ar ? "روابط وملفات المشروع" : "Project links and files"}</h3>
+          {renderEntries((row) => row.entry_type === "file")}
+          <PrivateAttachments projectId={id} language={language} />
+        </div>
+      )}
+      {activeTab === "documents" && (
+        <div id="project-workspace-documents" role="tabpanel" className="csp-workspace-tabpanel">
+          <h3>{ar ? "المستندات" : "Documents"}</h3>
+          {["invoice", "contract"].map((type, i) => (
+            <button
+              key={type}
+              className="csp-button"
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  setDocument((await write(`/api/studio/documents/${id}`, { type })).document);
+                  await load();
+                } catch (e) {
+                  setError(e.message);
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              {ar ? ["إنشاء فاتورة تشغيلية", "إنشاء مسودة عقد"][i] : `Create ${type}`}
+            </button>
+          ))}
+          {data.documents.map((doc) => (
+            <button key={doc.id} className="csp-button" onClick={() => setDocument(doc)}>
+              {doc.reference}
+            </button>
+          ))}
+          {document && <BusinessDocument document={document} language={language} />}
+        </div>
+      )}
     </section>
   );
 }

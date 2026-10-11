@@ -17,6 +17,12 @@ import {
 const labelFor = (value, language) => value?.[language] || value || "";
 const CATALOG_ID_BY_SITE_ID = { launch: "presence" };
 
+function revisionLabel(count, arabic) {
+  if (!count) return "";
+  if (arabic && Number(count) === 2) return "مراجعتان على اتجاه اللوجو";
+  return `${count}${arabic ? " جولات" : " logo-direction rounds"}`;
+}
+
 function applyCatalogToOffers(offers, catalogItems) {
   if (!catalogItems) return offers;
   return offers.flatMap((offer) => {
@@ -35,7 +41,10 @@ function applyCatalogToOffers(offers, catalogItems) {
         featured: item.featured,
         outputs:
           item.included?.ar?.length && item.included?.en?.length
-            ? {ar: contentProductionLines(offer.id, item.included.ar), en: contentProductionLines(offer.id, item.included.en)}
+            ? {
+                ar: contentProductionLines(offer.id, item.included.ar),
+                en: contentProductionLines(offer.id, item.included.en),
+              }
             : offer.outputs,
         exclusions: item.exclusions?.ar && item.exclusions?.en ? item.exclusions : offer.exclusions,
         duration: item.duration?.ar && item.duration?.en ? item.duration : offer.duration,
@@ -98,7 +107,9 @@ function OfferTierCard({ offer, language, route, isStart, index, mobileCard = fa
     route === "continue" ? (isArabic ? "جنيه / شهريًا" : "EGP / month") : isArabic ? "جنيه" : "EGP";
   const note = offer.duration
     ? `${isArabic ? "المدة:" : "Duration:"} ${labelFor(offer.duration, language)}`
-    : labelFor(offer.priceNote, language);
+    : "";
+  const priceNote = labelFor(offer.priceNote, language);
+  const revisionNote = revisionLabel(offer.revisions, isArabic);
 
   return (
     <Gsap.article
@@ -127,6 +138,22 @@ function OfferTierCard({ offer, language, route, isStart, index, mobileCard = fa
       >
         {offer.price} <span className="text-xs text-white/50">{priceSuffix}</span>
       </p>
+      {(priceNote || revisionNote) && (
+        <div className="mt-3 space-y-1 text-xs leading-5 text-white/65">
+          {revisionNote && (
+            <p>
+              {isArabic ? "المراجعات: " : "Revisions: "}
+              {revisionNote}
+            </p>
+          )}
+          {priceNote && (
+            <p>
+              <strong>{isArabic ? "نطاق مهم: " : "Important scope: "}</strong>
+              {priceNote}
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="my-5 h-px bg-white/15" />
       <ul className="space-y-2 text-sm leading-6 text-white/75">
@@ -138,7 +165,12 @@ function OfferTierCard({ offer, language, route, isStart, index, mobileCard = fa
         ))}
       </ul>
       {note && <p className="mt-5 text-xs leading-5 text-white/65">{note}</p>}
-      {offer.exclusions?.[language] && <p className="mt-3 text-sm leading-6 text-white/75"><strong>{isArabic ? "غير مشمول: " : "Not included: "}</strong>{offer.exclusions[language]}</p>}
+      {offer.exclusions?.[language] && (
+        <p className="mt-3 text-sm leading-6 text-white/75">
+          <strong>{isArabic ? "غير مشمول: " : "Not included: "}</strong>
+          {offer.exclusions[language]}
+        </p>
+      )}
       <p className="mt-3 text-xs leading-6 text-white/70">{PAYMENT_TERMS[language]}</p>
       <button
         type="button"
