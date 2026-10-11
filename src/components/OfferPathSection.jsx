@@ -1094,7 +1094,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
               </div>
             </div>
 
-            <div className="mt-7">
+            <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3">
               <span className="primary-cta-badge">{isArabic ? "الخطوة الجاية" : "NEXT STEP"}</span>
               <button type="button" onClick={() => chooseOffer(recommendation.route, primaryOffer.id)} className="zoomix-button group result-primary-cta route-result-cta bg-[#BBFF00] text-black transition-transform hover:-translate-y-0.5">
                 {text.choose}<ActionArrow className="transition-transform duration-200 group-hover:-translate-y-0.5" size={18} aria-hidden="true" />
