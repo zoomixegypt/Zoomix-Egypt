@@ -8,10 +8,11 @@ const stages = [
   { code: "ONE THING", ar: "خدمة واحدة", en: "ONE THING" },
 ];
 
-export default function RouteFinderEntry() {
+export default function RouteFinderEntry({ previewMode = false }) {
   const { language } = useLanguage();
   const isArabic = language === "ar";
   const ActionArrow = isArabic ? ArrowUpLeft : ArrowUpRight;
+  const homePath = previewMode ? "/preview/" : "/";
 
   return (
     <section id="route-finder-entry" className="route-finder-entry border-y border-black/15 bg-[#F5F4EF] text-[#0A0A0A]" dir={isArabic ? "rtl" : "ltr"}>
@@ -39,7 +40,7 @@ export default function RouteFinderEntry() {
                   <ActionArrow className="quick-match-arrow" size={18} aria-hidden="true" />
                 </a>
               </div>
-              <a href="/#packages-section" className="zoomix-button border-black/25 text-black hover:border-black hover:bg-white">
+              <a href={`${homePath}#packages-section`} className="zoomix-button border-black/25 text-black hover:border-black hover:bg-white">
                 {isArabic ? "عارف هتبدأ بإيه؟ شوف الباقات" : "Know what you need? See packages"}
               </a>
             </div>

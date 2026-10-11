@@ -15,6 +15,7 @@ const { ZOOMIX_PROJECTS } = await vite.ssrLoadModule("/src/data/zoomixProjects.j
 
 const routes = [
   { path: "/", type: "home" },
+  { path: "/preview", type: "preview" },
   { path: "/route-finder", type: "route-finder" },
   { path: "/prototype/commercial-studio", type: "prototype" },
   { path: "/studio", type: "prototype" },
@@ -118,6 +119,19 @@ function pageHead(route) {
     };
   }
 
+  if (route.type === "preview") {
+    const title = "ZOOMIX — Preview";
+    const description = "نسخة مراجعة كاملة من موقع ZOOMIX تشمل جميع الأقسام والتجارب الأساسية.";
+    return {
+      title,
+      description,
+      canonical: `${SITE_URL}/preview/`,
+      image: `${SITE_URL}/og-image.png`,
+      robots: "noindex, nofollow",
+      schema: null,
+    };
+  }
+
   const title = "ZOOMIX — شريكك الإبداعي";
   const description = "شريك إبداعي واحد للمشروعات: هوية، محتوى، تصوير وحضور رقمي في اتجاه واضح.";
   return {
@@ -152,6 +166,7 @@ function buildPage(templateHtml, route, markup) {
   html = replaceMeta(html, "property", "og:description", meta.description);
   html = replaceMeta(html, "property", "og:image", meta.image);
   html = replaceMeta(html, "name", "twitter:title", meta.title);
+  html = replaceMeta(html, "name", "twitter:url", meta.canonical);
   html = replaceMeta(html, "name", "twitter:description", meta.description);
   html = replaceMeta(html, "name", "twitter:image", meta.image);
   html = replaceLink(html, "canonical", meta.canonical);

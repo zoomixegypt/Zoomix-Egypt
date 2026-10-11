@@ -10,14 +10,15 @@ export default function MobileBottomBar() {
   const location = useLocation();
   const navigate = useNavigate();
   const isArabic = language === "ar";
+  const isHomeLikePage = location.pathname === "/" || location.pathname === "/preview";
 
   useEffect(() => {
-    if (location.pathname === "/") document.body.classList.add("has-mobile-bottom-bar");
+    if (isHomeLikePage) document.body.classList.add("has-mobile-bottom-bar");
     else document.body.classList.remove("has-mobile-bottom-bar");
     return () => document.body.classList.remove("has-mobile-bottom-bar");
-  }, [location.pathname]);
+  }, [isHomeLikePage]);
 
-  if (location.pathname !== "/") return null;
+  if (!isHomeLikePage) return null;
 
   const items = [
     { href: "#packages-section", label: isArabic ? "الباقات" : "Packages", Icon: BriefcaseBusiness },

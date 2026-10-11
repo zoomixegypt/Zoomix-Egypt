@@ -81,7 +81,7 @@ const useScrollToGallery = (galleryRef, isLoading) => {
       }, 300);
 
       setTimeout(() => {
-        window.history.replaceState({}, "", "/");
+        window.history.replaceState({}, "", `${location.pathname}${location.hash || ""}`);
       }, 100);
 
       return () => {

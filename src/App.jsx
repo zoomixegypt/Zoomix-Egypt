@@ -23,6 +23,7 @@ function ScrollToTop() {
   const location = useLocation();
   const navType = useNavigationType();
   const { pathname, search, hash } = location;
+  const isHomeLikePage = pathname === "/" || pathname === "/preview";
   const isProjectModal = pathname.startsWith("/projects/") && location.state?.backgroundLocation;
 
   // useLayoutEffect untuk memastikan scroll terjadi SEBELUM render
@@ -42,7 +43,7 @@ function ScrollToTop() {
     }
 
     // Jika navigasi ke halaman project fallback (bukan modal), cleanup Lenis dan ScrollTrigger
-    if (pathname !== "/") {
+    if (!isHomeLikePage) {
       Promise.all([import("gsap"), import("gsap/ScrollTrigger")]).then(([{ gsap }, { ScrollTrigger }]) => {
         if (cancelled) return;
         // Direct Studio entry may never mount Home, which normally registers GSAP.
@@ -125,7 +126,7 @@ function ScrollToTop() {
     return () => {
       cancelled = true;
     };
-  }, [pathname, search, hash, isProjectModal, navType]);
+  }, [pathname, search, hash, isProjectModal, navType, isHomeLikePage]);
 
   return null;
 }
@@ -134,6 +135,7 @@ export default function App() {
   const location = useLocation();
   const backgroundLocation = location.state?.backgroundLocation;
   const isPublicAnalyticsRoute =
+    !location.pathname.startsWith("/preview") &&
     !location.pathname.startsWith("/studio") &&
     !location.pathname.startsWith("/prototype") &&
     !location.pathname.startsWith("/q/") &&
@@ -150,6 +152,7 @@ export default function App() {
       <ScrollToTop />
       <Routes location={backgroundLocation || location}>
         <Route path="/" element={<Home />} />
+        <Route path="/preview" element={<Home previewMode />} />
         <Route
           path="/prototype/commercial-studio"
           element={

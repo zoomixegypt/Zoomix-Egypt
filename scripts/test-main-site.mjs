@@ -166,6 +166,12 @@ try {
   assert.match(navigation, /menuRef.current\?\.focus\(\)/);
   assert.match(navigation, /getClientRects\(\).length/);
   assert.match(navigation, /!menuRef.current\?\.contains\(document.activeElement\)/);
+  const app = await readFile("src/App.jsx", "utf8");
+  assert.match(app, /path="\/preview" element=\{<Home previewMode \/>\}/);
+  const pages = await readFile("scripts/prepare-pages-routes.mjs", "utf8");
+  assert.match(pages, /path: "\/preview", type: "preview"/);
+  const previewSeo = await readFile("src/components/HomeSeo.jsx", "utf8");
+  assert.match(previewSeo, /noindex, nofollow/);
   const mobileBar = await readFile("src/components/MobileBottomBar.jsx", "utf8");
   assert.match(mobileBar, /mobile_bottom_bar_start/);
   assert.match(mobileBar, /packages-section/);

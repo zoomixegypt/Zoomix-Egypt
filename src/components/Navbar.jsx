@@ -34,7 +34,8 @@ const Navbar = memo(function Navbar() {
   const menuStoppedLenisRef = useRef(false);
   const menuRef = useRef(null);
   const isRouteFinderPage = location.pathname === "/route-finder";
-  const logoOnDark = isOnDarkSection || (!scrolled && !isRouteFinderPage);
+  const isHomeLikePage = location.pathname === "/" || location.pathname === "/preview";
+  const logoOnDark = isOnDarkSection || (!scrolled && !isRouteFinderPage && isHomeLikePage);
 
   useEffect(() => {
     let ticking = false;
@@ -150,7 +151,7 @@ const Navbar = memo(function Navbar() {
   const scrollTo = (sectionId) => {
     setIsMenuOpen(false);
 
-    if (location.pathname !== "/") {
+    if (!isHomeLikePage) {
       navigate(`/#${sectionId}`);
       return;
     }

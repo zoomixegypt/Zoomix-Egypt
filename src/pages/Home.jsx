@@ -36,7 +36,7 @@ function shouldShowSiteSplash() {
   }
 }
 
-export default function Home() {
+export default function Home({ previewMode = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const galleryRef = useRef(null);
@@ -61,8 +61,8 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (shouldShowSiteSplash()) setShowSiteSplash(true);
-  }, []);
+    if (!previewMode && shouldShowSiteSplash()) setShowSiteSplash(true);
+  }, [previewMode]);
 
   useEffect(() => {
     if (!showSiteSplash) return undefined;
@@ -115,7 +115,7 @@ export default function Home() {
         id="main-content"
         className="bg-[#F5F4EF] text-black selection:bg-[#BBFF00] selection:text-black relative"
       >
-        <HomeSeo />
+        <HomeSeo preview={previewMode} />
         {enableNoiseOverlay && (
           <Suspense fallback={null}>
             <NoiseOverlay />
@@ -131,7 +131,7 @@ export default function Home() {
           <ServicesSection />
         </Suspense>
         <Suspense fallback={<SectionSkeleton className="min-h-[40vh]" />}>
-          <RouteFinderEntry />
+          <RouteFinderEntry previewMode={previewMode} />
         </Suspense>
         <div className="route-to-work-transition" aria-label="Transition to the work gallery">
           <div className="route-to-work-transition__inner">
