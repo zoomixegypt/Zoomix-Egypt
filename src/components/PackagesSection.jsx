@@ -338,7 +338,7 @@ const PackagesSection = memo(function PackagesSection() {
 
         <div className="mb-14 grid gap-8 lg:grid-cols-[1fr_0.75fr] lg:items-end">
           <h2
-            className={`${isArabic ? "font-arabic tracking-normal" : "font-display tracking-[-0.06em]"} text-5xl font-black leading-[0.92] md:text-8xl`}
+            className={`${isArabic ? "font-arabic tracking-normal leading-[1.16] md:leading-[1.2]" : "font-display tracking-[-0.06em] leading-[0.92]"} text-5xl font-black md:text-8xl`}
           >
             {isArabic ? "اختار طريقة الشغل." : "Choose your way to work with us."}
           </h2>
@@ -525,7 +525,7 @@ const PackagesSection = memo(function PackagesSection() {
                     {group.number} / {group.title}
                   </span>
                   <h3
-                    className={`${isArabic ? "font-arabic" : "font-display tracking-[-0.04em]"} mt-5 text-4xl font-black md:text-6xl`}
+                    className={`${isArabic ? "font-arabic leading-[1.3] md:leading-[1.34]" : "font-display tracking-[-0.04em] leading-[0.95]"} mt-5 text-4xl font-black md:text-6xl`}
                   >
                     {group.description}
                   </h3>
@@ -576,7 +576,7 @@ const PackagesSection = memo(function PackagesSection() {
                 {isArabic ? "خدمة واحدة / ONE THING" : "ONE THING / SERVICE"}
               </span>
               <h3
-                className={`${isArabic ? "font-arabic" : "font-display tracking-[-0.04em]"} mt-5 text-4xl font-black md:text-6xl`}
+                className={`${isArabic ? "font-arabic leading-[1.3] md:leading-[1.34]" : "font-display tracking-[-0.04em] leading-[0.95]"} mt-5 text-4xl font-black md:text-6xl`}
               >
                 {isArabic ? "محتاج حاجة محددة؟" : "Need one specific thing?"}
               </h3>

@@ -435,7 +435,7 @@ export default function ProjectGallery({ onOpenProject }) {
           dir="ltr"
           aria-label={t("gallery", "explore")}
           style={{ direction: "ltr", unicodeBidi: "isolate" }}
-          className="flex gap-4 overflow-x-auto snap-x snap-mandatory px-6 scrollbar-hide [-webkit-overflow-scrolling:touch] [touch-action:pan-x] pb-4"
+          className="flex gap-4 overflow-x-auto snap-x snap-mandatory px-6 scrollbar-hide [-webkit-overflow-scrolling:touch] [touch-action:pan-x_pan-y] pb-4"
         >
           {projects.map((project, index) => (
             <Gsap.div

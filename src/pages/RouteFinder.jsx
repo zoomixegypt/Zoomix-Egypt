@@ -30,7 +30,7 @@ export default function RouteFinder() {
           <div className="route-finder-page-kicker flex flex-col justify-between gap-8 border-b border-black/15 pb-8 md:flex-row md:items-end">
             <div>
               <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-black/45">ZOOMIX / {isArabic ? "خطوتك الجاية" : "NEXT MOVE"}</span>
-              <h1 className={`${isArabic ? "font-arabic" : "font-display tracking-[-0.05em]"} mt-4 max-w-4xl text-5xl font-black leading-[0.92] md:text-8xl`}>
+              <h1 className={`${isArabic ? "font-arabic leading-[1.18] md:leading-[1.22]" : "font-display tracking-[-0.05em] leading-[0.92]"} mt-4 max-w-4xl text-5xl font-black md:text-8xl`}>
                 {isArabic ? "مش لازم تعرف تبدأ منين." : "You do not need to know where to start."}
                 <span className="block text-[#789900]">{isArabic ? "خلينا نحددها سوا." : "Let us find it together."}</span>
               </h1>
@@ -64,7 +64,7 @@ export default function RouteFinder() {
           <div className="mx-auto flex max-w-[1400px] flex-col justify-between gap-10 border-t border-white/15 pt-8 md:flex-row md:items-end">
             <div>
               <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#BBFF00]">04 / {isArabic ? "الخطوة التالية" : "NEXT STEP"}</span>
-              <h2 className={`${isArabic ? "font-arabic" : "font-display tracking-[-0.05em]"} mt-5 max-w-3xl text-5xl font-black leading-[0.92] md:text-8xl`}>
+              <h2 className={`${isArabic ? "font-arabic leading-[1.18] md:leading-[1.22]" : "font-display tracking-[-0.05em] leading-[0.92]"} mt-5 max-w-3xl text-5xl font-black md:text-8xl`}>
                 {isArabic ? "جاهز نحدد خطوتك الجاية؟" : "Ready to plan your next move?"}
               </h2>
               <p className="mt-6 max-w-xl text-base leading-7 text-white/55 md:text-lg">

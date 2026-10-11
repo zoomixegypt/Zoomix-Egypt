@@ -1414,10 +1414,22 @@
       grid-template-columns: minmax(0, 1fr);
     }
 
+    /* Mobile brief fix: flush white header (no beige gap above the title)
+       and non-sticky, so it never covers the Name field while scrolling.
+       !important wins over Tailwind utilities from within the components layer. */
+    #brief-form {
+      scroll-margin-top: 6rem;
+    }
+
+    .project-brief-form {
+      padding: 1rem !important;
+    }
+
     .project-brief-form .brief-progress-header {
-      position: sticky;
-      top: 4.75rem;
-      z-index: 4;
+      position: static;
+      top: auto;
+      z-index: auto;
+      margin: -1rem -1rem 0 !important;
     }
 
     .project-brief-form > .sm\:col-span-2,
@@ -1686,6 +1698,11 @@
       line-height: 0.95;
     }
 
+    /* The Arabic route lockups need extra breathing room between stacked lines. */
+    [dir="rtl"] .route-map-story h4 {
+      line-height: 1.24;
+    }
+
     .route-map-story-details {
       gap: 1.25rem !important;
     }
@@ -1693,6 +1710,10 @@
     .route-map-story-description {
       font-size: 1.05rem !important;
       line-height: 1.5;
+    }
+
+    [dir="rtl"] .route-map-story-description {
+      line-height: 1.34;
     }
 
     .route-map-story-outputs {

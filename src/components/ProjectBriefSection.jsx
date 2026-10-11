@@ -705,7 +705,7 @@ const ProjectBriefSection = memo(function ProjectBriefSection() {
               <span className="text-[#BBFF00]">{String(briefStep).padStart(2, "0")} / 03</span>
             </div>
             <h2
-              className={`${isArabic ? "font-arabic tracking-normal" : "font-display tracking-[-0.06em]"} text-5xl md:text-7xl font-black leading-[0.92]`}
+              className={`${isArabic ? "font-arabic tracking-normal leading-[1.18] md:leading-[1.22]" : "font-display tracking-[-0.06em] leading-[0.92]"} text-5xl md:text-7xl font-black`}
             >
               {label("نرتب الخطوة", "FIND THE NEXT")}
               <br />

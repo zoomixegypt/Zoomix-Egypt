@@ -22,7 +22,7 @@ export default function RouteFinderEntry() {
               <span className="h-2 w-2 bg-[#BBFF00]" aria-hidden="true" />
               <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-black/65">ZOOMIX / {isArabic ? "خطوتك الجاية" : "NEXT MOVE"}</span>
             </div>
-            <h2 className={`${isArabic ? "font-arabic" : "font-display tracking-[-0.05em]"} max-w-xl text-5xl font-black leading-[0.92] md:text-7xl`}>
+            <h2 className={`${isArabic ? "font-arabic leading-[1.22] md:leading-[1.26]" : "font-display tracking-[-0.05em] leading-[0.92]"} max-w-xl text-5xl font-black md:text-7xl`}>
               {isArabic ? "مش عارف تبدأ منين؟" : "Not sure where to start?"}
             </h2>
             <p className="mt-6 max-w-xl text-lg leading-8 text-black/60 md:text-xl">

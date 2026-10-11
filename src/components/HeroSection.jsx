@@ -10,7 +10,7 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
     <header
       id="hero-section"
       dir={language === "ar" ? "rtl" : "ltr"}
-      className="min-h-[100svh] bg-[#0A0A0A] text-white relative overflow-hidden flex flex-col justify-start pt-32 pb-12 lg:justify-center lg:flex-row lg:items-end md:pb-24 md:pt-28"
+      className="min-h-[100svh] bg-[#0A0A0A] text-white relative overflow-hidden flex flex-col justify-start pt-32 pb-12 lg:min-h-[min(100svh,920px)] lg:justify-center lg:flex-row lg:items-center lg:pt-24 lg:pb-16 md:pb-24 md:pt-28"
     >
       <div className="hero-grid absolute inset-0 opacity-20 [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:56px_56px]" />
       <div className="hero-orbit absolute -right-[18vw] bottom-[-20vw] h-[68vw] w-[68vw] rounded-full border border-white/20 shadow-[0_0_0_90px_rgba(255,255,255,.025),0_0_0_180px_rgba(255,255,255,.018)]" />
@@ -23,18 +23,19 @@ const HeroSection = memo(function HeroSection({ isRevealed = true }) {
             {t("hero", "eyebrow")}
           </p>
           <h1
-            className={`${language === "ar" ? "font-arabic tracking-normal leading-[1.12]" : "font-display tracking-[-.06em] leading-[.98]"} text-[clamp(2.75rem,12vw,8.7rem)] sm:text-[clamp(3.6rem,9vw,8.7rem)] lg:text-[clamp(3.5rem,5.2vw,5.4rem)] font-extrabold max-w-4xl break-words`}
+            className={`${language === "ar" ? "font-arabic tracking-normal leading-[1.28] [text-wrap:balance]" : "font-display tracking-[-.06em] leading-[.98]"} text-[clamp(2.75rem,12vw,8.7rem)] sm:text-[clamp(3.6rem,9vw,8.7rem)] lg:text-[clamp(3.5rem,5.2vw,5.4rem)] font-extrabold max-w-4xl break-words`}
           >
-            {t("hero", "titleA")} <span className="text-[#BBFF00]">{t("hero", "titleAccent")}</span>
-            <br />
-            {t("hero", "titleB")}
+            <span className="block">
+              {t("hero", "titleA")} <span className="text-[#BBFF00]">{t("hero", "titleAccent")}</span>
+            </span>
+            <span className="mt-[0.12em] block">{t("hero", "titleB")}</span>
           </h1>
           <p
-            className={`zoomix-reveal zoomix-reveal-delay-2 ${language === "ar" ? "font-arabic leading-[1.9]" : "font-display leading-8"} text-white/75 max-w-xl mt-7 text-base md:text-lg`}
+            className={`zoomix-reveal zoomix-reveal-delay-2 ${language === "ar" ? "font-arabic leading-[2.1] mt-8" : "font-display leading-8 mt-7"} text-white/75 max-w-xl text-base md:text-lg`}
           >
             {t("hero", "description")}
           </p>
-          <p className="zoomix-reveal zoomix-reveal-delay-2 mt-3 max-w-xl text-sm leading-6 text-[#BBFF00]/80">
+          <p className={`zoomix-reveal zoomix-reveal-delay-2 ${language === "ar" ? "mt-4 leading-7" : "mt-3 leading-6"} max-w-xl text-sm text-[#BBFF00]/80`}>
             {t("hero", "partnerLine")}
           </p>
           <div className="hero-cta-group zoomix-reveal zoomix-reveal-delay-3 relative z-10 -mx-2 mt-9 flex w-fit flex-wrap items-center gap-3 rounded-full bg-[#0A0A0A]/85 px-2 py-2">

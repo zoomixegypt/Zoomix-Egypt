@@ -764,7 +764,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
         </div>
 
         <div className={`route-finder-page-intro mb-12 grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end ${standalone ? "route-finder-page-intro--standalone" : ""}`}>
-          <h2 className={`${isArabic ? "font-arabic tracking-normal" : "font-display tracking-[-0.05em]"} text-5xl font-black leading-[0.95] md:text-7xl`}>{sectionTitle}</h2>
+          <h2 className={`${isArabic ? "font-arabic tracking-normal leading-[1.16] md:leading-[1.2]" : "font-display tracking-[-0.05em] leading-[0.95]"} text-5xl font-black md:text-7xl`}>{sectionTitle}</h2>
           <p className="max-w-xl text-lg leading-8 text-black/65 md:text-xl">{sectionIntro}</p>
         </div>
 
@@ -803,7 +803,7 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
           <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
             <div>
               <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-black/45">{text.routeMapEyebrow}</span>
-              <h3 className={`${isArabic ? "font-arabic" : "font-display tracking-[-0.04em]"} route-map-title mt-4 text-4xl font-black leading-none md:text-6xl`}><span className="route-title-mark">{text.routeMapTitle}</span></h3>
+              <h3 className={`${isArabic ? "font-arabic leading-[1.18] md:leading-[1.22]" : "font-display tracking-[-0.04em] leading-none"} route-map-title mt-4 text-4xl font-black md:text-6xl`}><span className="route-title-mark">{text.routeMapTitle}</span></h3>
             </div>
             <div className="max-w-lg">
               <p className="text-sm leading-6 text-black/60 md:text-base">{text.routeMapIntro}</p>
@@ -853,13 +853,13 @@ const OfferPathSection = memo(function OfferPathSection({ standalone = false, re
                       <div className="route-map-story-head flex items-start justify-between gap-5">
                         <div>
                           <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-black/45">0{index + 1} / {route.code}</span>
-                          <h4 className={`${isArabic ? "font-arabic" : "font-display tracking-[-0.04em]"} mt-5 text-4xl font-black md:text-6xl`}>{route.title}</h4>
+                          <h4 className={`${isArabic ? "font-arabic leading-[1.24] md:leading-[1.28]" : "font-display tracking-[-0.04em] leading-[0.95]"} mt-5 text-4xl font-black md:text-6xl`}>{route.title}</h4>
                         </div>
                         <span className={`route-map-story-dot mt-2 h-3 w-3 shrink-0 rounded-full ${active ? "bg-[#BBFF00] shadow-[0_0_22px_rgba(187,255,0,0.9)]" : "bg-black/15"}`} />
                       </div>
                       <div className="route-map-story-details grid gap-8 md:grid-cols-[1.1fr_0.9fr] md:items-end">
                         <div>
-                          <p className="route-map-story-description max-w-lg text-2xl font-black leading-tight md:text-4xl">{route.description}</p>
+                          <p className={`route-map-story-description max-w-lg text-2xl font-black md:text-4xl ${isArabic ? "font-arabic leading-[1.34] md:leading-[1.32]" : "leading-tight"}`}>{route.description}</p>
                           <div className="mt-7 flex flex-wrap items-center gap-4">
                             <button type="button" onClick={() => standalone ? revealRouteDetails(route.value) : scrollToSection(`offer-${route.value}`)} aria-expanded={standalone ? expandedRoute === route.value : undefined} aria-controls={standalone ? `route-details-${route.value}` : undefined} className="route-map-details-trigger inline-flex items-center gap-2 border-b border-black/30 pb-1 text-sm font-bold text-black/55 hover:border-black hover:text-black">
                               {standalone ? (expandedRoute === route.value ? text.hideRouteDetails : text.routeMapShowDetails) : route.value === "one-thing" ? (isArabic ? "شوف الخدمات المنفصلة" : "See one-off services") : text.routeMapBrowse}

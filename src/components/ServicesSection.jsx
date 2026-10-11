@@ -24,7 +24,7 @@ const ServicesSection = memo(function ServicesSection() {
           <div>
             <p className="zoomix-label mb-6">{t("services", "eyebrow")}</p>
             <h2
-              className={`${language === "ar" ? "font-arabic tracking-normal" : "font-display tracking-[-0.045em]"} lg:sticky lg:top-28 text-4xl md:text-6xl font-black leading-[1.05] max-w-xl`}
+              className={`${language === "ar" ? "font-arabic tracking-normal leading-[1.2] md:leading-[1.24]" : "font-display tracking-[-0.045em] leading-[1.05]"} lg:sticky lg:top-28 text-4xl md:text-6xl font-black max-w-xl`}
             >
               {t("services", "problem")}
             </h2>

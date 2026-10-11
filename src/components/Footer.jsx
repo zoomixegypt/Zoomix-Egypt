@@ -52,7 +52,7 @@ const Footer = memo(function Footer() {
               {t("footer", "partner")}
             </p>
             <h2
-              className={`${language === "ar" ? "font-arabic tracking-normal" : "font-display tracking-tighter"} text-5xl sm:text-7xl lg:text-8xl font-black uppercase leading-[0.9]`}
+              className={`${language === "ar" ? "font-arabic tracking-normal leading-[1.15] sm:leading-[1.18] lg:leading-[1.2]" : "font-display tracking-tighter leading-[0.9]"} text-5xl sm:text-7xl lg:text-8xl font-black uppercase`}
             >
               {t("footer", "title")} <br />
               <span className="text-[#BBFF00] italic">{t("footer", "accent")}</span>
