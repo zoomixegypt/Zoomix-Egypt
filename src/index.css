@@ -387,6 +387,11 @@
     width: 100%;
   }
 
+  /* Keep the gallery arrows clear of the fixed WhatsApp action on desktop. */
+  .project-gallery-desktop-controls {
+    padding-inline-end: 4.75rem;
+  }
+
   @media (max-width: 767px) {
     .nav-logo-backplate {
       inset-inline-end: -0.25rem;
@@ -426,6 +431,10 @@
       font-size: 0.64rem;
       letter-spacing: 0.04em;
       text-transform: uppercase;
+    }
+
+    .project-gallery-desktop-controls {
+      padding-inline-end: 0;
     }
   }
 

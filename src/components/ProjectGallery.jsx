@@ -697,7 +697,7 @@ export default function ProjectGallery({ onOpenProject }) {
       </div>
 
       {/* Optional manual browsing keeps later projects accessible without extending the pin. */}
-      <div className="absolute bottom-7 left-8 right-8 z-20 flex items-center justify-between gap-4">
+      <div className="project-gallery-desktop-controls absolute bottom-7 left-8 right-8 z-20 flex items-center justify-between gap-4">
         <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/60">
           {language === "ar" ? "مشاريع أخرى" : "MORE PROJECTS"}
         </span>
