@@ -19,7 +19,7 @@ const ZoomixLogo = memo(function ZoomixLogo({
       {...props}
     >
       <img
-        src="/zoomix-logo.svg"
+        src="/zoomix-logo.svg?v=clipped"
         alt={alt}
         width={width}
         height={height}
@@ -27,7 +27,7 @@ const ZoomixLogo = memo(function ZoomixLogo({
       />
       {isLight && (
         <img
-          src="/zoomix-logo.svg"
+          src="/zoomix-logo.svg?v=clipped"
           alt=""
           aria-hidden="true"
           width={width}

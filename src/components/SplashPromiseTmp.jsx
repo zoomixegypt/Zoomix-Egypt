@@ -39,7 +39,7 @@ export default function SplashPromiseTmp() {
   // Artwork is untouched — only opacity/transform/filter are animated.
   useEffect(() => {
     let cancelled = false;
-    fetch("/zoomix-logo.svg", { cache: "force-cache" })
+    fetch("/zoomix-logo.svg?v=clipped", { cache: "force-cache" })
       .then((r) => r.text())
       .then((text) => {
         if (cancelled) return;

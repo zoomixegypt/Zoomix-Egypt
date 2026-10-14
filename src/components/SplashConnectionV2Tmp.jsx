@@ -98,7 +98,7 @@ export default function SplashConnectionV2Tmp({ onComplete = null, preview = tru
     const logoTimeout = window.setTimeout(() => {
       if (!cancelled) setLogoReady(true);
     }, 800);
-    fetch("/zoomix-logo.svg", { cache: "force-cache" })
+    fetch("/zoomix-logo.svg?v=clipped", { cache: "force-cache" })
       .then((r) => r.text())
       .then((text) => {
         if (cancelled) return;
