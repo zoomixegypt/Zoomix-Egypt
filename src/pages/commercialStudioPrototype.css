@@ -11,6 +11,9 @@
   --csp-type-label: 12px;
   --csp-type-meta: 11px;
   --csp-line-body: 1.65;
+  --csp-font-system: var(--font-sans);
+  --csp-font-arabic: var(--font-arabic);
+  --csp-font-numeric: var(--font-sans);
   min-height: 100vh;
   background: var(--csp-paper);
   color: var(--csp-black);
@@ -50,6 +53,24 @@
   display: flex;
   align-items: center;
   gap: 14px;
+}
+.csp-brand-lockup {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+.csp-brand-logo {
+  width: 112px;
+  flex: 0 0 auto;
+}
+.csp-brand-context {
+  color: var(--csp-lime);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
 }
 .csp-brand > span {
   color: var(--csp-lime);
@@ -1207,6 +1228,12 @@
 .csp-view-enter {
   animation: csp-view-enter 0.28s var(--zoomix-ease) both;
 }
+/* A fixed modal/drawer must escape the view-entry animation's containing
+   block so it covers the viewport, including the mobile bottom navigation. */
+.csp-view-enter:has(.csp-modal-backdrop),
+.csp-view-enter:has(.csp-drawer-backdrop) {
+  animation: none;
+}
 @keyframes csp-view-enter {
   from {
     opacity: 0;
@@ -1293,6 +1320,16 @@
   .csp-brand {
     gap: 9px;
   }
+  .csp-brand-lockup {
+    gap: 5px;
+  }
+  .csp-brand-logo {
+    width: 92px;
+  }
+  .csp-brand-context {
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
   .csp-brand > span {
     font-size: 10px;
   }
@@ -1307,6 +1344,9 @@
   }
   .csp-metrics-grid {
     grid-template-columns: 1fr 1fr;
+  }
+  .csp-metrics-grid--three {
+    grid-template-columns: 1fr;
   }
   .csp-metric {
     padding: 14px;
@@ -1995,6 +2035,15 @@
   width: 15px;
   color: rgba(10, 10, 10, 0.55);
 }
+/* The topbar gives its trigger buttons a compact icon size. Do not let that
+   rule collapse the actual menu items inside the quick-action popover. */
+.csp-top-actions .csp-quick-pop button {
+  display: flex;
+  width: 100%;
+  height: auto;
+  min-height: 44px;
+  place-items: initial;
+}
 /* 3.2 — شارة وضع التخزين ثابتة في الهيدر */
 .csp-topbar .csp-storage-state {
   flex-shrink: 0;
@@ -2251,6 +2300,10 @@
 .csp-mobile-bottom-nav {
   display: none;
 }
+.csp-mobile-search-button,
+.csp-mobile-search-panel {
+  display: none;
+}
 
 @media (max-width: 1100px) {
   .csp-global-search {
@@ -2276,12 +2329,39 @@
   }
   .csp-brand {
     min-width: 0;
+    flex: 1;
+    gap: 6px;
+  }
+  .csp-brand > span {
+    overflow: hidden;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .csp-brand small,
+  .csp-topbar .csp-storage-state,
+  .csp-avatar,
   .csp-global-search,
   .csp-quick-action,
   .csp-quick-wrap {
     display: none !important;
+  }
+  .csp-top-actions {
+    flex-shrink: 0;
+    gap: 6px;
+  }
+  .csp-mobile-search-button {
+    display: grid !important;
+    width: 42px !important;
+    height: 42px !important;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.82);
+  }
+  .csp-mobile-search-button svg {
+    width: 18px;
   }
   .csp-sidebar {
     top: 64px;
@@ -2304,7 +2384,8 @@
     display: none;
   }
   .csp-priority-strip .csp-button {
-    width: fit-content;
+    width: 100%;
+    min-height: 46px;
   }
   .csp-commercial-summary {
     position: static;
@@ -2350,6 +2431,97 @@
   }
 }
 
+@media (max-width: 800px) {
+  .csp-mobile-search-panel {
+    position: fixed;
+    inset: 74px 10px auto;
+    z-index: 70;
+    display: block;
+    max-height: calc(100vh - 90px);
+    overflow: auto;
+    border: 1px solid rgba(10, 10, 10, 0.22);
+    background: #fff;
+    box-shadow: 0 18px 42px rgba(10, 10, 10, 0.24);
+    color: var(--csp-black);
+  }
+  .csp-mobile-search-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--csp-line);
+    padding: 10px;
+  }
+  .csp-mobile-search-field {
+    display: flex;
+    min-height: 44px;
+    flex: 1;
+    align-items: center;
+    gap: 9px;
+    border: 1px solid var(--csp-line);
+    padding: 0 11px;
+    color: rgba(10, 10, 10, 0.55);
+  }
+  .csp-mobile-search-field input {
+    min-width: 0;
+    flex: 1;
+    border: 0;
+    outline: 0;
+    color: var(--csp-black);
+    font-size: 14px;
+  }
+  .csp-mobile-search-close {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border: 1px solid var(--csp-line);
+    background: var(--csp-paper);
+    color: var(--csp-black);
+  }
+  .csp-mobile-search-results {
+    display: grid;
+    gap: 2px;
+    padding: 7px;
+  }
+  .csp-mobile-search-results button {
+    display: grid;
+    min-height: 54px;
+    grid-template-columns: minmax(72px, auto) 1fr;
+    align-items: center;
+    gap: 10px;
+    border: 0;
+    background: transparent;
+    padding: 8px 10px;
+    color: var(--csp-black);
+    text-align: start;
+  }
+  .csp-mobile-search-results button:hover,
+  .csp-mobile-search-results button:focus-visible {
+    background: rgba(187, 255, 0, 0.28);
+    outline: none;
+  }
+  .csp-mobile-search-results small {
+    color: rgba(10, 10, 10, 0.55);
+    font-size: 11px;
+    font-weight: 800;
+  }
+  .csp-mobile-search-results span {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 13px;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  [dir="rtl"] .csp-mobile-search-results button,
+  [dir="rtl"] .csp-mobile-search-field input {
+    font-family: var(--font-arabic);
+  }
+  [dir="rtl"] .csp-mobile-search-results small {
+    font-size: 12px;
+  }
+}
+
 @media (max-width: 560px) {
   .csp-page-head {
     gap: 17px;
@@ -2365,6 +2537,13 @@
   }
   .csp-head-actions .csp-button {
     flex: 1 1 auto;
+  }
+  .csp-head-actions .csp-button--primary {
+    flex-basis: 100%;
+    order: -1;
+  }
+  .csp-head-actions .csp-button:not(.csp-button--primary) {
+    flex-basis: calc(50% - 4px);
   }
   .csp-priority-strip {
     padding: 15px;
@@ -2936,6 +3115,14 @@
   color: rgba(10, 10, 10, 0.45);
   font-size: 10px;
 }
+.csp-top-actions .csp-notif-pop .csp-notif-item {
+  display: grid;
+  width: 100%;
+  height: auto;
+  min-height: 56px;
+  place-items: initial;
+  text-align: start;
+}
 
 /* Offline / demo-mode note */
 .csp-mode-note {
@@ -3218,7 +3405,7 @@
 }
 .csp-quote-list-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 150px 150px;
+  grid-template-columns: minmax(0, 1fr) 140px 150px auto;
   align-items: center;
   gap: 14px;
   width: 100%;
@@ -3263,11 +3450,28 @@
   font-size: 10px;
 }
 .csp-quote-list-total {
-  font-family: var(--csp-font-numeric, Arial, sans-serif);
+  font-family: var(--csp-font-numeric);
   font-size: 13px;
   font-weight: 900;
   text-align: end;
   white-space: nowrap;
+}
+.csp-quote-list-open {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-inline-start: 1px solid var(--csp-line);
+  padding-inline-start: 12px;
+  color: rgba(10, 10, 10, 0.64);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.csp-quote-list-row:hover .csp-quote-list-open,
+.csp-quote-list-row:focus-visible .csp-quote-list-open {
+  color: var(--csp-black);
 }
 .csp-quote-list-empty {
   border-top: 1px solid var(--csp-line);
@@ -3310,6 +3514,14 @@
     border-top: 1px solid var(--csp-line);
     padding-top: 8px;
     text-align: start;
+  }
+  .csp-quote-list-open {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    border-inline-start: 0;
+    border-top: 1px solid var(--csp-line);
+    padding-block-start: 8px;
+    padding-inline-start: 0;
   }
 }
 
@@ -3390,7 +3602,7 @@
   background: #fff7df;
 }
 .csp-discount-table td b {
-  font-family: var(--csp-font-numeric, Arial, sans-serif);
+  font-family: var(--csp-font-numeric);
 }
 .csp-discount-impact-empty {
   margin: 0;

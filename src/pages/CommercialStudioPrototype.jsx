@@ -6,17 +6,23 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BadgePercent,
   Bell,
+  Check,
   ChevronLeft,
   ChevronRight,
+  Copy,
+  Eye,
+  FilePlus2,
   FileText,
   LayoutDashboard,
   Menu,
+  MoreHorizontal,
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
   Search,
   Settings,
   Users,
+  X,
 } from "lucide-react";
 import {} from "../data/commercialStudioPrototype";
 
@@ -35,6 +41,8 @@ import SectionBoundary from "./studio/SectionBoundary";
 import "./commercialStudioPrototype.css";
 import "./studio/studioLayout.css";
 import { useStudioData } from "./studio/useStudioData";
+import { workflowState } from "./studio/workflow";
+import ZoomixLogo from "../components/ZoomixLogo";
 
 const QUOTE_STATUSES = [
   "draft",
@@ -55,7 +63,7 @@ const quoteStatusLabel = (status, isArabic) =>
     accepted: isArabic ? "مقبول" : "Accepted",
     cancelled: isArabic ? "ملغي" : "Cancelled",
     expired: isArabic ? "منتهي" : "Expired",
-    "local-draft": isArabic ? "مسودة على الجهاز" : "Device draft",
+    "local-draft": isArabic ? "مسودة غير محفوظة" : "Unsaved draft",
   })[status] || status;
 
 const quoteValueRange = (value, isArabic) =>
@@ -76,12 +84,94 @@ const quoteMatchesValueRange = (total, range) => {
   return total > 15000;
 };
 
-function QuoteList({ language, quotes = [], draftRows = [], onOpenQuote }) {
+const quotePriorityScore = (status) =>
+  ({
+    revision_requested: 5,
+    viewed: 4,
+    sent: 3,
+    draft: 2,
+    "local-draft": 2,
+    accepted: 1,
+    expired: 0,
+    cancelled: 0,
+  })[status] ?? 0;
+
+const quoteNextAction = (status, isArabic) =>
+  ({
+    revision_requested: isArabic ? "راجع طلب التعديل" : "Review requested changes",
+    viewed: isArabic ? "تابع مع العميل" : "Follow up with client",
+    sent: isArabic ? "راجع العرض المرسل" : "Review sent quote",
+    draft: isArabic ? "أكمل تجهيز العرض" : "Finish the draft",
+    "local-draft": isArabic ? "راجع المسودة" : "Review draft",
+    accepted: isArabic ? "جاهز للانتقال إلى المشروع" : "Ready for project handoff",
+    expired: isArabic ? "راجع العرض المنتهي" : "Review expired quote",
+    cancelled: isArabic ? "راجع السجل" : "Review record",
+  })[status] || (isArabic ? "افتح العرض" : "Open quote");
+
+const quoteSortLabel = (value, isArabic) =>
+  ({
+    priority: isArabic ? "الأولوية العملية" : "Work priority",
+    recent: isArabic ? "آخر تحديث" : "Recently updated",
+    value: isArabic ? "القيمة الأعلى" : "Highest value",
+    version: isArabic ? "الإصدار" : "Version",
+  })[value];
+
+const QUOTE_PREFERENCES_KEY = "zoomix-quote-preferences";
+const QUOTE_PAGE_SIZE = 5;
+
+const readQuotePreferences = () => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(QUOTE_PREFERENCES_KEY) || "{}");
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+};
+
+function QuoteList({
+  language,
+  quotes = [],
+  draftRows = [],
+  selectedQuoteId,
+  onOpenQuote,
+  projects = [],
+  payments = [],
+  onOpenProject,
+  onOpenPayment,
+}) {
   const isArabic = language === "ar";
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("all");
-  const [valueRange, setValueRange] = useState("all");
-  const [version, setVersion] = useState("all");
+  const [quotePreferences] = useState(readQuotePreferences);
+  const [query, setQuery] = useState(() => quotePreferences.query || "");
+  const [status, setStatus] = useState(() => quotePreferences.status || "all");
+  const [valueRange, setValueRange] = useState(() => quotePreferences.valueRange || "all");
+  const [version, setVersion] = useState(() => quotePreferences.version || "all");
+  const [sortBy, setSortBy] = useState(() => quotePreferences.sortBy || "priority");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [openActionId, setOpenActionId] = useState(null);
+  const [actionFeedback, setActionFeedback] = useState("");
+  const feedbackTimer = useRef(null);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        QUOTE_PREFERENCES_KEY,
+        JSON.stringify({ query, status, valueRange, version, sortBy }),
+      );
+    } catch {
+      // Preferences are a convenience; a blocked localStorage must not affect the list.
+    }
+  }, [query, sortBy, status, valueRange, version]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query, sortBy, status, valueRange, version]);
+
+  useEffect(
+    () => () => {
+      if (feedbackTimer.current) window.clearTimeout(feedbackTimer.current);
+    },
+    [],
+  );
 
   const records = useMemo(
     () => [
@@ -91,7 +181,14 @@ function QuoteList({ language, quotes = [], draftRows = [], onOpenQuote }) {
         status: row.status || "draft",
         version: Number(row.version || 0),
         total: Number.isFinite(Number(row.total)) ? Number(row.total) : null,
-        searchText: [row.reference, row.clientName, row.projectName].filter(Boolean).join(" "),
+        searchText: [
+          row.reference,
+          row.clientName,
+          row.projectName,
+          row.lastEvent,
+        ]
+          .filter(Boolean)
+          .join(" "),
       })),
       ...visibleQuoteDrafts(draftRows, quotes || []).map(([id, row]) => ({
         ...row,
@@ -105,144 +202,496 @@ function QuoteList({ language, quotes = [], draftRows = [], onOpenQuote }) {
           row.clientName,
           row.projectName,
           row.record?.projectName,
+          row.record?.lastEvent,
         ]
           .filter(Boolean)
           .join(" "),
       })),
-    ],
+    ].filter((row) => !row.isTest),
     [draftRows, quotes],
   );
+
+  const workflowForQuote = (row) => {
+    const linkedProject = row?.kind !== "local-draft"
+      ? projects.find((project) => String(project.quoteId) === String(row.id))
+      : null;
+    const linkedPayments = linkedProject
+      ? payments.filter((payment) => String(payment.projectId) === String(linkedProject.id))
+      : [];
+    return workflowState({ quote: row, project: linkedProject, payments: linkedPayments }, isArabic);
+  };
 
   const versions = useMemo(
     () =>
       [...new Set(records.map((row) => row.version).filter((value) => value > 0))].sort(
         (a, b) => a - b,
       ),
+    [isArabic, payments, projects, records],
+  );
+
+  const quoteSummary = useMemo(() => {
+    const draftCount = records.filter((row) => ["draft", "local-draft"].includes(row.status)).length;
+    const attentionCount = records.filter((row) =>
+      ["sent", "viewed", "revision_requested"].includes(row.status),
+    ).length;
+    const acceptedCount = records.filter((row) => row.status === "accepted").length;
+    const totalValue = records.reduce((sum, row) => sum + (row.total || 0), 0);
+    const attentionValue = records
+      .filter((row) => ["sent", "viewed", "revision_requested"].includes(row.status))
+      .reduce((sum, row) => sum + (row.total || 0), 0);
+    const acceptedValue = records
+      .filter((row) => row.status === "accepted")
+      .reduce((sum, row) => sum + (row.total || 0), 0);
+    return [
+      {
+        key: "total",
+        label: isArabic ? "إجمالي العروض" : "Total quotes",
+        count: records.length,
+        note: `${money(totalValue)} ${isArabic ? "جنيه قيمة إجمالية" : "EGP total value"}`,
+      },
+      {
+        key: "drafts",
+        label: isArabic ? "المسودات" : "Drafts",
+        count: draftCount,
+        note: isArabic ? "جاهزة للمراجعة" : "Ready for review",
+      },
+      {
+        key: "attention",
+        label: isArabic ? "تحتاج متابعة" : "Needs attention",
+        count: attentionCount,
+        note: `${money(attentionValue)} ${isArabic ? "جنيه قيد المتابعة" : "EGP in follow-up"}`,
+      },
+      {
+        key: "accepted",
+        label: isArabic ? "مقبولة" : "Accepted",
+        count: acceptedCount,
+        note: `${money(acceptedValue)} ${isArabic ? "جنيه مؤكدة" : "EGP confirmed"}`,
+      },
+    ];
+  }, [isArabic, records]);
+
+  const priorityRecord = useMemo(
+    () =>
+      [...records]
+        .filter((row) => !["accepted", "cancelled", "expired"].includes(row.status))
+        .sort((a, b) => {
+          const score = quotePriorityScore(b.status) - quotePriorityScore(a.status);
+          if (score) return score;
+          return new Date(b.updatedAt || b.lastEventAt || b.createdAt || 0) - new Date(a.updatedAt || a.lastEventAt || a.createdAt || 0);
+        })[0] || null,
     [records],
   );
 
+  const quickFilters = [
+    { value: "all", label: isArabic ? "كل العروض" : "All quotes", count: records.length },
+    {
+      value: "draft",
+      label: isArabic ? "المسودات" : "Drafts",
+      count: records.filter((row) => ["draft", "local-draft"].includes(row.status)).length,
+    },
+    {
+      value: "sent",
+      label: isArabic ? "مُرسلة" : "Sent",
+      count: records.filter((row) => row.status === "sent").length,
+    },
+    {
+      value: "viewed",
+      label: isArabic ? "تمت المشاهدة" : "Viewed",
+      count: records.filter((row) => row.status === "viewed").length,
+    },
+    {
+      value: "revision_requested",
+      label: isArabic ? "مطلوب تعديل" : "Changes requested",
+      count: records.filter((row) => row.status === "revision_requested").length,
+    },
+    {
+      value: "accepted",
+      label: isArabic ? "مقبولة" : "Accepted",
+      count: records.filter((row) => row.status === "accepted").length,
+    },
+  ];
+
   const filtered = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase();
-    return records.filter((row) => {
+    const rows = records.filter((row) => {
       const matchesQuery =
         !normalizedQuery || row.searchText.toLocaleLowerCase().includes(normalizedQuery);
-      const matchesStatus = status === "all" || row.status === status;
+      const matchesStatus =
+        status === "all" ||
+        (status === "draft" ? ["draft", "local-draft"].includes(row.status) : row.status === status);
       const matchesRange = quoteMatchesValueRange(row.total, valueRange);
       const matchesVersion = version === "all" || String(row.version) === version;
       return matchesQuery && matchesStatus && matchesRange && matchesVersion;
     });
-  }, [query, records, status, valueRange, version]);
+    return rows.sort((a, b) => {
+      if (sortBy === "value") return (b.total || 0) - (a.total || 0);
+      if (sortBy === "version") return (b.version || 0) - (a.version || 0);
+      if (sortBy === "recent") {
+        return new Date(b.updatedAt || b.lastEventAt || b.createdAt || 0) - new Date(a.updatedAt || a.lastEventAt || a.createdAt || 0);
+      }
+      const priority = quotePriorityScore(b.status) - quotePriorityScore(a.status);
+      if (priority) return priority;
+      return new Date(b.updatedAt || b.lastEventAt || b.createdAt || 0) - new Date(a.updatedAt || a.lastEventAt || a.createdAt || 0);
+    });
+  }, [query, records, sortBy, status, valueRange, version]);
 
   const hasFilters =
-    Boolean(query.trim()) || status !== "all" || valueRange !== "all" || version !== "all";
+    Boolean(query.trim()) ||
+    status !== "all" ||
+    valueRange !== "all" ||
+    version !== "all";
   const resetFilters = () => {
     setQuery("");
     setStatus("all");
     setValueRange("all");
     setVersion("all");
+    setSortBy("priority");
+  };
+  const totalPages = Math.max(1, Math.ceil(filtered.length / QUOTE_PAGE_SIZE));
+  const pageRows = filtered.slice((currentPage - 1) * QUOTE_PAGE_SIZE, currentPage * QUOTE_PAGE_SIZE);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
+
+  const announceAction = (message) => {
+    setActionFeedback(message);
+    if (feedbackTimer.current) window.clearTimeout(feedbackTimer.current);
+    feedbackTimer.current = window.setTimeout(() => setActionFeedback(""), 5000);
+  };
+
+  const copyQuoteLink = (row) => {
+    const internalLink = `${window.location.origin}/studio?view=quotes&record=${encodeURIComponent(row.id)}`;
+    const link = row.clientUrl || internalLink;
+    setOpenActionId(null);
+    let copied = false;
+    try {
+      const field = document.createElement("textarea");
+      field.value = link;
+      field.setAttribute("readonly", "");
+      field.style.position = "fixed";
+      field.style.opacity = "0";
+      document.body.appendChild(field);
+      field.select();
+      copied = document.execCommand("copy");
+      field.remove();
+    } catch {
+      copied = false;
+    }
+    announceAction(
+      copied
+        ? row.clientUrl
+          ? isArabic
+            ? "تم نسخ رابط العميل الآمن."
+            : "Secure client link copied."
+          : isArabic
+            ? "تم نسخ رابط تفاصيل العرض داخل الاستوديو."
+            : "Studio quote details link copied."
+        : isArabic
+          ? "تم تجهيز رابط التفاصيل، لكن تعذر النسخ التلقائي."
+          : "The details link is ready, but automatic copying failed.",
+    );
+  };
+
+  const openQuote = (row, action = "open") => {
+    const isLocal = row.kind === "local-draft";
+    setOpenActionId(null);
+    onOpenQuote(isLocal ? null : row.id, isLocal ? row.id : null, action);
   };
 
   return (
-    <section className="csp-draft-list csp-quote-list" aria-labelledby="quote-list-title">
+    <section
+      className="csp-draft-list csp-quote-list csp-quote-list--workspace"
+      aria-labelledby="quote-list-title"
+    >
       <div className="csp-quote-list-head">
-        <div>
-          <p className="csp-kicker">QUOTES / SEARCH + FILTER</p>
+        <div className="csp-quote-list-head-copy">
+          <p className="csp-kicker">COMMERCIAL / QUOTES</p>
           <h2 id="quote-list-title">{isArabic ? "العروض والمسودات" : "Quotes and drafts"}</h2>
+          <p className="csp-quote-list-description">
+            {isArabic
+              ? "كل عرض يبدأ كنطاق واضح، ثم يمر بالمراجعة قبل أن يصل إلى العميل."
+              : "Every quote starts as a clear scope, then moves through review before it reaches the client."}
+          </p>
         </div>
-        <span className="csp-quote-list-count">
-          {filtered.length} / {records.length}
-        </span>
+        <div className="csp-quote-list-head-side">
+          <div className="csp-quote-list-priority">
+            <span>{isArabic ? "الخطوة التالية" : "NEXT UP"}</span>
+            <strong>
+              {priorityRecord
+                ? workflowForQuote(priorityRecord).next.label
+                : isArabic
+                  ? "كل العروض تحت السيطرة"
+                  : "Everything is under control"}
+            </strong>
+            <small>
+              {priorityRecord
+                ? `${priorityRecord.reference || (isArabic ? "عرض بلا مرجع" : "Unreferenced quote")} · ${money(priorityRecord.total)} ${isArabic ? "جنيه" : "EGP"}`
+                : isArabic
+                  ? "لا توجد خطوة عاجلة"
+                  : "No urgent action"}
+            </small>
+          </div>
+          <span className="csp-quote-list-count">
+            {filtered.length} / {records.length} {isArabic ? "عرض" : "quotes"}
+          </span>
+        </div>
       </div>
-      <div className="csp-quote-list-toolbar">
-        <label className="csp-quote-search">
-          <Search size={16} aria-hidden="true" />
-          <span className="csp-sr-only">{isArabic ? "بحث في العروض" : "Search quotes"}</span>
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={
-              isArabic ? "ابحث بالمرجع أو العميل أو المشروع" : "Search reference, client or project"
-            }
-          />
-        </label>
-        <label>
-          <span>{isArabic ? "الحالة" : "Status"}</span>
-          <select value={status} onChange={(event) => setStatus(event.target.value)}>
-            <option value="all">{isArabic ? "كل الحالات" : "All statuses"}</option>
-            {QUOTE_STATUSES.map((value) => (
-              <option value={value} key={value}>
-                {quoteStatusLabel(value, isArabic)}
-              </option>
-            ))}
-            <option value="local-draft">{quoteStatusLabel("local-draft", isArabic)}</option>
-          </select>
-        </label>
-        <label>
-          <span>{isArabic ? "نطاق القيمة" : "Value range"}</span>
-          <select value={valueRange} onChange={(event) => setValueRange(event.target.value)}>
-            {Object.keys({
-              all: true,
-              under_5000: true,
-              from_5000_to_10000: true,
-              from_10000_to_15000: true,
-              over_15000: true,
-            }).map((value) => (
-              <option value={value} key={value}>
-                {quoteValueRange(value, isArabic)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span>{isArabic ? "الإصدار" : "Version"}</span>
-          <select value={version} onChange={(event) => setVersion(event.target.value)}>
-            <option value="all">{isArabic ? "كل الإصدارات" : "All versions"}</option>
-            {versions.map((value) => (
-              <option value={value} key={value}>
-                {isArabic ? `الإصدار ${value}` : `Version ${value}`}
-              </option>
-            ))}
-          </select>
-        </label>
-        {hasFilters && (
-          <button type="button" className="csp-button" onClick={resetFilters}>
-            {isArabic ? "مسح الفلاتر" : "Clear filters"}
+      <div className="csp-quote-summary" aria-label={isArabic ? "ملخص العروض" : "Quote summary"}>
+        {quoteSummary.map((item) => (
+          <div className={`csp-quote-summary-card csp-quote-summary-card--${item.key}`} key={item.key}>
+            <span>{item.label}</span>
+            <strong>{item.count}</strong>
+            <small>{item.note}</small>
+          </div>
+        ))}
+      </div>
+      <div
+        className="csp-quote-quick-filters"
+        role="group"
+        aria-label={isArabic ? "فلاتر حالة سريعة" : "Quick status filters"}
+      >
+        {quickFilters.map((filter) => (
+          <button
+            type="button"
+            key={filter.value}
+            className={status === filter.value ? "is-active" : ""}
+            aria-pressed={status === filter.value}
+            onClick={() => setStatus(filter.value)}
+          >
+            <span>{filter.label}</span>
+            <b>{filter.count}</b>
           </button>
-        )}
+        ))}
+      </div>
+      <div className="csp-quote-filters-panel">
+        <div className="csp-quote-filters-head">
+          <div>
+            <span className="csp-kicker">FIND / REFINE</span>
+            <strong>{isArabic ? "ابحث في العروض" : "Find a quote"}</strong>
+          </div>
+          <small>
+            {isArabic ? "النتائج الظاهرة الآن" : "Showing now"} · {filtered.length}
+          </small>
+        </div>
+        <div className="csp-quote-list-toolbar">
+          <label className="csp-quote-search">
+            <Search size={16} aria-hidden="true" />
+            <span className="csp-sr-only">{isArabic ? "بحث في العروض" : "Search quotes"}</span>
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={
+                isArabic ? "ابحث بالمرجع أو العميل أو المشروع" : "Search reference, client or project"
+              }
+            />
+          </label>
+          <label>
+            <span>{isArabic ? "الحالة" : "Status"}</span>
+            <select value={status} onChange={(event) => setStatus(event.target.value)}>
+              <option value="all">{isArabic ? "كل الحالات" : "All statuses"}</option>
+              {QUOTE_STATUSES.map((value) => (
+                <option value={value} key={value}>
+                  {quoteStatusLabel(value, isArabic)}
+                </option>
+              ))}
+              <option value="local-draft">{quoteStatusLabel("local-draft", isArabic)}</option>
+            </select>
+          </label>
+          <label>
+            <span>{isArabic ? "نطاق القيمة" : "Value range"}</span>
+            <select value={valueRange} onChange={(event) => setValueRange(event.target.value)}>
+              {Object.keys({
+                all: true,
+                under_5000: true,
+                from_5000_to_10000: true,
+                from_10000_to_15000: true,
+                over_15000: true,
+              }).map((value) => (
+                <option value={value} key={value}>
+                  {quoteValueRange(value, isArabic)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>{isArabic ? "الإصدار" : "Version"}</span>
+            <select value={version} onChange={(event) => setVersion(event.target.value)}>
+              <option value="all">{isArabic ? "كل الإصدارات" : "All versions"}</option>
+              {versions.map((value) => (
+                <option value={value} key={value}>
+                  {isArabic ? `الإصدار ${value}` : `Version ${value}`}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>{isArabic ? "ترتيب" : "Sort"}</span>
+            <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+              {Object.keys({ priority: true, recent: true, value: true, version: true }).map((value) => (
+                <option value={value} key={value}>
+                  {quoteSortLabel(value, isArabic)}
+                </option>
+              ))}
+            </select>
+          </label>
+          {hasFilters && (
+            <button type="button" className="csp-button" onClick={resetFilters}>
+              {isArabic ? "مسح الفلاتر" : "Clear filters"}
+            </button>
+          )}
+        </div>
       </div>
       {filtered.length ? (
         <div className="csp-quote-list-grid">
-          {filtered.map((row) => {
+          {pageRows.map((row) => {
             const isLocal = row.kind === "local-draft";
+            const isSelected = !isLocal && String(row.id) === String(selectedQuoteId);
             const reference = isLocal
-              ? row.record?.reference || (isArabic ? "مسودة محلية" : "Local draft")
+              ? row.record?.reference || (isArabic ? "مسودة غير محفوظة" : "Unsaved draft")
               : row.reference;
+            const openLabel = isArabic ? "فتح العرض" : "Open quote";
+            const OpenIcon = isArabic ? ChevronLeft : ChevronRight;
+            const nextAction = workflowForQuote(row).next.label;
+            const updatedAt = row.updatedAt || row.lastEventAt || row.createdAt;
+            const linkedProject = !isLocal
+              ? projects.find((project) => String(project.quoteId) === String(row.id))
+              : null;
+            const linkedPayments = linkedProject
+              ? payments.filter((payment) => String(payment.projectId) === String(linkedProject.id))
+              : [];
             return (
-              <button
-                type="button"
-                className="csp-quote-list-row"
+              <article
+                className={`csp-quote-list-row${
+                  isLocal
+                    ? " csp-quote-list-row--local"
+                    : row.status === "revision_requested"
+                      ? " csp-quote-list-row--attention"
+                      : row.status === "accepted"
+                        ? " csp-quote-list-row--accepted"
+                        : ""
+                }${isSelected ? " is-selected" : ""}`}
+                data-status={row.status}
                 key={`${row.kind}-${row.id}`}
-                onClick={() => (isLocal ? onOpenQuote(null, row.id) : onOpenQuote(row.id))}
+                aria-label={`${reference || (isArabic ? "عرض بلا مرجع" : "Unreferenced quote")} — ${nextAction}`}
               >
-                <span>
-                  <strong>{reference || (isArabic ? "عرض بلا مرجع" : "Unreferenced quote")}</strong>
-                  <small>{row.clientName || (isArabic ? "بدون اسم عميل" : "Unnamed client")}</small>
-                  <small>
+                <button type="button" className="csp-quote-list-row-main" onClick={() => openQuote(row)}>
+                  <span className="csp-quote-list-row-reference">
+                    <i aria-hidden="true" />
+                    <strong>{reference || (isArabic ? "عرض بلا مرجع" : "Unreferenced quote")}</strong>
+                  </span>
+                  <span className="csp-quote-list-row-client">
+                    {row.clientName || (isArabic ? "بدون اسم عميل" : "Unnamed client")}
+                  </span>
+                  <span className="csp-quote-list-row-project">
                     {row.projectName || (isArabic ? "بدون اسم مشروع" : "Unnamed project")}
-                  </small>
-                </span>
-                <span className="csp-quote-list-meta">
-                  <b>{quoteStatusLabel(row.status, isArabic)}</b>
-                  <small>
+                  </span>
+                  <span className={`csp-quote-next csp-quote-next--${row.status}`}>
+                    <small>{isArabic ? "الخطوة التالية" : "NEXT"}</small>
+                    {nextAction}
+                  </span>
+                </button>
+                <span className="csp-quote-list-meta" data-status={row.status}>
+                  <span className="csp-quote-status-line">
+                    <i aria-hidden="true" />
+                    <b>{quoteStatusLabel(row.status, isArabic)}</b>
+                  </span>
+                  <small className="csp-quote-version">
                     {row.version > 0 ? (isArabic ? `V${row.version}` : `v${row.version}`) : "—"}
+                  </small>
+                  <small className="csp-quote-updated">
+                    {updatedAt ? `${isArabic ? "آخر تحديث" : "Updated"} · ${shortTime(updatedAt)}` : "—"}
                   </small>
                 </span>
                 <span className="csp-quote-list-total">
-                  {row.total == null
-                    ? "—"
-                    : `${money(row.total, language)} ${isArabic ? "جنيه" : "EGP"}`}
+                  <small>{isArabic ? "قيمة العرض" : "QUOTE VALUE"}</small>
+                  <strong>
+                    {row.total == null
+                      ? "—"
+                      : `${money(row.total, language)} ${isArabic ? "جنيه" : "EGP"}`}
+                  </strong>
                 </span>
-              </button>
+                <div className="csp-quote-list-actions">
+                  <button type="button" className="csp-quote-list-open" onClick={() => openQuote(row)}>
+                    <span>{isSelected ? (isArabic ? "مفتوح الآن" : "Open now") : openLabel}</span>
+                    <OpenIcon size={15} />
+                  </button>
+                  {linkedProject && (
+                    <button
+                      type="button"
+                      className="csp-quote-list-open csp-quote-list-open--related"
+                      onClick={() => onOpenProject?.(linkedProject.id)}
+                    >
+                      <span>{isArabic ? "المشروع" : "Project"}</span>
+                      <ChevronRight size={14} />
+                    </button>
+                  )}
+                  {linkedPayments.length > 0 && (
+                    <button
+                      type="button"
+                      className="csp-quote-list-open csp-quote-list-open--related"
+                      onClick={() => onOpenPayment?.(linkedPayments[0].id)}
+                    >
+                      <span>{isArabic ? "الدفعات" : "Payments"}</span>
+                      <ChevronRight size={14} />
+                    </button>
+                  )}
+                  <div className="csp-quote-actions">
+                    <button
+                      type="button"
+                      className="csp-quote-more"
+                      aria-label={isArabic ? "إجراءات العرض" : "Quote actions"}
+                      aria-haspopup="menu"
+                      aria-expanded={openActionId === `${row.kind}-${row.id}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        const key = `${row.kind}-${row.id}`;
+                        setOpenActionId((current) => (current === key ? null : key));
+                      }}
+                    >
+                      <MoreHorizontal size={17} />
+                    </button>
+                    {openActionId === `${row.kind}-${row.id}` && (
+                      <div
+                        className="csp-quote-actions-menu"
+                        role="menu"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <button type="button" role="menuitem" onClick={() => openQuote(row, "preview")}>
+                          <Eye size={15} />
+                          {isArabic ? "معاينة العرض" : "Preview quote"}
+                        </button>
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onMouseDown={() => {
+                            setOpenActionId(null);
+                            announceAction(
+                              isArabic
+                                ? "تم تجهيز رابط التفاصيل للنسخ."
+                                : "The quote details link is ready to copy.",
+                            );
+                          }}
+                          onClick={() => copyQuoteLink(row)}
+                        >
+                          <Copy size={15} />
+                          {row.clientUrl
+                            ? isArabic
+                              ? "نسخ رابط العميل"
+                              : "Copy client link"
+                            : isArabic
+                              ? "نسخ رابط التفاصيل"
+                              : "Copy details link"}
+                        </button>
+                        <button type="button" role="menuitem" onClick={() => openQuote(row, "copy")}>
+                          <FilePlus2 size={15} />
+                          {isArabic ? "إنشاء نسخة جديدة" : "Create a new copy"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </article>
             );
           })}
         </div>
@@ -266,6 +715,33 @@ function QuoteList({ language, quotes = [], draftRows = [], onOpenQuote }) {
           )}
         </div>
       )}
+      {filtered.length > QUOTE_PAGE_SIZE && (
+        <nav className="csp-quote-pagination" aria-label={isArabic ? "صفحات العروض" : "Quote pages"}>
+          <button
+            type="button"
+            disabled={currentPage <= 1}
+            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+          >
+            {isArabic ? "السابق" : "Previous"}
+          </button>
+          <span>
+            {isArabic ? "صفحة" : "Page"} {currentPage} {isArabic ? "من" : "of"} {totalPages}
+          </span>
+          <button
+            type="button"
+            disabled={currentPage >= totalPages}
+            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+          >
+            {isArabic ? "التالي" : "Next"}
+          </button>
+        </nav>
+      )}
+      {actionFeedback && (
+        <p className="csp-quote-feedback" role="status">
+          <Check size={16} />
+          {actionFeedback}
+        </p>
+      )}
     </section>
   );
 }
@@ -277,6 +753,7 @@ export default function CommercialStudioPrototype({ demo = false }) {
   const draftId =
     params.get("draft") || (params.get("record") ? `quote-${params.get("record")}` : "working");
   const selectedQuoteId = page === "quotes" ? params.get("record") : null;
+  const quoteDetailOpen = page === "quotes" && Boolean(params.get("record") || params.get("draft"));
   const [selection, setSelection] = useState(params.get("record"));
   const [draftRows, setDraftRows] = useState([]);
   const lastParams = useRef(params.toString());
@@ -336,6 +813,7 @@ export default function CommercialStudioPrototype({ demo = false }) {
     }
   });
   const searchRef = useRef(null);
+  const mobileSearchRef = useRef(null);
 
   const syncQuote = (quote) => {
     setQuotes((current) =>
@@ -478,7 +956,12 @@ export default function CommercialStudioPrototype({ demo = false }) {
   useEffect(() => {
     if (!searchOpen && !notifOpen && !quickOpen) return undefined;
     const closeOnOutside = (event) => {
-      if (!event.target.closest?.(".csp-global-search")) setSearchOpen(false);
+      if (
+        !event.target.closest?.(".csp-global-search") &&
+        !event.target.closest?.(".csp-mobile-search-panel") &&
+        !event.target.closest?.(".csp-mobile-search-button")
+      )
+        setSearchOpen(false);
       if (!event.target.closest?.(".csp-notif-wrap")) setNotifOpen(false);
       if (!event.target.closest?.(".csp-quick-wrap")) setQuickOpen(false);
     };
@@ -498,17 +981,26 @@ export default function CommercialStudioPrototype({ demo = false }) {
   }, [searchOpen, notifOpen, quickOpen]);
 
   useEffect(() => {
+    if (searchOpen && isMobile) {
+      window.requestAnimationFrame(() => mobileSearchRef.current?.focus());
+    }
+  }, [searchOpen, isMobile]);
+
+  useEffect(() => {
     if (!flash) return undefined;
     const timer = window.setTimeout(() => setFlash(""), 5000);
     return () => window.clearTimeout(timer);
   }, [flash]);
 
-  const navigate = (next, recordId = null, nextDraft = null) => {
+  const navigate = (next, recordId = null, nextDraft = null, extraParams = {}) => {
     if (!confirmLeave()) return false;
     lastParams.current = new URLSearchParams({
       view: next,
       ...(recordId ? { record: String(recordId) } : {}),
       ...(nextDraft ? { draft: nextDraft } : {}),
+      ...Object.fromEntries(
+        Object.entries(extraParams || {}).filter(([, value]) => value !== null && value !== undefined && value !== ""),
+      ),
     }).toString();
     setParams(lastParams.current);
     setPage(next);
@@ -577,17 +1069,21 @@ export default function CommercialStudioPrototype({ demo = false }) {
           >
             <Menu />
           </button>
-          <span>ZOOMIX / STUDIO</span>
+          <div className="csp-brand-lockup" aria-label="ZOOMIX / STUDIO">
+            <ZoomixLogo
+              variant="dark"
+              className="csp-brand-logo"
+              width={180}
+              height={60}
+            />
+            <span className="csp-brand-context">/ STUDIO</span>
+          </div>
           <small>COMMAND CENTER</small>
-          <span className={`csp-storage-state is-${storageMode}`} role="status">
-            {storageMode === "cloud"
-              ? isArabic
-                ? "متصل بقاعدة البيانات"
-                : "DATABASE CONNECTED"
-              : isArabic
-                ? "وضع محلي تجريبي"
-                : "LOCAL DEMO MODE"}
-          </span>
+          {storageMode === "cloud" && (
+            <span className="csp-storage-state is-cloud" role="status">
+              {isArabic ? "متصل بقاعدة البيانات" : "DATABASE CONNECTED"}
+            </span>
+          )}
         </div>
         <div className="csp-global-search">
           <Search size={16} />
@@ -666,6 +1162,19 @@ export default function CommercialStudioPrototype({ demo = false }) {
           )}
         </div>
         <div className="csp-top-actions">
+          <button
+            type="button"
+            className="csp-mobile-search-button"
+            aria-label={isArabic ? "فتح البحث الشامل" : "Open global search"}
+            aria-expanded={searchOpen}
+            onClick={() => {
+              setSearchOpen((value) => !value);
+              setNotifOpen(false);
+              setQuickOpen(false);
+            }}
+          >
+            <Search />
+          </button>
           <div className="csp-quick-wrap">
             <button
               type="button"
@@ -796,6 +1305,68 @@ export default function CommercialStudioPrototype({ demo = false }) {
           <span className="csp-avatar">F</span>
         </div>
       </header>
+      {isMobile && searchOpen && (
+        <section
+          className="csp-mobile-search-panel"
+          role="dialog"
+          aria-modal="false"
+          aria-label={isArabic ? "البحث الشامل" : "Global search"}
+        >
+          <div className="csp-mobile-search-head">
+            <label className="csp-mobile-search-field">
+              <Search size={17} aria-hidden="true" />
+              <span className="csp-sr-only">{isArabic ? "البحث الشامل" : "Global search"}</span>
+              <input
+                ref={mobileSearchRef}
+                value={globalQuery}
+                onChange={(event) => setGlobalQuery(event.target.value)}
+                placeholder={
+                  isArabic
+                    ? "ابحث عن عميل، طلب، عرض أو دفعة…"
+                    : "Search clients, briefs, quotes or payments…"
+                }
+                autoComplete="off"
+              />
+            </label>
+            <button
+              type="button"
+              className="csp-mobile-search-close"
+              onClick={() => setSearchOpen(false)}
+              aria-label={isArabic ? "إغلاق البحث" : "Close search"}
+            >
+              <X size={18} />
+            </button>
+          </div>
+          <div className="csp-mobile-search-results" id="csp-mobile-search-results">
+            {searchQuery.length < 2 ? (
+              <p className="csp-search-empty">
+                {isArabic ? "اكتب حرفين على الأقل للبحث." : "Type at least two characters to search."}
+              </p>
+            ) : searchResults.length ? (
+              searchResults.map((result) => (
+                <button
+                  type="button"
+                  key={result.key}
+                  onClick={() => {
+                    navigate(result.target, result.recordId);
+                    setGlobalQuery("");
+                    setSearchOpen(false);
+                  }}
+                >
+                  <small>{result.group}</small>
+                  <span>{result.label}</span>
+                </button>
+              ))
+            ) : (
+              <p className="csp-search-empty">
+                {isArabic
+                  ? `لا توجد نتائج لـ «${globalQuery.trim()}»`
+                  : `No results for “${globalQuery.trim()}”`}
+              </p>
+            )}
+          </div>
+        </section>
+      )}
       <div className={`csp-shell ${sidebarCollapsed ? "is-sidebar-collapsed" : ""}`}>
         {isMobile && mobileNav && (
           <button
@@ -869,7 +1440,7 @@ export default function CommercialStudioPrototype({ demo = false }) {
             </button>
           </footer>
         </aside>
-        <section className="csp-content" aria-label={activeNav?.[isArabic ? 2 : 3]}>
+        <section className={`csp-content csp-content--${page}`} aria-label={activeNav?.[isArabic ? 2 : 3]}>
           <div className="csp-refresh-state">
             <button className="csp-button" onClick={retry}>
               {isArabic ? "تحديث البيانات" : "Refresh data"}
@@ -892,9 +1463,17 @@ export default function CommercialStudioPrototype({ demo = false }) {
                 language={language}
                 onNavigate={navigate}
                 onOpenQuote={(id) => navigate("quotes", id)}
+                onOpenRequest={(id) => navigate("leads", id)}
+                onOpenProject={(id) => navigate("projects", id)}
+                onOpenPayment={(id) => navigate("payments", id)}
                 quotes={quotes}
                 requests={requests}
+                projects={projects}
+                payments={payments}
                 storageMode={storageMode}
+                lastUpdatedLabel={lastUpdated ? `${isArabic ? "آخر تحديث" : "Updated"}: ${shortTime(lastUpdated)}` : ""}
+                refreshError={refreshError}
+                onRefresh={retry}
               />
             )}
             {page === "leads" && (
@@ -904,8 +1483,15 @@ export default function CommercialStudioPrototype({ demo = false }) {
                 language={language}
                 requests={requests}
                 quotes={quotes}
+                projects={projects}
+                payments={payments}
                 onCreateQuote={createQuoteFromLead}
                 onOpenQuote={(id) => navigate("quotes", id)}
+                onOpenProject={(id) => navigate("projects", id)}
+                onOpenPayment={(id) => navigate("payments", id)}
+                lastUpdatedLabel={lastUpdated ? `${isArabic ? "آخر تحديث" : "Updated"}: ${shortTime(lastUpdated)}` : ""}
+                refreshError={refreshError}
+                onRefresh={retry}
               />
             )}
             {page === "catalog" && (
@@ -917,36 +1503,61 @@ export default function CommercialStudioPrototype({ demo = false }) {
                 storageMode={storageMode}
               />
             )}
-            {page === "quotes" && (
+            {page === "quotes" && !quoteDetailOpen && (
               <QuoteList
                 language={language}
                 quotes={quotes || []}
                 draftRows={draftRows}
-                onOpenQuote={(quoteId, localDraftId) =>
-                  localDraftId
-                    ? navigate("quotes", null, localDraftId)
-                    : navigate("quotes", quoteId)
-                }
+                selectedQuoteId={selectedQuoteId}
+                projects={projects || []}
+                payments={payments || []}
+                onOpenProject={(id) => navigate("projects", id)}
+                onOpenPayment={(id) => navigate("payments", id)}
+                onOpenQuote={(quoteId, localDraftId, action = "open") => {
+                  if (action === "copy") {
+                    const sourceId = localDraftId || quoteId;
+                    return navigate(
+                      "quotes",
+                      null,
+                      `copy-${sourceId}-${crypto.randomUUID()}`,
+                      { copy: sourceId },
+                    );
+                  }
+                  const extraParams = action === "preview" ? { preview: "1" } : {};
+                  return localDraftId
+                    ? navigate("quotes", null, localDraftId, extraParams)
+                    : navigate("quotes", quoteId, null, extraParams);
+                }}
               />
             )}
-            {page === "quotes" && (
-              <QuoteView
-                key={draftId}
-                draftId={draftId}
-                selectedQuoteId={selectedQuoteId}
-                language={language}
-                catalog={catalog}
-                promotions={promotions}
-                storageMode={storageMode}
-                onQuoteSaved={syncQuote}
-                liveQuoteStatus={
-                  quotes?.find((row) => String(row.id) === String(selectedQuoteId))?.status
-                }
-                lead={selectedLead}
-                requests={requests || []}
-                freshToken={freshToken}
-                freshRef={freshConsumedRef}
-              />
+            {page === "quotes" && quoteDetailOpen && (
+              <div className="csp-quote-detail-screen">
+                <QuoteView
+                  key={draftId}
+                  draftId={draftId}
+                  selectedQuoteId={selectedQuoteId}
+                  language={language}
+                  catalog={catalog}
+                  promotions={promotions}
+                  storageMode={storageMode}
+                  onBack={() => navigate("quotes")}
+                  onQuoteSaved={syncQuote}
+                  liveQuoteStatus={
+                    quotes?.find((row) => String(row.id) === String(selectedQuoteId))?.status
+                  }
+                  lead={selectedLead}
+                  requests={requests || []}
+                  projects={projects || []}
+                  payments={payments || []}
+                  freshToken={freshToken}
+                  freshRef={freshConsumedRef}
+                  onOpenRequest={(id) => navigate("leads", id)}
+                  onOpenProject={(id) => navigate("projects", id)}
+                  onOpenPayment={(id) => navigate("payments", id)}
+                  previewOnOpen={params.get("preview") === "1"}
+                  sourceQuoteId={params.get("copy") || null}
+                />
+              </div>
             )}
             {page === "promotions" && (
               <PromotionsView
@@ -958,14 +1569,30 @@ export default function CommercialStudioPrototype({ demo = false }) {
               />
             )}
             {page === "projects" && (
-              <ProjectsView language={language} projects={projects} storageMode={storageMode} />
+              <ProjectsView
+                language={language}
+                projects={projects}
+                quotes={quotes}
+                requests={requests}
+                payments={payments}
+                onOpenQuote={(id) => navigate("quotes", id)}
+                onOpenPayment={(id) => navigate("payments", id)}
+                storageMode={storageMode}
+              />
             )}
             {page === "payments" && (
               <PaymentsView
                 language={language}
                 payments={payments}
+                projects={projects}
+                quotes={quotes}
+                requests={requests}
+                onOpenRequest={(id) => navigate("leads", id)}
+                onOpenProject={(id) => navigate("projects", id)}
+                onOpenQuote={(id) => navigate("quotes", id)}
                 onPaymentUpdated={syncPayment}
                 storageMode={storageMode}
+                focusFilter={params.get("focus") || ""}
               />
             )}
             {page === "reports" && (
@@ -975,6 +1602,7 @@ export default function CommercialStudioPrototype({ demo = false }) {
                 quotes={quotes}
                 projects={projects}
                 payments={payments}
+                onNavigate={navigate}
               />
             )}
             {page === "settings" && <SettingsView language={language} storageMode={storageMode} />}
@@ -1012,7 +1640,17 @@ export default function CommercialStudioPrototype({ demo = false }) {
             <span>{isArabic ? ar : en}</span>
           </button>
         ))}
-        <button type="button" onClick={() => setMobileNav(true)} aria-expanded={mobileNav}>
+        <button
+          type="button"
+          className={
+            ["catalog", "promotions", "projects", "payments", "reports", "settings"].includes(page)
+              ? "is-active"
+              : ""
+          }
+          onClick={() => setMobileNav(true)}
+          aria-expanded={mobileNav}
+          aria-label={isArabic ? "فتح باقي أقسام Studio" : "Open more Studio sections"}
+        >
           <Menu />
           <span>{isArabic ? "المزيد" : "More"}</span>
         </button>
