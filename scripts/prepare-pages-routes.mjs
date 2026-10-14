@@ -18,7 +18,7 @@ const routes = [
   { path: "/preview", type: "preview" },
   { path: "/route-finder", type: "route-finder" },
   { path: "/prototype/commercial-studio", type: "prototype" },
-  { path: "/studio", type: "prototype" },
+  { path: "/studio", type: "studio" },
   ...PROJECT_META.map((project) => ({
     path: `/projects/${project.slug}`,
     type: "project",
@@ -108,10 +108,10 @@ function pageHead(route) {
     };
   }
 
-  if (route.type === "prototype") {
+  if (route.type === "studio") {
     return {
-      title: "ZOOMIX Commercial Studio Prototype",
-      description: "Interactive commercial workspace prototype for ZOOMIX.",
+      title: "ZOOMIX Commercial Studio",
+      description: "Private commercial workspace for managing briefs, quotes, projects and collections.",
       canonical: `${SITE_URL}${route.path}`,
       image: `${SITE_URL}/og-image.png`,
       robots: "noindex, nofollow",
